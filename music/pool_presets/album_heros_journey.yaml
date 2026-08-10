@@ -1,0 +1,48 @@
+name: "英雄远征 — 影视史诗"
+version: "1.0"
+bpm: 100
+key: "C"
+scale: "harmonic_minor"
+style: battle
+
+instruments:
+  - name: "Hero Theme"
+    role: melody
+    engine: wavetable
+    preset: "brass_section"
+    volume: 0.80
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.15
+      lp_filter_hz: 5000
+
+  - name: "Epic Harmony"
+    role: chord
+    engine: subtractive
+    preset: "string_ensemble"
+    volume: 0.50
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.25
+      lp_filter_hz: 3500
+
+  - name: "FM Bass"
+    role: bass
+    engine: fm
+    preset: "fm_bass"
+    volume: 0.80
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 800
+
+  - name: "Battle Kit"
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+
+generation:
+  diversity: 0.2
+  humanize: true
+  chord_progression: "heroic"

@@ -1,0 +1,45 @@
+name: "空山鸟语 — 冥想/自然"
+version: "1.0"
+bpm: 55
+key: "C"
+scale: "pentatonic"
+style: ambient
+
+instruments:
+  - name: "Bird Song"
+    role: melody
+    engine: wavetable
+    preset: "flute"
+    volume: 0.55
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.7
+      reverb_decay: 5.0
+      lp_filter_hz: 6000
+
+  - name: "Mountain Drone"
+    role: pad
+    engine: subtractive
+    preset: "sine_pad"
+    volume: 0.40
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.6
+      reverb_decay: 4.0
+      lp_filter_hz: 1500
+
+  - name: "Deep Resonance"
+    role: bass
+    engine: subtractive
+    preset: "sub_bass"
+    volume: 0.50
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 5.0
+      lp_filter_hz: 400
+
+generation:
+  diversity: 0.4
+  humanize: true
+  chord_progression: "ambient"

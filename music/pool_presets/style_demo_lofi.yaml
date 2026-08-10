@@ -1,0 +1,48 @@
+name: "慵懒午后 — Lo-Fi 低保真"
+version: "1.0"
+bpm: 80
+key: "C"
+scale: "major"
+style: lofi
+
+instruments:
+  - name: "Lo-Fi Piano"
+    role: melody
+    engine: wavetable
+    preset: "piano"
+    volume: 0.65
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.30
+      lp_filter_hz: 3000
+
+  - name: "Warm Organ"
+    role: chord
+    engine: fm_advanced
+    preset: "organ"
+    volume: 0.45
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.25
+      lp_filter_hz: 2500
+
+  - name: "Sub Bass"
+    role: bass
+    engine: subtractive
+    preset: "sub"
+    volume: 0.60
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 500
+
+  - name: "Lo-Fi Kit"
+    role: drum
+    engine: noise
+    volume: 0.50
+    pan: 0.0
+
+generation:
+  diversity: 0.35
+  humanize: true
+  chord_progression: "jazz"

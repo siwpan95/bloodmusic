@@ -9,6 +9,11 @@ description: >
   or any request to programmatically generate WAV audio files with drum rhythms and melodies.
   Supports 7 beat styles: Trap, Boom Bap, Lo-Fi, Battle, Drum-Only, EDM, and Ambient.
   Also supports full song arrangement, effect chains, automation, bass synthesis, harmony, and sampling.
+  Supports InstrumentPool (乐器池) for YAML-driven multi-instrument composition,
+  album generation with --pool mode, and 10 preset album-style YAML configurations.
+  Triggers include: "build an instrument pool", "generate music from instrument pool",
+  "album with pool", "pool render", "create instrument pool", "generate album with pool",
+  "使用乐器池", "乐池生成", "InstrumentPool".
 ---
 
 # BloodMusic Beats
@@ -16,6 +21,8 @@ description: >
 ## Overview
 
 Use the BloodMusic engine (at `G:\tools\bloodmusic`) to programmatically synthesize beats, drum patterns, full music arrangements, and complete songs. Generate WAV audio files by combining 808 drum synthesis, Euclidean rhythms, music presets, custom patterns, bass synthesis, harmony generation, effects chains, and automation lanes.
+
+The engine also includes the **InstrumentPool** system — define a multi-instrument ensemble via YAML, pick a StylePreset, and render a complete arrangement with one call. Use `album_generator.py --pool` to generate a 10-track multi-style album from pool presets.
 
 ## Quick Start — Generate All Beat Styles
 
@@ -337,6 +344,204 @@ pattern = [
 audio = render_pad_sequence(pad, pattern, bpm=120, duration=4.0)
 ```
 
+### Workflow 11: InstrumentPool (端到端乐器池系统)
+
+一键从乐器池配置生成完整纯音乐 — 声明乐器、选风格、出成品。
+
+**核心概念**：
+- **InstrumentPool** — 乐器池：定义用哪些乐器、什么角色、BPM/调性/音阶
+- **StylePreset** — 风格预设：5 种内置风格 (exploration, battle, town, dungeon, ambient)
+- **PoolRenderer** — 渲染管线：乐池 → 分轨生成 → 混音辅助 → 母带 → 成品音频
+
+**快速开始 — 从 YAML 到 WAV**：
+
+```python
+from bloodmusic.music.instrument_pool import InstrumentPool
+from bloodmusic.music.pool_renderer import PoolRenderer
+
+# 方式1: 从 YAML 加载预置乐池
+pool = InstrumentPool.from_yaml("music/pool_presets/orchestral_small.yaml")
+
+# 方式2: 使用内置模板
+from bloodmusic.music.pool_templates import POOL_TEMPLATES
+pool = POOL_TEMPLATES["electronic_group"].to_pool(style="battle")
+
+# 方式3: 纯代码构建
+from bloodmusic.music.instrument_pool import InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine
+pool = InstrumentPool(name="自定义BGM", bpm=120, key="C", scale="dorian")
+pool.instruments.append(PoolInstrument("主旋律", role=InstrumentRole.MELODY,
+    engine=SynthEngine.WAVETABLE, preset="acoustic_grand_piano", volume=0.9))
+pool.instruments.append(PoolInstrument("和弦", role=InstrumentRole.CHORD,
+    engine=SynthEngine.SUBTRACTIVE, preset="string_ensemble", volume=0.6))
+
+# 一键渲染: 乐池 → 分轨 → 混音 → 成品 (float32 ndarray)
+renderer = PoolRenderer(pool, duration_sec=120.0, style_name="battle")
+final_audio, stems = renderer.render()
+
+# final_audio: np.ndarray (float32, 44100Hz) — 可直接保存
+# stems: Dict[str, np.ndarray] — {乐器名: 分轨音频}
+
+# 仅导出分轨（跳过混音）
+stems = renderer.render_stems_only()
+
+# 导出为 WAV
+from scipy.io import wavfile
+wavfile.write("output.wav", 44100, (final_audio * 32767).astype(np.int16))
+```
+
+**5 个内置 StylePreset**：
+
+| 风格 | 名称 | 描述 | BPM 范围 | arrangement_template |
+|------|------|------|----------|---------------------|
+| exploration | 探索/漫游 | 宽广、明亮的旋律 | 70-100 | ambient |
+| battle | 战斗 | 激烈、快速、压迫感 | 130-180 | pop |
+| town | 城镇/村庄 | 温暖、舒缓、亲切 | 80-110 | lo-fi |
+| dungeon | 地下城 | 阴暗、紧张、沉重 | 60-90 | ambient |
+| ambient | 氛围/环境 | 空灵、缓慢、空间感 | 40-80 | ambient |
+
+**5 个内置 PoolTemplate**：
+
+| 模板 | 描述 | 乐器配置 |
+|------|------|----------|
+| orchestral_small | 管弦小编制 | Violin(melody) + Strings(chord) + Cello(bass) + Timpani(drum) |
+| electronic_group | 电子合成器组 | Square Lead(melody) + Saw Pad(chord) + FM Bass + Noise Drum |
+| jazz_trio | 爵士三重奏 | Trumpet(melody) + Piano(chord) + Acoustic Bass + Brush Drum |
+| rock_band | 摇滚乐队 | Dist Guitar(melody) + Clean Guitar(chord) + Pick Bass + Rock Drum |
+| ambient_pad | 氛围环境 | Sine Pad(melody) + Granular Pad + Sub Bass (无鼓) |
+
+**生成整张专辑（10 首多风格纯音乐）**：
+
+```bash
+cd G:\tools\bloodmusic
+
+# Pool 模式：使用 10 个 album YAML + InstrumentPool 自动生成
+python album_generator.py --pool
+
+# 自定义参数
+python album_generator.py --pool --duration 180 --seed 42
+
+# Legacy 模式（原有手写编曲，不变）
+python album_generator.py
+```
+
+Pool 模式会遍历 `music/pool_presets/album_*.yaml` 中的 10 个风格配置，
+调用 `InstrumentPool.from_yaml()` → `StylePreset.apply_to()` → `PoolRenderer.render()`
+为每种风格生成一首完整曲目，输出到 `album_output_pool/`。
+
+**自定义乐池 YAML 格式**：
+
+```yaml
+name: "我的自定义 BGM"
+version: "1.0"
+bpm: 120
+key: "C"
+scale: "dorian"
+style: exploration          # 关联 StylePreset
+
+instruments:
+  - name: "主旋律"
+    role: melody
+    engine: wavetable
+    preset: "acoustic_grand_piano"
+    volume: 0.9
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.3
+      reverb_decay: 1.5
+      lp_filter_hz: 4500
+
+  - name: "和弦"
+    role: chord
+    engine: subtractive
+    preset: "string_ensemble"
+    volume: 0.6
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 2.0
+
+  - name: "Bass"
+    role: bass
+    engine: fm
+    preset: "fm_bass"
+    volume: 0.8
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 800
+
+  - name: "鼓"
+    role: drum
+    engine: noise
+    volume: 0.7
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "dreamy"
+  # sections: ["intro", "verse", "chorus", "outro"]   # 可选，不填走 StylePreset 默认
+  # section_bars: [4, 8, 8, 4]
+```
+
+**关键字段说明**：
+
+| 字段层级 | 字段 | 类型 | 必填 | 说明 |
+|----------|------|------|------|------|
+| 顶层 | name | str | ✅ | 乐池名称 |
+| 顶层 | bpm | int | ✅ | 速度 |
+| 顶层 | key | str | ✅ | 调性 ("C", "Am", "D", ...) |
+| 顶层 | scale | str | ✅ | 音阶 ("major", "minor", "dorian", "pentatonic", ...) |
+| 顶层 | style | str | ❌ | 风格预设名，PoolRenderer 自动应用 |
+| 顶层 | global_volume | float | ❌ | 全局音量 (默认 0.9) |
+| instruments[] | name | str | ✅ | 乐器显示名 |
+| instruments[] | role | str | ✅ | melody/chord/bass/drum/pad/fx |
+| instruments[] | engine | str | ✅ | wavetable/subtractive/fm/fm_advanced/karplus_strong/granular/waveguide/noise |
+| instruments[] | preset | str | ❌ | instruments.py 预设名 |
+| instruments[] | volume | float | ❌ | 相对音量 (默认 1.0) |
+| instruments[] | pan | float | ❌ | 声像 (-1.0 ~ 1.0, 默认 0.0) |
+| instruments[] | octave | int | ❌ | 八度偏移 (bass 常用 -1) |
+| instruments[] | effect_chain | dict | ❌ | 效果链参数 |
+| instruments[].effect_chain | reverb_mix | float | ❌ | 混响混合量 |
+| instruments[].effect_chain | reverb_decay | float | ❌ | 混响衰减时间 |
+| instruments[].effect_chain | lp_filter_hz | float | ❌ | 低通滤波截止频率 |
+| generation | diversity | float | ❌ | 多样性 (0.0~1.0, 默认 0.3) |
+| generation | humanize | bool | ❌ | 人性化处理 (默认 true) |
+| generation | chord_progression | str | ❌ | 和弦进行 (dreamy/epic/folk/ambient/pop_verse/heroic) |
+| generation | sections | list | ❌ | 段落名称列表 |
+| generation | section_bars | list | ❌ | 各段小节数 |
+
+**InstrumentRole 枚举值**：
+- `melody` — 主旋律 (使用 Markov 链生成)
+- `chord` — 和弦/和声 (使用 harmony.py)
+- `bass` — 低音线 (使用 bass.py)
+- `drum` — 打击乐 (使用 euclidean.py)
+- `pad` — 铺底/氛围 (harmony + arpeggiator)
+- `fx` — 特殊效果
+
+**SynthEngine 枚举值**：
+- `wavetable` — 波表合成 (钢琴、弦乐、吉他等)
+- `subtractive` — 减法合成 (铺底、正弦波)
+- `fm` — 2-op FM 合成 (金属音色、铃音)
+- `fm_advanced` — 多 op FM (DX7 风格)
+- `karplus_strong` — 物理建模拨弦
+- `granular` — 粒子合成
+- `waveguide` — 波导物理建模
+- `noise` — 噪声合成 (鼓专用)
+
+**相关 Python API**：
+```python
+# 风格预设
+from bloodmusic.music.pool_styles import STYLES, get_style, list_styles
+battle = get_style("battle")
+
+# 模板
+from bloodmusic.music.pool_templates import POOL_TEMPLATES, get_template, list_templates
+orch = get_template("orchestral_small")
+
+# 序列化
+from bloodmusic.music.pool_serializer import PoolSerializer
+pools = PoolSerializer.list_presets()  # 列出所有 YAML 预置
+```
+
 ## Creating Custom Beats
 
 To create a new beat style:
@@ -369,3 +574,22 @@ Comprehensive API reference covering all classes, parameters, and code examples 
 - Harmony (parallel, diatonic, chordal, voice leading)
 - SamplePad and WAV sample playback
 - Export and normalization utilities
+
+### music/pool_presets/album_*.yaml
+10 个专辑风格乐池 YAML 配置文件，对应《血音幻境》专辑的 10 首曲目：
+- `album_dawn_overture.yaml` — 01 晨曦序曲 (古典/钢琴, exploration)
+- `album_lost_in_cosmos.yaml` — 02 星海迷途 (新世纪, ambient)
+- `album_deep_sea.yaml` — 03 深海絮语 (氛围, ambient)
+- `album_midnight_jazz.yaml` — 04 午夜爵士 (爵士, town)
+- `album_neon_pulse.yaml` — 05 霓虹脉冲 (电子, battle)
+- `album_heros_journey.yaml` — 06 英雄远征 (影视史诗, battle)
+- `album_nostalgia.yaml` — 07 旧日时光 (Lo-Fi, town)
+- `album_birds_mountains.yaml` — 08 空山鸟语 (冥想, ambient)
+- `album_pastoral_tune.yaml` — 09 田园小调 (民谣, exploration)
+- `album_finale_rebirth.yaml` — 10 终章·重生 (史诗终章, battle)
+
+每个 YAML 文件包含该曲目的乐器组合、BPM、调性、音阶、效果链和生成参数。
+与 `album_generator.py --pool` 配合使用。
+
+### docs/PRD-instrument-pool.md
+InstrumentPool 系统的产品需求文档，包含完整的功能规格、用户故事和使用场景。

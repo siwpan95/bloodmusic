@@ -1,0 +1,43 @@
+name: "古典华章 — 古典/钢琴"
+version: "1.0"
+bpm: 72
+key: "C"
+scale: "major"
+style: classical
+
+instruments:
+  - name: "Piano Melody"
+    role: melody
+    engine: wavetable
+    preset: "piano"
+    volume: 0.75
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.30
+      lp_filter_hz: 8000
+
+  - name: "Strings Chord"
+    role: chord
+    engine: subtractive
+    preset: "strings"
+    volume: 0.55
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.35
+      lp_filter_hz: 6000
+
+  - name: "Cello Bass"
+    role: bass
+    engine: subtractive
+    preset: "cello"
+    volume: 0.60
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.25
+      lp_filter_hz: 2000
+
+generation:
+  diversity: 0.15
+  humanize: true
+  chord_progression: "dreamy"

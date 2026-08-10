@@ -1,0 +1,47 @@
+name: "电音脉动 — 电子/EDM"
+version: "1.0"
+bpm: 128
+key: "C"
+scale: "minor"
+style: electronic
+
+instruments:
+  - name: "Synth Lead"
+    role: melody
+    engine: wavetable
+    preset: "lead"
+    volume: 0.75
+    pan: 0.0
+    effect_chain:
+      lp_filter_hz: 8000
+
+  - name: "Synth Pad"
+    role: chord
+    engine: subtractive
+    preset: "pad"
+    volume: 0.50
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.2
+      lp_filter_hz: 6000
+
+  - name: "Acid Bass"
+    role: bass
+    engine: fm
+    preset: "acid"
+    volume: 0.80
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 1500
+
+  - name: "EDM Kit"
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+
+generation:
+  diversity: 0.2
+  humanize: false
+  chord_progression: "driving"

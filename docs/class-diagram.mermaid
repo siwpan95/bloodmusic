@@ -1,167 +1,64 @@
 classDiagram
-    direction TB
-
-    class LFOParams {
-        +float rate = 0.0
-        +float depth = 0.0
-        +LFOTarget target = AMPLITUDE
+    %% ═══ 新增类/函数（album_generator.py 内） ═══
+    class ALBUM_STYLE_POOLS {
+        <<Dict>>
+        +"01_晨曦序曲": (yaml, style)
+        +"02_星海迷途": (yaml, style)
+        +"03_深海絮语": (yaml, style)
+        +"04_午夜爵士": (yaml, style)
+        +"05_霓虹脉冲": (yaml, style)
+        +"06_英雄远征": (yaml, style)
+        +"07_旧日时光": (yaml, style)
+        +"08_空山鸟语": (yaml, style)
+        +"09_田园小调": (yaml, style)
+        +"10_终章·重生": (yaml, style)
     }
 
-    class LFOTarget {
-        <<enumeration>>
-        AMPLITUDE
-        FILTER_CUTOFF
-        PITCH
+    class generate_album_with_pool_fn {
+        +generate_album_with_pool(pool_dir, output_dir, duration_sec, seed) List~str~
+        -save_wav_pool(audio, filename, output_dir) str
     }
 
-    class SynthVoice {
-        +float freq = 440.0
-        +OscType osc_type = SINE
-        +float duration = 0.15
-        +float volume = 1.0
-        +EnvShape env_shape = PERCUSSIVE
-        +ADSRParams adsr = None
-        +EffectChain effect_chain = None
-        +float pitch_mod = 0.0
-        +float vibrato_rate = 0.0
-        +float vibrato_depth = 0.0
-        +float detune = 0.0
-        +List~Tuple~ harmonics
-        +LFOParams lfo = None
+    class cli_main_fn {
+        +cli_main() None
     }
 
-    class FMSynthVoice {
-        +float carrier_freq = 440.0
-        +OscType carrier_type = SINE
-        +float modulator_freq_ratio = 1.0
-        +OscType modulator_type = SINE
-        +float fm_depth = 100.0
-        +float duration = 0.3
-        +float volume = 1.0
-        +EnvShape env_shape = PERCUSSIVE
-        +ADSRParams adsr = None
-        +EffectChain effect_chain = None
-        +LFOParams lfo = None
+    %% ═══ 现有模块（仅关系标注） ═══
+    class InstrumentPool {
+        +from_yaml(path) InstrumentPool$
+        +validate() List~str~
+        +get_by_role(role) List~PoolInstrument~
     }
 
-    class EffectChain {
-        +Optional~float~ lp_filter_hz = None
-        +Optional~float~ hp_filter_hz = None
-        +Optional~float~ bp_center_hz = None
-        +Optional~float~ bp_q = None
-        +Optional~float~ notch_hz = None
-        +Optional~float~ notch_q = None
-        +float distortion = 0.0
-        +Optional~int~ bit_crush = None
-        +float reverb_mix = 0.0
-        +float reverb_decay = 0.5
-        +float reverb_delay_ms = 40.0
-        +bool reverb_schroeder = False
-        +float stereo_width = 0.0
-        +Optional~CompressorParams~ compressor = None
-        +Optional~ParametricEQParams~ eq = None
-        +float chorus_mix = 0.0
-        +float chorus_rate = 0.5
-        +float chorus_depth = 0.002
+    class PoolRenderer {
+        +render() Tuple~np.ndarray, Dict~
+        +render_stems_only() Dict~str, np.ndarray~
     }
 
-    class CompressorParams {
-        +float threshold_db = -12.0
-        +float ratio = 4.0
-        +float attack_ms = 10.0
-        +float release_ms = 100.0
-        +float makeup_db = 0.0
+    class StylePreset {
+        +apply_to(pool) InstrumentPool
     }
 
-    class ParametricEQParams {
-        +float low_freq = 200.0
-        +float low_gain_db = 0.0
-        +float low_q = 1.0
-        +float mid_freq = 1000.0
-        +float mid_gain_db = 0.0
-        +float mid_q = 1.0
-        +float high_freq = 4000.0
-        +float high_gain_db = 0.0
-        +float high_q = 1.0
+    %% ═══ album_generator.py 现有工具函数 ═══
+    class utility_functions {
+        +_to_mono(audio) np.ndarray
+        +_to_stereo(audio) np.ndarray
+        +_mix_audio(main, add, vol) np.ndarray
+        +_fade_edges(audio, fi, fo) np.ndarray
+        +_normalize(audio, peak) np.ndarray
+        +save_wav(audio, filename) str
+        +_mk_drum(name, bpm, kick, snare, hh) DrumPattern
     }
 
-    class MusicPattern {
-        +str name
-        +List~Optional~str~~ notes
-        +List~float~ durations
-        +Optional~List~int~~ octave_shifts = None
-        +int bpm = 120
-        +bool loop = True
-        +OscType osc_type = SINE
-        +float volume = 0.18
-        +EnvShape env_shape = PAD
-        +List~Tuple~ harmonics
-        +float vibrato_rate = 0.0
-        +float vibrato_depth = 0.0
-        +float reverb_mix = 0.15
-        +float reverb_decay = 0.8
-        +float stereo_width = 0.3
-        +Optional~float~ lp_filter_hz = None
-        +Optional~List~List~str~~~ chords = None
-    }
+    %% ═══ 关系 ═══
+    generate_album_with_pool_fn ..> ALBUM_STYLE_POOLS : reads
+    generate_album_with_pool_fn ..> InstrumentPool : from_yaml()
+    generate_album_with_pool_fn ..> PoolRenderer : creates & render()
+    generate_album_with_pool_fn ..> utility_functions : reuse
+    generate_album_with_pool_fn ..> StylePreset : apply_to()
+    cli_main_fn ..> generate_album_with_pool_fn : --pool
+    cli_main_fn ..> main_fn : default (legacy)
 
-    class DrumPattern {
-        +str name
-        +int steps = 16
-        +int bpm = 120
-        +Dict~str~List~bool~~ tracks
-        +Dict~str~DrumSoundParams~ sounds
-        +bool loop = True
+    class main_fn {
+        +main() None  (原有, 零修改)
     }
-
-    class DrumSoundParams {
-        +OscType osc_type = NOISE_BROWN
-        +float pitch_hz = 100.0
-        +float decay = 0.15
-        +float volume = 0.6
-        +float hp_hz = 0.0
-        +float lp_hz = 0.0
-    }
-
-    class MultiTrackPattern {
-        +str name
-        +int bpm = 120
-        +bool loop = True
-        +List~MusicPattern~ music_tracks
-        +Optional~DrumPattern~ drum_track = None
-    }
-
-    class Scale {
-        +str name
-        +List~int~ intervals
-        +root_note: str = "C"
-        +octave: int = 4
-        +get_notes() List~str~
-        +get_freqs() List~float~
-        +get_chord(degree: int, quality: str) List~str~
-    }
-
-    class Arpeggiator {
-        +ArpMode mode = UP
-        +int octaves = 1
-        +float gate = 0.8
-        +generate(notes, bpm, durations) List~Tuple~
-    }
-
-    class ArpMode {
-        <<enumeration>>
-        UP
-        DOWN
-        UP_DOWN
-        RANDOM
-    }
-
-    SynthVoice --> LFOParams : lfo
-    FMSynthVoice --> LFOParams : lfo
-    EffectChain --> CompressorParams : compressor
-    EffectChain --> ParametricEQParams : eq
-    DrumPattern --> DrumSoundParams : sounds
-    MultiTrackPattern --> MusicPattern : music_tracks
-    MultiTrackPattern --> DrumPattern : drum_track
-    Arpeggiator --> ArpMode : mode
-    MusicPattern ..> Arpeggiator : uses

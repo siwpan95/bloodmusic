@@ -1,0 +1,48 @@
+name: "田园牧歌 — 民谣/世界音乐"
+version: "1.0"
+bpm: 80
+key: "G"
+scale: "major"
+style: folk
+
+instruments:
+  - name: "Acoustic Guitar"
+    role: melody
+    engine: karplus_strong
+    preset: "guitar"
+    volume: 0.70
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.15
+      lp_filter_hz: 6000
+
+  - name: "Folk Pad"
+    role: chord
+    engine: subtractive
+    preset: "pad"
+    volume: 0.40
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.25
+      lp_filter_hz: 4000
+
+  - name: "Pluck Bass"
+    role: bass
+    engine: subtractive
+    preset: "pluck"
+    volume: 0.55
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 1000
+
+  - name: "Folk Percussion"
+    role: drum
+    engine: noise
+    volume: 0.50
+    pan: 0.0
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "dreamy"

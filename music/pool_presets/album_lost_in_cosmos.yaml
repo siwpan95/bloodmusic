@@ -1,0 +1,51 @@
+name: "星海迷途 — 新世纪"
+version: "1.0"
+bpm: 85
+key: "C"
+scale: "dorian"
+style: ambient
+
+instruments:
+  - name: "Cosmos Bell"
+    role: melody
+    engine: fm
+    preset: "bell"
+    volume: 0.70
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 2.5
+      lp_filter_hz: 5000
+
+  - name: "Space Drone"
+    role: chord
+    engine: subtractive
+    preset: "warm_pad"
+    volume: 0.35
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 3.0
+      lp_filter_hz: 2000
+
+  - name: "Deep Bass"
+    role: bass
+    engine: subtractive
+    preset: "sub_bass"
+    volume: 0.60
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.3
+      lp_filter_hz: 400
+
+  - name: "Light Percussion"
+    role: drum
+    engine: noise
+    volume: 0.40
+    pan: 0.0
+
+generation:
+  diversity: 0.5
+  humanize: true
+  chord_progression: "ambient"

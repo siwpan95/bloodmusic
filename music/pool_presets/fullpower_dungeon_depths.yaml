@@ -1,0 +1,86 @@
+name: "全能力量·地城深渊 — Dungeon Depths"
+version: "2.0"
+bpm: 72
+key: "Em"
+scale: "minor"
+style: dungeon
+
+instruments:
+  - name: "Wavetable Vocal Melody"
+    role: melody
+    engine: wavetable
+    engine_params:
+      preset: vocal
+    volume: 0.65
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.5
+      lp_filter_hz: 4000
+
+  - name: "Subtractive Dark Chords"
+    role: chord
+    engine: subtractive
+    preset: "string_ensemble"
+    volume: 0.5
+    pan: -0.15
+    effect_chain:
+      reverb_mix: 0.25
+      reverb_decay: 2.0
+      lp_filter_hz: 3000
+
+  - name: "DX7 FM Bass"
+    role: bass
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_bass
+    volume: 0.75
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.05
+      lp_filter_hz: 400
+
+  - name: "Dungeon Drums"
+    role: drum
+    engine: noise
+    volume: 0.7
+
+  - name: "Wavetable Vocal Pad"
+    role: pad
+    engine: wavetable
+    engine_params:
+      preset: vocal
+    volume: 0.4
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 2.5
+      lp_filter_hz: 2500
+      stereo_width: 0.7
+
+  - name: "Granular Sci-Fi FX"
+    role: fx
+    engine: granular
+    engine_params:
+      preset: sci_fi
+    volume: 0.35
+    pan: -0.3
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 3.0
+      lp_filter_hz: 3500
+
+automation:
+  filter_sweep:
+    start_hz: 20000
+    end_hz: 300
+    mid_hz: 500
+    q: 2.5
+    mid_time_ratio: 0.6
+    type: lowpass
+    interpolate: smooth
+
+generation:
+  diversity: 0.4
+  humanize: true
+  chord_progression: "dark"

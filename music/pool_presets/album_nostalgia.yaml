@@ -1,0 +1,50 @@
+name: "旧日时光 — Lo-Fi"
+version: "1.0"
+bpm: 78
+key: "A"
+scale: "major"
+style: town
+
+instruments:
+  - name: "Lo-Fi Lead"
+    role: melody
+    engine: wavetable
+    preset: "electric_piano"
+    volume: 0.65
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.3
+      reverb_decay: 1.5
+      lp_filter_hz: 3500
+
+  - name: "Lo-Fi Chords"
+    role: chord
+    engine: wavetable
+    preset: "electric_piano"
+    volume: 0.55
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.35
+      reverb_decay: 1.8
+      lp_filter_hz: 3000
+
+  - name: "Sub Bass"
+    role: bass
+    engine: subtractive
+    preset: "sub_bass"
+    volume: 0.65
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 500
+
+  - name: "Lo-Fi Kit"
+    role: drum
+    engine: noise
+    volume: 0.55
+    pan: 0.0
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "pop_verse"

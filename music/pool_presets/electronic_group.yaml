@@ -1,0 +1,46 @@
+name: "电子合成器组"
+version: "1.0"
+bpm: 128
+key: "Am"
+scale: "minor"
+style: battle
+
+instruments:
+  - name: "Synth Lead"
+    role: melody
+    engine: wavetable
+    preset: "synth_lead"
+    volume: 0.85
+    pan: 0.1
+
+  - name: "Bright Pad Chords"
+    role: chord
+    engine: fm_advanced
+    preset: "bright_pad"
+    volume: 0.5
+    pan: -0.2
+
+  - name: "FM Bass"
+    role: bass
+    engine: fm
+    preset: "synth_bass"
+    volume: 0.9
+    pan: 0.0
+
+  - name: "Electronic Drums"
+    role: drum
+    engine: noise
+    volume: 0.75
+    pan: 0.0
+
+  - name: "Arpeggio Pad"
+    role: pad
+    engine: granular
+    preset: "warm_pad"
+    volume: 0.4
+    pan: 0.3
+
+generation:
+  diversity: 0.25
+  humanize: true
+  chord_progression: "heroic"

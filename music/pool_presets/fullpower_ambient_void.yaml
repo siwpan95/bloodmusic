@@ -1,0 +1,87 @@
+name: "全能力量·虚空之境 — Ambient Void"
+version: "2.0"
+bpm: 55
+key: "F"
+scale: "pentatonic_major"
+style: ambient
+
+instruments:
+  - name: "Waveguide Flute Melody"
+    role: melody
+    engine: waveguide
+    engine_params:
+      instrument: flute
+    volume: 0.6
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.45
+      reverb_decay: 3.5
+      lp_filter_hz: 5000
+
+  - name: "Granular Ethereal Chords"
+    role: chord
+    engine: granular
+    engine_params:
+      preset: ethereal_pad
+    volume: 0.5
+    pan: -0.15
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 4.0
+      lp_filter_hz: 3000
+
+  - name: "Subtractive Deep Bass"
+    role: bass
+    engine: subtractive
+    preset: "deep_bass"
+    volume: 0.5
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.2
+      lp_filter_hz: 350
+
+  - name: "Soft Percussion"
+    role: drum
+    engine: noise
+    volume: 0.3
+
+  - name: "DX7 Strings Pad"
+    role: pad
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_strings
+    volume: 0.4
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 4.0
+      lp_filter_hz: 2500
+      stereo_width: 0.9
+
+  - name: "KS Harp FX"
+    role: fx
+    engine: karplus_strong
+    engine_params:
+      preset: harp
+    volume: 0.3
+    pan: -0.3
+    effect_chain:
+      reverb_mix: 0.55
+      reverb_decay: 5.0
+      lp_filter_hz: 5000
+
+automation:
+  filter_sweep:
+    start_hz: 20000
+    end_hz: 500
+    mid_hz: 600
+    q: 0.7
+    mid_time_ratio: 0.75
+    type: lowpass
+    interpolate: smooth
+
+generation:
+  diversity: 0.2
+  humanize: true
+  chord_progression: "dreamy"

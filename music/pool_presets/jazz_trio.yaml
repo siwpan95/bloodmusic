@@ -1,0 +1,40 @@
+name: "爵士三重奏"
+version: "1.0"
+bpm: 110
+key: "F"
+scale: "mixolydian"
+style: town
+
+instruments:
+  - name: "Jazz Piano"
+    role: melody
+    engine: wavetable
+    preset: "acoustic_grand_piano"
+    volume: 0.85
+    pan: 0.0
+
+  - name: "Piano Chords"
+    role: chord
+    engine: wavetable
+    preset: "electric_piano_rhodes"
+    volume: 0.55
+    pan: -0.2
+
+  - name: "Double Bass"
+    role: bass
+    engine: karplus_strong
+    preset: "cello"
+    volume: 0.8
+    pan: 0.0
+    octave: -1
+
+  - name: "Jazz Drums"
+    role: drum
+    engine: noise
+    volume: 0.7
+    pan: 0.0
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "jazz_ii-V-I"

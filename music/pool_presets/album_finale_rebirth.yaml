@@ -1,0 +1,49 @@
+name: "终章·重生 — 史诗终章"
+version: "1.0"
+bpm: 110
+key: "C"
+scale: "major"
+style: battle
+
+instruments:
+  - name: "Finale Lead"
+    role: melody
+    engine: wavetable
+    preset: "brass_section"
+    volume: 0.85
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.22
+      reverb_decay: 1.2
+      lp_filter_hz: 5000
+
+  - name: "Finale Harmony"
+    role: chord
+    engine: wavetable
+    preset: "choir"
+    volume: 0.55
+    pan: -0.15
+    effect_chain:
+      reverb_mix: 0.25
+      lp_filter_hz: 4500
+
+  - name: "FM Bass"
+    role: bass
+    engine: fm
+    preset: "fm_bass"
+    volume: 0.85
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 1000
+
+  - name: "Epic Kit"
+    role: drum
+    engine: noise
+    volume: 0.90
+    pan: 0.0
+
+generation:
+  diversity: 0.2
+  humanize: true
+  chord_progression: "epic"

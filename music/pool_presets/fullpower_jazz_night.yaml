@@ -1,0 +1,77 @@
+name: "全能力量·爵士之夜 — Jazz Night"
+version: "2.0"
+bpm: 100
+key: "Eb"
+scale: "major"
+style: jazz
+
+instruments:
+  - name: "Nylon Guitar Melody"
+    role: melody
+    engine: karplus_strong
+    engine_params:
+      preset: nylon_guitar
+    volume: 0.7
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.15
+      reverb_decay: 0.8
+      lp_filter_hz: 5000
+
+  - name: "Brass Chords"
+    role: chord
+    engine: waveguide
+    engine_params:
+      instrument: brass
+    volume: 0.5
+    pan: -0.1
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.0
+      lp_filter_hz: 4000
+
+  - name: "Subtractive Walking Bass"
+    role: bass
+    engine: subtractive
+    preset: "upright_bass"
+    volume: 0.6
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.1
+      lp_filter_hz: 600
+
+  - name: "Jazz Drums"
+    role: drum
+    engine: noise
+    volume: 0.5
+
+  - name: "Wavetable Bell Pad"
+    role: pad
+    engine: wavetable
+    engine_params:
+      preset: bell
+    volume: 0.4
+    pan: 0.25
+    effect_chain:
+      reverb_mix: 0.3
+      reverb_decay: 1.5
+      lp_filter_hz: 3500
+      stereo_width: 0.5
+
+  - name: "FM Advanced EP FX"
+    role: fx
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_epiano
+    volume: 0.35
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.35
+      reverb_decay: 2.0
+      lp_filter_hz: 4000
+
+generation:
+  diversity: 0.35
+  humanize: true
+  chord_progression: "jazz_251"

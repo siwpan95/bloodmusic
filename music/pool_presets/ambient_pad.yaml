@@ -1,0 +1,42 @@
+name: "氛围环境"
+version: "1.0"
+bpm: 60
+key: "D"
+scale: "dorian"
+style: ambient
+
+instruments:
+  - name: "Atmosphere Pad"
+    role: pad
+    engine: granular
+    preset: "warm_pad"
+    volume: 0.7
+    pan: 0.0
+
+  - name: "Ambient Drone"
+    role: fx
+    engine: fm_advanced
+    preset: "bright_pad"
+    volume: 0.5
+    pan: 0.3
+
+  - name: "Subtle Bass"
+    role: bass
+    engine: subtractive
+    preset: "synth_bass"
+    volume: 0.4
+    pan: 0.0
+    octave: -1
+
+  - name: "Sparse Percussion"
+    role: drum
+    engine: noise
+    volume: 0.3
+    pan: 0.0
+
+generation:
+  diversity: 0.5
+  humanize: true
+  chord_progression: "ambient"
+  sections: ["intro", "body", "climax", "resolution", "outro"]
+  section_bars: [8, 16, 8, 8, 8]

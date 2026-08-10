@@ -1,0 +1,77 @@
+name: "全能力量·民谣之旅 — Folk Voyage"
+version: "2.0"
+bpm: 95
+key: "G"
+scale: "major"
+style: folk
+
+instruments:
+  - name: "KS Sitar Melody"
+    role: melody
+    engine: karplus_strong
+    engine_params:
+      preset: sitar
+    volume: 0.7
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.0
+      lp_filter_hz: 5000
+
+  - name: "Wavetable Bell Chords"
+    role: chord
+    engine: wavetable
+    engine_params:
+      preset: bell
+    volume: 0.5
+    pan: -0.1
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.2
+      lp_filter_hz: 4000
+
+  - name: "Subtractive Folk Bass"
+    role: bass
+    engine: subtractive
+    preset: "warm_bass"
+    volume: 0.6
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.1
+      lp_filter_hz: 600
+
+  - name: "Folk Percussion"
+    role: drum
+    engine: noise
+    volume: 0.5
+
+  - name: "FM Advanced EP Pad"
+    role: pad
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_epiano
+    volume: 0.4
+    pan: 0.25
+    effect_chain:
+      reverb_mix: 0.35
+      reverb_decay: 2.0
+      lp_filter_hz: 3500
+      stereo_width: 0.6
+
+  - name: "Waveguide Flute FX"
+    role: fx
+    engine: waveguide
+    engine_params:
+      instrument: flute
+    volume: 0.35
+    pan: -0.25
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 2.5
+      lp_filter_hz: 5000
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "I-IV-V-I"

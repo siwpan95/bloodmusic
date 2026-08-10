@@ -1,0 +1,87 @@
+name: "全能力量·古典歌剧 — Classical Opera"
+version: "2.0"
+bpm: 80
+key: "C"
+scale: "major"
+style: classical
+
+instruments:
+  - name: "Flute Melody"
+    role: melody
+    engine: waveguide
+    engine_params:
+      instrument: flute
+    volume: 0.75
+    pan: 0.15
+    effect_chain:
+      reverb_mix: 0.25
+      reverb_decay: 1.5
+      lp_filter_hz: 6000
+
+  - name: "DX7 EP Chords"
+    role: chord
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_epiano
+    volume: 0.55
+    pan: -0.15
+    effect_chain:
+      reverb_mix: 0.25
+      reverb_decay: 1.8
+      lp_filter_hz: 4500
+
+  - name: "Subtractive Bass"
+    role: bass
+    engine: subtractive
+    preset: "cello"
+    volume: 0.65
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.15
+      lp_filter_hz: 800
+
+  - name: "Noise Percussion"
+    role: drum
+    engine: noise
+    volume: 0.6
+
+  - name: "Wavetable Organ Pad"
+    role: pad
+    engine: wavetable
+    engine_params:
+      preset: organ
+    volume: 0.45
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 2.5
+      lp_filter_hz: 3000
+      stereo_width: 0.7
+
+  - name: "Karplus-Strong Harp FX"
+    role: fx
+    engine: karplus_strong
+    engine_params:
+      preset: harp
+    volume: 0.4
+    pan: -0.3
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 3.0
+      lp_filter_hz: 5000
+
+automation:
+  filter_sweep:
+    start_hz: 20000
+    end_hz: 800
+    mid_hz: 3000
+    q: 1.5
+    mid_time_ratio: 0.4
+    type: lowpass
+    interpolate: smooth
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "dreamy"

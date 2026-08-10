@@ -1,0 +1,56 @@
+name: "深海絮语 — 氛围音乐"
+version: "1.0"
+bpm: 60
+key: "C"
+scale: "minor"
+style: ambient
+
+instruments:
+  - name: "Floating Mid"
+    role: melody
+    engine: subtractive
+    preset: "sine_pad"
+    volume: 0.45
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.55
+      reverb_decay: 3.5
+      lp_filter_hz: 2500
+
+  - name: "Ocean Deep"
+    role: pad
+    engine: subtractive
+    preset: "warm_pad"
+    volume: 0.55
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.6
+      reverb_decay: 4.0
+      lp_filter_hz: 800
+
+  - name: "Abyss Bass"
+    role: bass
+    engine: subtractive
+    preset: "sub_bass"
+    volume: 0.50
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.4
+      lp_filter_hz: 300
+
+  - name: "Sparkle FX"
+    role: fx
+    engine: wavetable
+    preset: "bell"
+    volume: 0.30
+    pan: 0.5
+    effect_chain:
+      reverb_mix: 0.6
+      reverb_decay: 5.0
+      lp_filter_hz: 6000
+
+generation:
+  diversity: 0.4
+  humanize: true
+  chord_progression: "ambient"

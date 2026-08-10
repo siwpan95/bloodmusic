@@ -1,0 +1,87 @@
+name: "全能力量·影视史诗 — Cinematic Odyssey"
+version: "2.0"
+bpm: 90
+key: "Dm"
+scale: "minor"
+style: cinematic
+
+instruments:
+  - name: "DX7 Brass Melody"
+    role: melody
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_brass
+    volume: 0.75
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.15
+      reverb_decay: 1.2
+      lp_filter_hz: 6000
+
+  - name: "Waveguide Brass Chords"
+    role: chord
+    engine: waveguide
+    engine_params:
+      instrument: brass
+    volume: 0.55
+    pan: -0.15
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.5
+      lp_filter_hz: 4500
+
+  - name: "Subtractive Epic Bass"
+    role: bass
+    engine: subtractive
+    preset: "deep_bass"
+    volume: 0.7
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.1
+      lp_filter_hz: 600
+
+  - name: "Battle Drums"
+    role: drum
+    engine: noise
+    volume: 0.8
+
+  - name: "Wavetable Strings Pad"
+    role: pad
+    engine: wavetable
+    engine_params:
+      preset: vocal
+    volume: 0.45
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.35
+      reverb_decay: 2.0
+      lp_filter_hz: 3500
+      stereo_width: 0.7
+
+  - name: "Granular Wind FX"
+    role: fx
+    engine: granular
+    engine_params:
+      preset: wind_ambient
+    volume: 0.35
+    pan: -0.3
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 3.0
+      lp_filter_hz: 4000
+
+automation:
+  filter_sweep:
+    start_hz: 400
+    end_hz: 20000
+    mid_hz: 20000
+    q: 1.5
+    mid_time_ratio: 0.2
+    type: lowpass
+    interpolate: smooth
+
+generation:
+  diversity: 0.4
+  humanize: true
+  chord_progression: "epic"

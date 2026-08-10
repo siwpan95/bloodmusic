@@ -1,0 +1,128 @@
+sequenceDiagram
+    actor User
+    participant CLI as CLI / AlbumGen
+    participant PR as PoolRenderer
+    participant PG as PoolGenerator
+    participant PS as PoolSerializer
+    participant MP as MusicPattern
+    participant RE_FM as synthesize_fm_voice
+    participant RE_FMA as MultiOpFM
+    participant RE_WG as render_waveguide
+    participant RE_KS as KarplusStrongSynth
+    participant RE_WT as WavetableOscillator
+    participant RE_GR as GranularSynth
+    participant FO as render_pattern_to_array (fallback)
+    participant AL as AutomationLane
+    participant MX as SongArrangement + Mixer
+    participant MC as Master Chain
+
+    User->>CLI: 渲染专辑
+    CLI->>PS: load_yaml("fullpower_01.yaml")
+    PS-->>CLI: InstrumentPool (含 engine_params, automation)
+    CLI->>PR: PoolRenderer(pool, duration_sec)
+    CLI->>PR: render()
+
+    rect rgb(255, 240, 220)
+        Note over PR,PG: Phase 1: 生成分轨
+        PR->>PG: generate_all(target_bars)
+        loop 遍历 pool.instruments
+            PG->>PG: _generate_for_instrument(instrument)
+            alt role == melody
+                PG->>PG: generate_melody() → MarkovChain
+            else role == chord
+                PG->>PG: generate_chord() → harmony
+            else role == bass
+                PG->>PG: generate_bass()
+            else role == drum
+                PG->>PG: generate_drum() → euclidean
+            else role == pad
+                PG->>PG: generate_pad() → arpeggiator
+            else role == fx
+                PG->>PG: generate_fx() → drone
+            end
+            PG->>MP: MusicPattern(engine=SynthEngine, engine_params={...}, automation={...})
+        end
+        PG-->>PR: MultiTrackPattern (各轨含 engine/engine_params/automation)
+    end
+
+    rect rgb(220, 240, 255)
+        Note over PR,AL: Phase 2: 引擎感知渲染 → stems
+        loop 每个 MusicPattern track
+            alt engine == FM
+                loop 每个音符
+                    PR->>RE_FM: synthesize_fm_voice(FMSynthVoice(freq, dur, modulator_ratio, fm_depth))
+                    RE_FM-->>PR: FM 调制音频片段
+                end
+            else engine == FM_ADVANCED
+                loop 每个音符
+                    PR->>RE_FMA: MultiOpFM(4, STACK).render(freq, dur)
+                    RE_FMA-->>PR: DX7 风格音频片段
+                end
+            else engine == WAVEGUIDE
+                loop 每个音符
+                    PR->>RE_WG: render_waveguide(WaveguideVoice.preset("clarinet", freq))
+                    RE_WG-->>PR: 波导管建模音频片段
+                end
+            else engine == KARPLUS_STRONG
+                loop 每个音符
+                    PR->>RE_KS: KarplusStrongSynth.synthesize(KSVoice(freq, dur, preset))
+                    RE_KS-->>PR: 拨弦物理建模音频片段
+                end
+            else engine == WAVETABLE
+                loop 每个音符
+                    PR->>RE_WT: WavetableOscillator(wt, freq).render(dur)
+                    RE_WT-->>PR: 波表合成音频片段
+                end
+            else engine == GRANULAR
+                PR->>RE_GR: GranularSynth.synthesize(GrainCloud(preset), duration_sec)
+                RE_GR-->>PR: 整轨粒子纹理
+            else engine == SUBTRACTIVE/NOISE/None
+                PR->>FO: render_pattern_to_array(pattern, duration_sec)
+                FO-->>PR: legacy 基础振荡器渲染
+            end
+
+            opt 渲染失败 (异常)
+                PR->>FO: fallback → render_pattern_to_array(pattern)
+                FO-->>PR: fallback 音频
+                Note over PR: ⚠️ logger.warning("fallback to basic oscillator")
+            end
+
+            opt pattern.automation 存在
+                alt filter_sweep
+                    PR->>AL: AutomationLane("cutoff", [(0,20000),(t_mid,400),(end,20000)])
+                    PR->>AL: apply_filter_sweep(audio, cutoff_lane, q=2.0)
+                    AL-->>PR: filtered audio
+                end
+                alt volume_curve
+                    PR->>AL: AutomationLane("volume", points)
+                    PR->>AL: apply_volume_automation(audio, volume_lane)
+                    AL-->>PR: volume-modulated audio
+                end
+            end
+        end
+        PR-->>PR: stems dict {name: ndarray}
+    end
+
+    rect rgb(230, 255, 230)
+        Note over PR: Phase 3: 混音辅助
+        PR->>PR: auto_level(stems, target_rms_db)
+        PR->>PR: freq_slot_allocator(stems) → 日志建议
+    end
+
+    rect rgb(255, 230, 255)
+        Note over PR,MX: Phase 4: 编排渲染
+        PR->>MX: SongArrangement(sections, bpm, key)
+        PR->>MX: SongMixer(buses: DrumBus, BassBus, MelodyBus)
+        MX-->>PR: 混合后立体声数组
+    end
+
+    rect rgb(255, 255, 220)
+        Note over PR,MC: Phase 5: 母带处理
+        PR->>MC: process_effects(audio, master_chain)
+        MC-->>PR: 处理后音频
+        PR->>PR: normalize to NORMALIZE_DBFS
+        PR->>PR: clip(-1, 1) + nan_to_num
+    end
+
+    PR-->>CLI: (final_audio: float32[], stems: dict)
+    CLI-->>User: 保存 WAV 文件 + 报告统计

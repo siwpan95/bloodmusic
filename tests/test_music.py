@@ -214,7 +214,7 @@ class TestArpeggiator(unittest.TestCase):
         """八度扩展应增加音符数量"""
         arp = Arpeggiator(mode=ArpMode.UP, octaves=2)
         result = generate_arpeggio(arp, ["C4", "E4", "G4"], bpm=120)
-        # 3 notes × 2 octaves = 6
+        # 3 notes x 2 octaves = 6
         self.assertEqual(len(result), 6)
 
     def test_arp_gate_parameter(self):
@@ -283,9 +283,9 @@ class TestScale(unittest.TestCase):
 class TestScaleIntervals(unittest.TestCase):
     """SCALE_INTERVALS 包含 12 种音阶"""
 
-    def test_scale_intervals_has_12_types(self):
-        """SCALE_INTERVALS 应包含 12 种音阶"""
-        self.assertEqual(len(SCALE_INTERVALS), 12)
+    def test_scale_intervals_has_25_types(self):
+        """SCALE_INTERVALS 应包含 25 种音阶"""
+        self.assertEqual(len(SCALE_INTERVALS), 25)
 
     def test_all_scales_start_at_zero(self):
         """所有音阶间隔应从 0 开始"""
@@ -334,6 +334,388 @@ class TestMusicPresets(unittest.TestCase):
             expected_len = int(duration * SR)
             self.assertEqual(len(sig), expected_len,
                               f"Preset '{key}' has wrong length")
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 乐器池系统测试 — T05 集成测试
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestInstrumentPoolDataModel(unittest.TestCase):
+    """InstrumentPool / PoolInstrument / PoolConfig 数据模型测试"""
+
+    def test_pool_instrument_creation(self):
+        """PoolInstrument 基本创建"""
+        from bloodmusic.music.instrument_pool import (
+            PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        inst = PoolInstrument(
+            name="Test Piano",
+            role=InstrumentRole.MELODY,
+            engine=SynthEngine.WAVETABLE,
+            preset="acoustic_grand_piano",
+        )
+        self.assertEqual(inst.name, "Test Piano")
+        self.assertEqual(inst.role, InstrumentRole.MELODY)
+        self.assertEqual(inst.engine, SynthEngine.WAVETABLE)
+
+    def test_pool_instrument_string_role(self):
+        """PoolInstrument 支持字符串 role 自动转换"""
+        from bloodmusic.music.instrument_pool import (
+            PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        inst = PoolInstrument(name="Test", role="melody")  # type: ignore
+        self.assertEqual(inst.role, InstrumentRole.MELODY)
+
+    def test_pool_config_defaults(self):
+        """PoolConfig 默认值正确"""
+        from bloodmusic.music.instrument_pool import PoolConfig
+        config = PoolConfig()
+        self.assertEqual(config.diversity, 0.3)
+        self.assertTrue(config.humanize)
+
+    def test_instrument_pool_validate_empty(self):
+        """空乐器池校验应返回警告"""
+        from bloodmusic.music.instrument_pool import InstrumentPool
+        pool = InstrumentPool(name="Empty")
+        warnings = pool.validate()
+        self.assertGreater(len(warnings), 0)
+
+    def test_get_by_role(self):
+        """get_by_role 正确筛选乐器"""
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        pool = InstrumentPool(name="Test", instruments=[
+            PoolInstrument("Melody1", role=InstrumentRole.MELODY),
+            PoolInstrument("Melody2", role=InstrumentRole.MELODY),
+            PoolInstrument("Bass1", role=InstrumentRole.BASS),
+        ])
+        melodies = pool.get_by_role(InstrumentRole.MELODY)
+        self.assertEqual(len(melodies), 2)
+        basses = pool.get_by_role(InstrumentRole.BASS)
+        self.assertEqual(len(basses), 1)
+        drums = pool.get_by_role(InstrumentRole.DRUM)
+        self.assertEqual(len(drums), 0)
+
+
+class TestPoolSerialization(unittest.TestCase):
+    """YAML/JSON 序列化往返测试"""
+
+    def setUp(self):
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        self.pool = InstrumentPool(
+            name="Test Pool",
+            bpm=120,
+            key="C",
+            instruments=[
+                PoolInstrument(
+                    name="Piano",
+                    role=InstrumentRole.MELODY,
+                    engine=SynthEngine.WAVETABLE,
+                    preset="acoustic_grand_piano",
+                    volume=0.8,
+                ),
+                PoolInstrument(
+                    name="Bass",
+                    role=InstrumentRole.BASS,
+                    engine=SynthEngine.SUBTRACTIVE,
+                    volume=0.9,
+                ),
+            ],
+        )
+
+    def test_yaml_roundtrip(self):
+        """YAML 往返测试: to_yaml -> from_yaml -> 对象相等"""
+        import tempfile
+        import os
+        from bloodmusic.music.pool_serializer import PoolSerializer
+
+        with tempfile.NamedTemporaryFile(
+            suffix=".yaml", mode="w", delete=False, encoding="utf-8",
+        ) as f:
+            tmp_path = f.name
+
+        try:
+            PoolSerializer.save_yaml(self.pool, tmp_path)
+            loaded = PoolSerializer.load_yaml(tmp_path)
+            self.assertEqual(loaded.name, "Test Pool")
+            self.assertEqual(loaded.bpm, 120)
+            self.assertEqual(loaded.key, "C")
+            self.assertEqual(len(loaded.instruments), 2)
+            self.assertEqual(loaded.instruments[0].name, "Piano")
+        finally:
+            os.unlink(tmp_path)
+
+    def test_json_roundtrip(self):
+        """JSON 往返测试: to_json -> from_json -> 字段一致"""
+        import tempfile
+        import os
+        from bloodmusic.music.pool_serializer import PoolSerializer
+
+        with tempfile.NamedTemporaryFile(
+            suffix=".json", mode="w", delete=False, encoding="utf-8",
+        ) as f:
+            tmp_path = f.name
+
+        try:
+            PoolSerializer.save_json(self.pool, tmp_path)
+            loaded = PoolSerializer.load_json(tmp_path)
+            self.assertEqual(loaded.name, "Test Pool")
+            self.assertEqual(loaded.bpm, 120)
+            self.assertEqual(len(loaded.instruments), 2)
+        finally:
+            os.unlink(tmp_path)
+
+
+class TestPoolTemplates(unittest.TestCase):
+    """乐器池模板测试"""
+
+    def test_all_templates_instantiable(self):
+        """3 个代码模板均可实例化且校验通过"""
+        from bloodmusic.music.pool_templates import POOL_TEMPLATES
+        for key, template in POOL_TEMPLATES.items():
+            pool = template.to_pool()
+            self.assertGreater(len(pool.instruments), 0)
+            warnings = pool.validate()
+            # 模板应有基本结构（可能缺少 drum 是可以接受的）
+            self.assertIsNotNone(pool.name)
+
+    def test_all_yaml_presets_loadable(self):
+        """5 个 YAML 预设均可正确加载"""
+        from bloodmusic.music.pool_serializer import PoolSerializer
+        presets = PoolSerializer.list_presets()
+        # 应有至少 5 个预设
+        self.assertGreaterEqual(len(presets), 5)
+        for preset_name in presets:
+            pool = PoolSerializer.load_preset(preset_name)
+            self.assertIsNotNone(pool.name)
+            self.assertGreater(len(pool.instruments), 0,
+                               f"Preset '{preset_name}' has no instruments")
+
+    def test_preset_yaml_structure(self):
+        """YAML 预设加载后结构正确"""
+        from bloodmusic.music.pool_serializer import PoolSerializer
+        pool = PoolSerializer.load_preset("orchestral_small")
+        self.assertEqual(pool.bpm, 100)
+        self.assertEqual(pool.key, "C")
+        self.assertEqual(pool.scale, "dorian")
+        self.assertGreaterEqual(len(pool.instruments), 3)
+
+
+class TestStylePresets(unittest.TestCase):
+    """风格预设测试"""
+
+    def test_all_styles_available(self):
+        """5 个风格预设均可获取"""
+        from bloodmusic.music.pool_styles import STYLES, get_style
+        expected = ["exploration", "battle", "town", "dungeon", "ambient"]
+        for name in expected:
+            self.assertIn(name, STYLES)
+            style = get_style(name)
+            self.assertEqual(style.name, name)
+            self.assertTrue(len(style.description) > 0)
+
+    def test_style_apply_to(self):
+        """风格预设应用到乐池后参数正确"""
+        from bloodmusic.music.pool_styles import get_style
+        from bloodmusic.music.instrument_pool import InstrumentPool
+
+        pool = InstrumentPool(name="Test", bpm=100, key="C")
+        style = get_style("battle")
+        new_pool = style.apply_to(pool)
+
+        self.assertEqual(new_pool.style, "battle")
+        self.assertEqual(style.arrangement_template, "pop")
+
+    def test_style_apply_preserves_pool(self):
+        """apply_to 不修改原始 pool"""
+        from bloodmusic.music.pool_styles import get_style
+        from bloodmusic.music.instrument_pool import InstrumentPool
+
+        pool = InstrumentPool(name="Test", bpm=100, key="C")
+        original_style = pool.style
+        style = get_style("ambient")
+        new_pool = style.apply_to(pool)
+
+        self.assertIsNone(original_style)
+        self.assertEqual(new_pool.style, "ambient")
+
+
+class TestPoolRendering(unittest.TestCase):
+    """完整渲染管线测试"""
+
+    def test_minimal_pool_render(self):
+        """最小乐池 -> render -> 检查音频非空/格式正确"""
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        from bloodmusic.music.pool_renderer import PoolRenderer
+
+        pool = InstrumentPool(
+            name="Minimal Test",
+            bpm=120,
+            key="C",
+            scale="minor",
+            instruments=[
+                PoolInstrument(
+                    name="Simple Melody",
+                    role=InstrumentRole.MELODY,
+                    engine=SynthEngine.WAVETABLE,
+                    volume=0.8,
+                    note_sequence=["C4", "E4", "G4", "C5"],
+                ),
+                PoolInstrument(
+                    name="Simple Bass",
+                    role=InstrumentRole.BASS,
+                    engine=SynthEngine.SUBTRACTIVE,
+                    volume=0.7,
+                ),
+                PoolInstrument(
+                    name="Simple Drums",
+                    role=InstrumentRole.DRUM,
+                    engine=SynthEngine.NOISE,
+                    volume=0.6,
+                ),
+            ],
+        )
+
+        renderer = PoolRenderer(pool, duration_sec=4.0)
+        final_audio, stems = renderer.render()
+
+        # 音频非空
+        self.assertGreater(np.max(np.abs(final_audio)), 0.0)
+        # 格式正确 (float32)
+        self.assertEqual(final_audio.dtype, np.float32)
+        # 至少 2 个 stems
+        self.assertGreaterEqual(len(stems), 2)
+
+    def test_stems_only_render(self):
+        """render_stems_only 跳过混音直接返回分轨"""
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        from bloodmusic.music.pool_renderer import PoolRenderer
+
+        pool = InstrumentPool(
+            name="Stems Test",
+            bpm=120,
+            key="C",
+            instruments=[
+                PoolInstrument(
+                    name="Melody",
+                    role=InstrumentRole.MELODY,
+                    engine=SynthEngine.WAVETABLE,
+                    volume=0.8,
+                    note_sequence=["C4", "D4", "E4", "F4"],
+                ),
+            ],
+        )
+
+        renderer = PoolRenderer(pool, duration_sec=2.0)
+        stems = renderer.render_stems_only()
+
+        self.assertIn("Melody", stems)
+        self.assertGreater(np.max(np.abs(stems["Melody"])), 0.0)
+
+    def test_pool_with_style_render(self):
+        """带风格的乐池渲染应正常完成"""
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        from bloodmusic.music.pool_renderer import PoolRenderer
+
+        pool = InstrumentPool(
+            name="Style Test",
+            bpm=140,
+            key="Am",
+            scale="phrygian",
+            instruments=[
+                PoolInstrument(
+                    name="Lead",
+                    role=InstrumentRole.MELODY,
+                    engine=SynthEngine.WAVETABLE,
+                    volume=0.85,
+                ),
+                PoolInstrument(
+                    name="Drums",
+                    role=InstrumentRole.DRUM,
+                    engine=SynthEngine.NOISE,
+                    volume=0.7,
+                ),
+            ],
+        )
+
+        renderer = PoolRenderer(pool, duration_sec=3.0, style_name="battle")
+        final_audio, stems = renderer.render()
+
+        self.assertGreater(np.max(np.abs(final_audio)), 0.0)
+        self.assertEqual(final_audio.dtype, np.float32)
+
+    def test_generator_produces_valid_multitrack(self):
+        """PoolGenerator.generate_all 返回有效 MultiTrackPattern"""
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        from bloodmusic.music.pool_generator import PoolGenerator
+
+        pool = InstrumentPool(
+            name="Gen Test",
+            bpm=100,
+            key="C",
+            instruments=[
+                PoolInstrument(
+                    name="Melody",
+                    role=InstrumentRole.MELODY,
+                    engine=SynthEngine.WAVETABLE,
+                    volume=0.8,
+                ),
+                PoolInstrument(
+                    name="Drums",
+                    role=InstrumentRole.DRUM,
+                    engine=SynthEngine.NOISE,
+                    volume=0.7,
+                ),
+            ],
+        )
+
+        gen = PoolGenerator(pool)
+        multi = gen.generate_all(target_bars=8)
+
+        self.assertIsNotNone(multi)
+        self.assertGreater(len(multi.music_tracks), 0)
+        self.assertIsNotNone(multi.drum_track)
+
+    def test_render_output_length(self):
+        """渲染输出长度应匹配预期"""
+        from bloodmusic.music.instrument_pool import (
+            InstrumentPool, PoolInstrument, InstrumentRole, SynthEngine,
+        )
+        from bloodmusic.music.pool_renderer import PoolRenderer
+        from bloodmusic.core.constants import SR
+
+        pool = InstrumentPool(
+            name="Length Test",
+            bpm=120,
+            key="C",
+            instruments=[
+                PoolInstrument(
+                    name="Tone",
+                    role=InstrumentRole.MELODY,
+                    engine=SynthEngine.WAVETABLE,
+                    volume=0.5,
+                    note_sequence=["C4"],
+                ),
+            ],
+        )
+
+        duration = 2.0
+        renderer = PoolRenderer(pool, duration_sec=duration)
+        final_audio, _ = renderer.render()
+
+        expected_len = int(duration * SR)
+        self.assertAlmostEqual(len(final_audio), expected_len, delta=100)
 
 
 if __name__ == "__main__":

@@ -1044,5 +1044,309 @@ def main():
     print(f"{'=' * 60}")
 
 
+# ═══════════════════════════════════════════════════════════════════
+# Pool-based 专辑生成 (v3.0 InstrumentPool 集成)
+# ═══════════════════════════════════════════════════════════════════
+
+import logging
+from typing import Dict, Tuple, Optional
+
+# ── 常量 ──
+
+POOL_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "album_output_pool")
+
+ALBUM_STYLE_POOLS: Dict[str, Tuple[str, str]] = {
+    "01_晨曦序曲":      ("album_dawn_overture.yaml",    "exploration"),
+    "02_星海迷途":      ("album_lost_in_cosmos.yaml",   "ambient"),
+    "03_深海絮语":      ("album_deep_sea.yaml",         "ambient"),
+    "04_午夜爵士":      ("album_midnight_jazz.yaml",    "town"),
+    "05_霓虹脉冲":      ("album_neon_pulse.yaml",       "battle"),
+    "06_英雄远征":      ("album_heros_journey.yaml",    "battle"),
+    "07_旧日时光":      ("album_nostalgia.yaml",        "town"),
+    "08_空山鸟语":      ("album_birds_mountains.yaml",  "ambient"),
+    "09_田园小调":      ("album_pastoral_tune.yaml",    "exploration"),
+    "10_终章·重生":     ("album_finale_rebirth.yaml",    "battle"),
+}
+
+FULLPOWER_ALBUM: Dict[str, Tuple[str, str]] = {
+    "01_古典歌剧":        ("fullpower_classical_opera.yaml",      "classical"),
+    "02_爵士之夜":        ("fullpower_jazz_night.yaml",           "jazz"),
+    "03_电子仓库":        ("fullpower_electronic_warehouse.yaml",  "electronic"),
+    "04_影视史诗":        ("fullpower_cinematic_odyssey.yaml",    "cinematic"),
+    "05_低保真梦境":      ("fullpower_lofi_dreams.yaml",          "lofi"),
+    "06_禅意冥想":        ("fullpower_meditation_zen.yaml",       "meditation"),
+    "07_民谣之旅":        ("fullpower_folk_voyage.yaml",          "folk"),
+    "08_战斗锻造":        ("fullpower_battle_forge.yaml",         "battle"),
+    "09_荒野探索":        ("fullpower_exploration_wilds.yaml",    "exploration"),
+    "10_城镇市集":        ("fullpower_town_market.yaml",          "town"),
+    "11_地城深渊":        ("fullpower_dungeon_depths.yaml",       "dungeon"),
+    "12_虚空之境":        ("fullpower_ambient_void.yaml",         "ambient"),
+}
+
+FULLPOWER_OUTPUT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "album_output_fullpower")
+
+
+# ── Pool 模式辅助函数 ──
+
+def save_wav_pool(audio: np.ndarray, filename: str, output_dir: str) -> str:
+    """Save WAV to a custom output directory.
+
+    Similar to save_wav() but accepts output_dir parameter.
+    Audio is normalized before saving.
+    """
+    audio = _normalize(audio)
+    path = os.path.join(output_dir, filename)
+    wavfile.write(path, SR, (audio * 32767).astype(np.int16))
+    size_mb = os.path.getsize(path) / 1024 / 1024
+    dur = len(audio) / SR
+    print(f"  [OK] {filename}  ({dur:.0f}s, {size_mb:.1f}MB)")
+    return path
+
+
+# ── Pool 模式主函数 ──
+
+def generate_album_with_pool(
+    pool_dir: str = "music/pool_presets",
+    output_dir: str = POOL_OUTPUT_DIR,
+    duration_sec: float = 120.0,
+    seed: Optional[int] = None,
+) -> list:
+    """Generate a 10-track multi-style album using InstrumentPool + PoolRenderer.
+
+    Iterates over ALBUM_STYLE_POOLS, for each track:
+      1. InstrumentPool.from_yaml(pool_dir / yaml_file)
+      2. StylePreset.get_style(style_name).apply_to(pool)
+      3. PoolRenderer(pool, duration_sec, style_name).render()
+      4. _to_mono → _fade_edges → _normalize → save_wav_pool
+
+    Single-track failures are caught, logged, and skipped without crashing.
+
+    Args:
+        pool_dir: Directory containing pool YAML configuration files.
+        output_dir: Output directory for generated WAV files.
+        duration_sec: Target duration per track in seconds.
+        seed: Random seed for reproducibility (None = not set).
+
+    Returns:
+        List of generated WAV file paths.
+    """
+    # Lazy import pool modules — only loaded when --pool is triggered
+    from bloodmusic.music.instrument_pool import InstrumentPool
+    from bloodmusic.music.pool_renderer import PoolRenderer
+    from bloodmusic.music.pool_styles import get_style
+
+    os.makedirs(output_dir, exist_ok=True)
+    generated = []
+
+    for track_name, (yaml_file, style_name) in ALBUM_STYLE_POOLS.items():
+        yaml_path = os.path.join(pool_dir, yaml_file)
+        print(f"\n{'='*50}")
+        print(f"  [Pool] {track_name} — style={style_name}")
+        print(f"  YAML: {yaml_path}")
+        print(f"{'='*50}")
+
+        try:
+            # 1. Load pool from YAML
+            pool = InstrumentPool.from_yaml(yaml_path)
+
+            # 2. Apply StylePreset overrides
+            try:
+                style = get_style(style_name)
+                pool = style.apply_to(pool)
+            except KeyError:
+                print(f"  [WARN] Unknown style '{style_name}', using YAML raw config")
+
+            # 3. Set seed if provided
+            if seed is not None:
+                pool.config.seed = seed
+
+            # 4. Render via PoolRenderer
+            renderer = PoolRenderer(pool, duration_sec=duration_sec, style_name=style_name)
+            final_audio, stems = renderer.render()
+
+            # 5. Post-processing: mono → fade → normalize
+            audio = _to_mono(final_audio.astype(np.float64))
+            audio = _fade_edges(audio, 1.0, 3.0)
+            audio = _normalize(audio)
+
+            # 6. Save to pool output directory
+            filename = f"{track_name}_{style_name}.wav"
+            wav_path = save_wav_pool(audio, filename, output_dir)
+            generated.append(wav_path)
+
+        except Exception as e:
+            print(f"\n  [ERROR] {track_name}: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"  [INFO] Skipping {track_name}, continuing to next track...")
+            continue
+
+    return generated
+
+
+# ── CLI ──
+
+
+def _generate_fullpower_album(
+    pool_dir: str = "music/pool_presets",
+    output_dir: str = "",
+    duration_sec: float = 120.0,
+    seed: Optional[int] = None,
+) -> list:
+    """Generate a 12-track fullpower album using all 6 real synth engines.
+
+    Iterates over FULLPOWER_ALBUM, for each track:
+      1. InstrumentPool.from_yaml(pool_dir / yaml_file)
+      2. PoolRenderer(pool, duration_sec, style_name).render()
+      3. _to_mono → _fade_edges → _normalize → save_wav_pool
+
+    Single-track failures are caught, logged, and skipped without crashing.
+
+    Args:
+        pool_dir: Directory containing pool YAML configuration files.
+        output_dir: Output directory for generated WAV files.
+        duration_sec: Target duration per track in seconds.
+        seed: Random seed for reproducibility.
+
+    Returns:
+        List of generated WAV file paths.
+    """
+    from bloodmusic.music.instrument_pool import InstrumentPool
+    from bloodmusic.music.pool_renderer import PoolRenderer
+
+    if not output_dir:
+        output_dir = FULLPOWER_OUTPUT_DIR
+    os.makedirs(output_dir, exist_ok=True)
+    generated = []
+
+    for track_name, (yaml_file, style_name) in FULLPOWER_ALBUM.items():
+        yaml_path = os.path.join(pool_dir, yaml_file)
+        print(f"\n{'='*50}")
+        print(f"  [Fullpower] {track_name} — style={style_name}")
+        print(f"  YAML: {yaml_path}")
+        print(f"{'='*50}")
+
+        try:
+            # 1. Load pool from YAML
+            pool = InstrumentPool.from_yaml(yaml_path)
+
+            # 2. Set seed if provided
+            if seed is not None:
+                pool.config.seed = seed
+
+            # 3. Render via PoolRenderer
+            renderer = PoolRenderer(
+                pool, duration_sec=duration_sec, style_name=style_name,
+            )
+            final_audio, stems = renderer.render()
+
+            # 4. Post-processing
+            audio = _to_mono(final_audio.astype(np.float64))
+            audio = _fade_edges(audio, 1.0, 3.0)
+            audio = _normalize(audio)
+
+            # 5. Save
+            filename = f"{track_name}_{style_name}.wav"
+            wav_path = save_wav_pool(audio, filename, output_dir)
+            generated.append(wav_path)
+
+        except Exception as e:
+            print(f"\n  [ERROR] {track_name}: {e}")
+            import traceback
+            traceback.print_exc()
+            print(f"  [INFO] Skipping {track_name}, continuing to next track...")
+            continue
+
+    return generated
+
+
+# ── CLI ──
+
+def cli_main() -> None:
+    """argparse CLI entry point.
+
+    Usage:
+        python album_generator.py                  # legacy mode (10 hand-crafted tracks)
+        python album_generator.py --pool           # pool mode (10 auto-generated tracks)
+        python album_generator.py --fullpower      # fullpower mode (12 all-engine tracks)
+        python album_generator.py --pool --duration 180 --seed 42
+    """
+    import argparse
+    parser = argparse.ArgumentParser(
+        description="BloodMusic 纯音乐专辑生成器",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python album_generator.py                  # Legacy mode (10 hand-crafted tracks)
+  python album_generator.py --pool           # Pool mode (10 auto-generated tracks)
+  python album_generator.py --fullpower      # Fullpower mode (12 all-engine tracks)
+  python album_generator.py --pool --duration 180 --seed 42
+        """,
+    )
+    parser.add_argument("--pool", action="store_true",
+                        help="Use InstrumentPool mode (default: legacy mode)")
+    parser.add_argument("--fullpower", action="store_true",
+                        help="Use Fullpower 12-track all-engine album mode")
+    parser.add_argument("--duration", type=float, default=120.0,
+                        help="Duration per track in seconds (default: 120)")
+    parser.add_argument("--output", type=str, default=None,
+                        help="Output directory (pool mode default: album_output_pool)")
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Random seed for reproducibility")
+    parser.add_argument("--pool-dir", type=str, default="music/pool_presets",
+                        help="Pool YAML directory (default: music/pool_presets)")
+
+    args = parser.parse_args()
+
+    if args.fullpower:
+        # ── Fullpower mode ──
+        output_dir = args.output or FULLPOWER_OUTPUT_DIR
+        print("=" * 60)
+        print(f"  BloodMusic 全性能压榨专辑生成器 (Fullpower Mode)")
+        print(f"  引擎: 6种真实合成引擎 (FM, FM_ADVANCED, WAVETABLE,")
+        print(f"        KARPLUS_STRONG, WAVEGUIDE, GRANULAR)")
+        print(f"  输出目录: {output_dir}")
+        print(f"  时长: {args.duration}s/track × 12 首")
+        print("=" * 60)
+
+        paths = _generate_fullpower_album(
+            pool_dir=args.pool_dir,
+            output_dir=output_dir,
+            duration_sec=args.duration,
+            seed=args.seed,
+        )
+
+        print(f"\n{'='*60}")
+        print(f"  全性能压榨专辑制作完成！")
+        print(f"  输出目录: {output_dir}")
+        print(f"  成功: {len(paths)}/12 首")
+        print(f"{'='*60}")
+    elif args.pool:
+        # ── Pool mode ──
+        output_dir = args.output or POOL_OUTPUT_DIR
+        print("=" * 60)
+        print(f"  BloodMusic 纯音乐专辑生成器 (Pool Mode)")
+        print(f"  引擎: InstrumentPool + PoolRenderer")
+        print(f"  输出目录: {output_dir}")
+        print(f"  时长: {args.duration}s/track")
+        print("=" * 60)
+
+        paths = generate_album_with_pool(
+            pool_dir=args.pool_dir,
+            output_dir=output_dir,
+            duration_sec=args.duration,
+            seed=args.seed,
+        )
+
+        print(f"\n{'='*60}")
+        print(f"  Pool 模式专辑制作完成！")
+        print(f"  输出目录: {output_dir}")
+        print(f"  成功: {len(paths)}/10 首")
+        print(f"{'='*60}")
+    else:
+        # ── Legacy mode (original behavior, zero change) ──
+        main()
+
+
 if __name__ == "__main__":
-    main()
+    cli_main()

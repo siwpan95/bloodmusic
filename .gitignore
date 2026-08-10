@@ -23,3 +23,9 @@ __pycache__/
 
 # Test temp files
 test_verify.mid
+test_*_result.txt
+test_result.txt
+
+# Pool mode output directories
+album_output_pool/
+album_output_fullpower/

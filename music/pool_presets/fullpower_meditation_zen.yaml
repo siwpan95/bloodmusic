@@ -1,0 +1,87 @@
+name: "全能力量·禅意冥想 — Meditation Zen"
+version: "2.0"
+bpm: 60
+key: "C"
+scale: "pentatonic_major"
+style: meditation
+
+instruments:
+  - name: "Granular Water Melody"
+    role: melody
+    engine: granular
+    engine_params:
+      preset: water_texture
+    volume: 0.55
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 4.0
+      lp_filter_hz: 4000
+
+  - name: "DX7 Strings Chords"
+    role: chord
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_strings
+    volume: 0.45
+    pan: -0.15
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 3.0
+      lp_filter_hz: 3000
+
+  - name: "Subtractive Deep Bass"
+    role: bass
+    engine: subtractive
+    preset: "deep_bass"
+    volume: 0.55
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.2
+      lp_filter_hz: 400
+
+  - name: "Soft Percussion"
+    role: drum
+    engine: noise
+    volume: 0.35
+
+  - name: "KS Harp Pad"
+    role: pad
+    engine: karplus_strong
+    engine_params:
+      preset: harp
+    volume: 0.4
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.55
+      reverb_decay: 4.0
+      lp_filter_hz: 3500
+      stereo_width: 0.9
+
+  - name: "Waveguide Flute FX"
+    role: fx
+    engine: waveguide
+    engine_params:
+      instrument: flute
+    volume: 0.3
+    pan: -0.3
+    effect_chain:
+      reverb_mix: 0.6
+      reverb_decay: 5.0
+      lp_filter_hz: 5000
+
+automation:
+  filter_sweep:
+    start_hz: 20000
+    end_hz: 600
+    mid_hz: 800
+    q: 0.8
+    mid_time_ratio: 0.7
+    type: lowpass
+    interpolate: smooth
+
+generation:
+  diversity: 0.25
+  humanize: true
+  chord_progression: "dreamy"

@@ -81,3 +81,22 @@ from .loop_utils import (
     zero_crossing_detect, find_loop_points, seamless_splice,
     make_loopable, loop_game_bgm, auto_loop, check_loop_quality,
 )
+
+# ── 乐器池系统 (v3.0) ──
+from .instrument_pool import (
+    InstrumentPool, PoolInstrument, PoolConfig,
+    InstrumentRole, SynthEngine,
+    DEFAULT_ENGINE_MAP, get_default_engine,
+)
+from .pool_serializer import (
+    PoolSerializer, PoolSerializationError,
+)
+from .pool_styles import (
+    StylePreset, STYLES, get_style, list_styles,
+    STYLE_EXPLORATION, STYLE_BATTLE, STYLE_TOWN, STYLE_DUNGEON, STYLE_AMBIENT,
+)
+from .pool_templates import (
+    PoolTemplate, POOL_TEMPLATES, get_template, list_templates,
+)
+from .pool_generator import PoolGenerator
+from .pool_renderer import PoolRenderer

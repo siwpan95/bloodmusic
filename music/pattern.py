@@ -4,7 +4,7 @@
 
 import numpy as np
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict, Any, TYPE_CHECKING
 
 from scipy.io import wavfile
 
@@ -14,6 +14,9 @@ from ..core.oscillator import oscillator, OscType
 from ..core.envelope import make_envelope, EnvShape
 from ..effects.chain import EffectChain
 from .humanize import HumanizeParams, apply_humanize_to_sequence
+
+if TYPE_CHECKING:
+    from .instrument_pool import SynthEngine
 
 
 @dataclass
@@ -48,6 +51,14 @@ class MusicPattern:
 
     # ── 人性化 (可选) ──
     humanize_params: Optional["HumanizeParams"] = None  # None=不启用
+
+    # ── 乐器池角色 (可选) ──
+    pool_role: Optional[str] = None  # None=非乐器池生成，非 None="melody"|"chord"|"bass"|"drum"|"pad"|"fx"
+
+    # ── 真实合成引擎 (v2.0 全性能压榨) ──
+    engine: Optional["SynthEngine"] = None           # 合成引擎类型，None=走基础振荡器
+    engine_params: Dict[str, Any] = field(default_factory=dict)  # 引擎专属参数
+    automation: Optional[Dict[str, Any]] = None      # 自动化配置 (filter_sweep / volume_curve)
 
     def __post_init__(self):
         """校验字段一致性"""

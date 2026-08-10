@@ -1,0 +1,77 @@
+name: "全能力量·低保真梦境 — Lo-Fi Dreams"
+version: "2.0"
+bpm: 78
+key: "Am"
+scale: "minor"
+style: lofi
+
+instruments:
+  - name: "KS Harp Melody"
+    role: melody
+    engine: karplus_strong
+    engine_params:
+      preset: harp
+    volume: 0.65
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.25
+      reverb_decay: 1.5
+      lp_filter_hz: 4000
+
+  - name: "DX7 Organ Chords"
+    role: chord
+    engine: fm_advanced
+    engine_params:
+      preset: dx7_organ
+    volume: 0.5
+    pan: -0.1
+    effect_chain:
+      reverb_mix: 0.25
+      reverb_decay: 1.8
+      lp_filter_hz: 3500
+
+  - name: "Subtractive Warm Bass"
+    role: bass
+    engine: subtractive
+    preset: "warm_bass"
+    volume: 0.6
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.08
+      lp_filter_hz: 500
+
+  - name: "Lo-Fi Drums"
+    role: drum
+    engine: noise
+    volume: 0.5
+
+  - name: "Granular Ethereal Pad"
+    role: pad
+    engine: granular
+    engine_params:
+      preset: ethereal_pad
+    volume: 0.4
+    pan: 0.25
+    effect_chain:
+      reverb_mix: 0.45
+      reverb_decay: 3.0
+      lp_filter_hz: 3000
+      stereo_width: 0.8
+
+  - name: "Wavetable Bell FX"
+    role: fx
+    engine: wavetable
+    engine_params:
+      preset: bell
+    volume: 0.3
+    pan: -0.25
+    effect_chain:
+      reverb_mix: 0.5
+      reverb_decay: 3.5
+      lp_filter_hz: 5000
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "dreamy"

@@ -1,0 +1,48 @@
+name: "史诗征程 — 影视史诗"
+version: "1.0"
+bpm: 100
+key: "D"
+scale: "minor"
+style: cinematic
+
+instruments:
+  - name: "Brass Hero"
+    role: melody
+    engine: wavetable
+    preset: "brass"
+    volume: 0.80
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.20
+      lp_filter_hz: 7000
+
+  - name: "Strings Ensemble"
+    role: chord
+    engine: fm_advanced
+    preset: "strings"
+    volume: 0.55
+    pan: 0.4
+    effect_chain:
+      reverb_mix: 0.30
+      lp_filter_hz: 5000
+
+  - name: "Epic Bass"
+    role: bass
+    engine: fm
+    preset: "bass"
+    volume: 0.70
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      lp_filter_hz: 1000
+
+  - name: "Epic Drums"
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+
+generation:
+  diversity: 0.2
+  humanize: true
+  chord_progression: "epic"

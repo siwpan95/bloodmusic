@@ -1,0 +1,87 @@
+name: "全能力量·荒野探索 — Exploration Wilds"
+version: "2.0"
+bpm: 85
+key: "C"
+scale: "major"
+style: exploration
+
+instruments:
+  - name: "Waveguide Sax Melody"
+    role: melody
+    engine: waveguide
+    engine_params:
+      instrument: saxophone
+    volume: 0.7
+    pan: 0.1
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.2
+      lp_filter_hz: 5000
+
+  - name: "KS Ethnic Lute Chords"
+    role: chord
+    engine: karplus_strong
+    engine_params:
+      preset: ethnic_lute
+    volume: 0.55
+    pan: -0.1
+    effect_chain:
+      reverb_mix: 0.2
+      reverb_decay: 1.0
+      lp_filter_hz: 4000
+
+  - name: "Subtractive Adventure Bass"
+    role: bass
+    engine: subtractive
+    preset: "deep_bass"
+    volume: 0.6
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.1
+      lp_filter_hz: 600
+
+  - name: "Exploration Percussion"
+    role: drum
+    engine: noise
+    volume: 0.55
+
+  - name: "Granular Wind Pad"
+    role: pad
+    engine: granular
+    engine_params:
+      preset: wind_ambient
+    volume: 0.4
+    pan: 0.3
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 2.5
+      lp_filter_hz: 3000
+      stereo_width: 0.8
+
+  - name: "Wavetable Bell FX"
+    role: fx
+    engine: wavetable
+    engine_params:
+      preset: bell
+    volume: 0.3
+    pan: -0.3
+    effect_chain:
+      reverb_mix: 0.45
+      reverb_decay: 3.0
+      lp_filter_hz: 5000
+
+automation:
+  filter_sweep:
+    start_hz: 20000
+    end_hz: 800
+    mid_hz: 3000
+    q: 1.2
+    mid_time_ratio: 0.35
+    type: lowpass
+    interpolate: smooth
+
+generation:
+  diversity: 0.35
+  humanize: true
+  chord_progression: "dreamy"

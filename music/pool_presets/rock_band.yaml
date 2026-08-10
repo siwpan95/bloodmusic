@@ -1,0 +1,40 @@
+name: "摇滚乐队"
+version: "1.0"
+bpm: 130
+key: "E"
+scale: "minor"
+style: battle
+
+instruments:
+  - name: "Overdriven Guitar"
+    role: melody
+    engine: wavetable
+    preset: "electric_guitar_clean"
+    volume: 0.9
+    pan: 0.1
+
+  - name: "Power Chords"
+    role: chord
+    engine: subtractive
+    preset: "bright_piano"
+    volume: 0.6
+    pan: -0.2
+
+  - name: "Bass Guitar"
+    role: bass
+    engine: subtractive
+    preset: "electric_bass_pick"
+    volume: 0.85
+    pan: 0.0
+    octave: -1
+
+  - name: "Rock Drums"
+    role: drum
+    engine: noise
+    volume: 0.8
+    pan: 0.0
+
+generation:
+  diversity: 0.2
+  humanize: true
+  chord_progression: "epic"

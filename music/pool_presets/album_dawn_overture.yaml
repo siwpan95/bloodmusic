@@ -1,0 +1,44 @@
+name: "晨曦序曲 — 古典/钢琴"
+version: "1.0"
+bpm: 72
+key: "C"
+scale: "major"
+style: exploration
+
+instruments:
+  - name: "Piano Melody"
+    role: melody
+    engine: wavetable
+    preset: "acoustic_grand_piano"
+    volume: 0.85
+    pan: 0.0
+    effect_chain:
+      reverb_mix: 0.3
+      reverb_decay: 1.5
+      lp_filter_hz: 4500
+
+  - name: "Strings Pad"
+    role: chord
+    engine: subtractive
+    preset: "string_ensemble"
+    volume: 0.55
+    pan: -0.2
+    effect_chain:
+      reverb_mix: 0.4
+      reverb_decay: 2.0
+
+  - name: "Cello Bass"
+    role: bass
+    engine: subtractive
+    preset: "cello"
+    volume: 0.65
+    pan: 0.0
+    octave: -1
+    effect_chain:
+      reverb_mix: 0.25
+      lp_filter_hz: 800
+
+generation:
+  diversity: 0.3
+  humanize: true
+  chord_progression: "dreamy"

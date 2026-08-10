@@ -1,0 +1,40 @@
+name: "管弦小编制"
+version: "1.0"
+bpm: 100
+key: "C"
+scale: "dorian"
+style: exploration
+
+instruments:
+  - name: "Violin Lead"
+    role: melody
+    engine: wavetable
+    preset: "violin"
+    volume: 0.9
+    pan: 0.0
+
+  - name: "String Ensemble"
+    role: chord
+    engine: subtractive
+    preset: "string_ensemble"
+    volume: 0.6
+    pan: -0.3
+
+  - name: "Cello Bass"
+    role: bass
+    engine: subtractive
+    preset: "cello"
+    volume: 0.8
+    pan: 0.0
+    octave: -1
+
+  - name: "Timpani Drums"
+    role: drum
+    engine: noise
+    volume: 0.7
+    pan: 0.0
+
+generation:
+  diversity: 0.4
+  humanize: true
+  chord_progression: "dreamy"

@@ -1,0 +1,175 @@
+classDiagram
+    class PoolInstrument {
+        +str name
+        +InstrumentRole role
+        +SynthEngine engine
+        +Optional~str~ preset
+        +Dict params
+        +Dict engine_params
+        +Optional~EffectChain~ effect_chain
+        +float pan
+        +float volume
+        +Optional~List~ note_sequence
+        +Optional~int~ octave
+        +to_dict() Dict
+        +validate() List~str~
+    }
+
+    class MusicPattern {
+        +str name
+        +List notes
+        +List durations
+        +OscType osc_type
+        +float volume
+        +EnvShape env_shape
+        +Optional~SynthEngine~ engine
+        +Optional~Dict~ engine_params
+        +Optional~Dict~ automation
+        +float reverb_mix
+        +float reverb_decay
+        +float stereo_width
+        +Optional~float~ lp_filter_hz
+    }
+
+    class PoolGenerator {
+        +InstrumentPool pool
+        +Optional~StylePreset~ style
+        +generate_all(target_bars) MultiTrackPattern
+        +generate_melody(instrument, bars) MusicPattern
+        +generate_chord(instrument, bars) MusicPattern
+        +generate_bass(instrument, bars) MusicPattern
+        +generate_drum(instrument, bars) DrumPattern
+        +generate_pad(instrument, bars) MusicPattern
+        +generate_fx(instrument, bars) MusicPattern
+        -_resolve_style_params(role) dict
+        -_apply_preset(pattern, instrument)
+        -_apply_humanize(pattern, params)
+    }
+
+    class PoolRenderer {
+        +InstrumentPool pool
+        +float duration_sec
+        +render() Tuple~ndarray, Dict~
+        +render_stems_only() Dict
+        -_generate_tracks() MultiTrackPattern
+        -_render_tracks_to_stems(tracks) Dict
+        -_render_with_real_engine(pattern) ndarray
+        -_render_per_note_engine(pattern) ndarray
+        -_render_granular_track(pattern) ndarray
+        -_render_fm_note(freq, dur, params) ndarray
+        -_render_fm_advanced_note(freq, dur, params) ndarray
+        -_render_waveguide_note(freq, dur, params) ndarray
+        -_render_karplus_strong_note(freq, dur, params) ndarray
+        -_render_wavetable_note(freq, dur, params) ndarray
+        -_apply_automation_to_stem(audio, pattern) ndarray
+        -_apply_mix_assist(stems) Dict
+        -_render_arrangement(tracks, stems) ndarray
+        -_apply_master_chain(audio) ndarray
+    }
+
+    class AutomationLane {
+        +str name
+        +List points
+        +str interpolate
+        +at_time(t) float
+        +to_array(sr, total_sec) ndarray
+        +constant(name, value) AutomationLane
+        +linear_ramp(name, start, end, t0, t1) AutomationLane
+        +sweep(name, from, to, to2, t1, t2, t3) AutomationLane
+    }
+
+    class MultiOpFM {
+        +int operators
+        +FMAlgorithm algorithm
+        +List~FMOpParams~ ops
+        +set_operator(idx, kwargs)
+        +render(freq, duration, sr, volume) ndarray
+    }
+
+    class WaveguideVoice {
+        +float freq
+        +float duration
+        +float volume
+        +str bore_type
+        +float breath
+        +float embouchure
+        +float bell_openness
+        +float loss_factor
+        +float reflection
+        +preset(name, freq) WaveguideVoice
+    }
+
+    class GranularSynth {
+        +int sr
+        +synthesize(cloud, duration) ndarray
+        +synthesize_stereo(cloud, duration) ndarray
+    }
+
+    class GrainCloud {
+        +float grain_size_ms
+        +float density
+        +float pitch_shift
+        +float pitch_random
+        +str envelope_type
+        +str source_type
+        +float source_freq
+    }
+
+    class KarplusStrongSynth {
+        +int sr
+        +synthesize(voice) ndarray
+    }
+
+    class KSVoice {
+        +float freq
+        +float duration
+        +float volume
+        +float pluck_position
+        +float stiffness
+        +float decay
+        +float damping_hz
+        +float body_resonance
+        +str excitation
+    }
+
+    class WavetableOscillator {
+        +Wavetable wavetable
+        +float freq
+        +int sr
+        +render(duration) ndarray
+        +render_with_pitch_bend(duration, curve) ndarray
+    }
+
+    class Wavetable {
+        +ndarray data
+        +str name
+        +int table_size
+        +from_preset(name) Wavetable
+        +sample(phase, mode) float
+        +morph(wtA, wtB, t) Wavetable
+    }
+
+    class FMSynthVoice {
+        +float carrier_freq
+        +OscType carrier_type
+        +float modulator_freq_ratio
+        +OscType modulator_type
+        +float fm_depth
+        +float duration
+        +float volume
+        +EnvShape env_shape
+    }
+
+    PoolInstrument --> MusicPattern : pool_generator 创建
+    PoolGenerator --> MusicPattern : 构建并设置 engine/engine_params
+    PoolRenderer --> PoolGenerator : 调用 generate_all()
+    PoolRenderer --> AutomationLane : 创建并应用
+    PoolRenderer --> MultiOpFM : fm_advanced 引擎
+    PoolRenderer --> FMSynthVoice : fm 引擎
+    PoolRenderer --> WaveguideVoice : waveguide 引擎
+    PoolRenderer --> GranularSynth : granular 引擎
+    PoolRenderer --> GrainCloud : 配置粒子参数
+    PoolRenderer --> KarplusStrongSynth : karplus_strong 引擎
+    PoolRenderer --> KSVoice : 配置拨弦参数
+    PoolRenderer --> WavetableOscillator : wavetable 引擎
+    WavetableOscillator --> Wavetable : 使用波表数据
