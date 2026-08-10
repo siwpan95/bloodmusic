@@ -1106,7 +1106,7 @@ def save_wav_pool(audio: np.ndarray, filename: str, output_dir: str) -> str:
 # ── Pool 模式主函数 ──
 
 def generate_album_with_pool(
-    pool_dir: str = "music/pool_presets",
+    pool_dir: str = "",
     output_dir: str = POOL_OUTPUT_DIR,
     duration_sec: float = 120.0,
     seed: Optional[int] = None,
@@ -1130,6 +1130,9 @@ def generate_album_with_pool(
     Returns:
         List of generated WAV file paths.
     """
+    if not pool_dir:
+        pool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music", "pool_presets")
+
     # Lazy import pool modules — only loaded when --pool is triggered
     from bloodmusic.music.instrument_pool import InstrumentPool
     from bloodmusic.music.pool_renderer import PoolRenderer
@@ -1188,7 +1191,7 @@ def generate_album_with_pool(
 
 
 def _generate_fullpower_album(
-    pool_dir: str = "music/pool_presets",
+    pool_dir: str = "",
     output_dir: str = "",
     duration_sec: float = 120.0,
     seed: Optional[int] = None,
@@ -1214,6 +1217,8 @@ def _generate_fullpower_album(
     from bloodmusic.music.instrument_pool import InstrumentPool
     from bloodmusic.music.pool_renderer import PoolRenderer
 
+    if not pool_dir:
+        pool_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "music", "pool_presets")
     if not output_dir:
         output_dir = FULLPOWER_OUTPUT_DIR
     os.makedirs(output_dir, exist_ok=True)
@@ -1293,8 +1298,8 @@ Examples:
                         help="Output directory (pool mode default: album_output_pool)")
     parser.add_argument("--seed", type=int, default=None,
                         help="Random seed for reproducibility")
-    parser.add_argument("--pool-dir", type=str, default="music/pool_presets",
-                        help="Pool YAML directory (default: music/pool_presets)")
+    parser.add_argument("--pool-dir", type=str, default="",
+                        help="Pool YAML directory (default: music/pool_presets under script dir)")
 
     args = parser.parse_args()
 
