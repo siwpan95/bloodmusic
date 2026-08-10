@@ -1,0 +1,24 @@
+# Audio output files (large binary)
+album_output/
+skill/output_beats/
+skill/bloodmusic-beats/scripts/output_beats/
+*.wav
+
+# Secrets / tokens
+*令牌*
+*token*
+*.token
+
+# Python artifacts
+*.pyc
+__pycache__/
+*.egg-info/
+
+# IDE / OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Test temp files
+test_verify.mid

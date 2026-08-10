@@ -1,0 +1,24 @@
+sequenceDiagram
+    participant Caller
+    participant fm_synth as fm_synth.py
+    participant osc as oscillator.py
+    participant env as envelope.py
+    participant chain as effects/chain.py
+
+    Caller->>fm_synth: synthesize_fm_voice(voice: FMSynthVoice)
+    fm_synth->>fm_synth: 计算 n_samples, t 数组
+    fm_synth->>osc: oscillator(t, carrier_freq * ratio, modulator_type)
+    osc-->>fm_synth: modulator_sig
+    fm_synth->>fm_synth: modulated_freq = carrier_freq + fm_depth * modulator_sig
+    fm_synth->>osc: oscillator(t, modulated_freq, carrier_type)
+    osc-->>fm_synth: carrier_sig
+    fm_synth->>fm_synth: LFO 调制 (如 lfo != None)
+    fm_synth->>env: make_envelope(n_samples, env_shape, adsr)
+    env-->>fm_synth: envelope
+    fm_synth->>fm_synth: sig = carrier_sig * envelope * volume
+    alt effect_chain != None
+        fm_synth->>chain: process_effects(sig, chain)
+        chain-->>fm_synth: processed_sig
+    end
+    fm_synth->>fm_synth: 归一化 + 限幅
+    fm_synth-->>Caller: float32 波形
