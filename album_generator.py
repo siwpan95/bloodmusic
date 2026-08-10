@@ -1039,6 +1039,7 @@ def main():
     print(f"  专辑制作完成！")
     print(f"  输出目录: {OUTPUT_DIR}")
     print(f"  共 10 首曲目，覆盖 10 种纯音乐风格")
+    print(f"  * P1 Motif | P2 Automation | P3 Riser FX | P5 Mix")
     print(f"  专辑信息文件: ALBUM_INFO.txt")
     print(f"{'=' * 60}")
 

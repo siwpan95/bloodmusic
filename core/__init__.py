@@ -1,4 +1,4 @@
-"""核心模块 —— 振荡器 / 包络 / 合成引擎"""
+"""核心模块 —— 振荡器 / 包络 / 合成引擎 / 波导物理建模"""
 
 from .constants import SR, BPM_DEFAULT, BEAT_DEFAULT, VOL_SFX, VOL_MUSIC, NORMALIZE_DBFS, DEFAULT_OGG_BITRATE
 from .note_utils import note_to_freq, midi_to_freq, NOTES
@@ -23,4 +23,9 @@ from .wavetable import (
 from .fm_advanced import (  # P2
     MultiOpFM, FMAlgorithm, FMOpParams,
     create_dx7_bell, create_dx7_epiano, create_dx7_bass,
+)
+from .waveguide import (
+    WaveguideVoice, render_waveguide,
+    render_clarinet, render_flute, render_brass, render_saxophone,
+    render_waveguide_preset,
 )

@@ -1,4 +1,4 @@
-"""SFX 音效模块 —— 预设库 + 分层音效 + 模拟鼓合成"""
+"""SFX 音效模块 —— 预设库 + 分层音效 + 模拟鼓合成 + Riser/Transition FX"""
 
 from .presets import (
     UI_FX_PRESETS, CARD_FX_PRESETS,
@@ -20,4 +20,8 @@ from .drum_synth import (
     CrashParams, synthesize_crash, ShakerParams, synthesize_shaker,
     AcousticSnareParams, synthesize_acoustic_snare,
     AcousticKickParams, synthesize_acoustic_kick,
+)
+from .riser import (
+    RiserVoice, ImpactVoice, BraamVoice, RiserSynth,
+    render_riser, riser_transition, impact_hit, build_and_drop,
 )

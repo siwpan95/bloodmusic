@@ -1,5 +1,6 @@
 # Audio output files (large binary)
 album_output/
+album_output_v2/
 skill/output_beats/
 skill/bloodmusic-beats/scripts/output_beats/
 *.wav

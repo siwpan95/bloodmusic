@@ -30,12 +30,32 @@ from ..effects.chain import EffectChain, process_effects
 from .pattern import (
     MusicPattern, DrumPattern, render_pattern_to_array, render_drum_pattern,
 )
-from .automation import TempoLane  # P1
+from .automation import AutomationLane, TempoLane  # P1
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Track Channel — 单轨独立效果链
+# Track Channel — 单轨独立效果链 + 参数自动化
 # ═══════════════════════════════════════════════════════════════════════
+
+_AUTOMATABLE_PARAMS = {
+    "reverb_mix": "reverb_mix", "reverb_decay": "reverb_decay",
+    "delay_time": "delay_time", "delay_feedback": "delay_feedback",
+    "delay_mix": "delay_mix", "lp_filter_hz": "lp_filter_hz",
+    "chorus_mix": "chorus_mix", "chorus_depth": "chorus_depth",
+    "flanger_mix": "flanger_mix", "flanger_depth": "flanger_depth",
+    "phaser_mix": "phaser_mix", "distortion": "distortion",
+    "stereo_width": "stereo_width",
+}
+
+def _merge_automation_to_chain(chain, automations, time_sec):
+    import copy
+    new_chain = copy.deepcopy(chain)
+    for lane in automations:
+        val = lane.at_time(time_sec)
+        param_name = _AUTOMATABLE_PARAMS.get(lane.name)
+        if param_name and hasattr(new_chain, param_name):
+            setattr(new_chain, param_name, val)
+    return new_chain
 
 @dataclass
 class TrackChannel:
@@ -43,19 +63,43 @@ class TrackChannel:
 
     每条轨道（旋律/贝斯/鼓等）可以有独立的效果链、音量和声像。
     在 SongArrangement 中，每个 Section 的每条轨道可覆盖默认值。
+    
+    支持 per-track 参数自动化：automations 列表中的 AutomationLane
+    会在渲染时实时插值并覆盖 effect_chain 中的对应参数。
     """
     volume: float = 1.0
     pan: float = 0.0           # -1.0 (左) ~ 1.0 (右)
     effect_chain: Optional[EffectChain] = None
     mute: bool = False
+    automations: List[AutomationLane] = field(default_factory=list)
 
-    def apply(self, audio: np.ndarray) -> np.ndarray:
-        """对音频应用通道处理"""
+    def apply(self, audio: np.ndarray,
+              time_offset: float = 0.0,
+              section_dur: float = 0.0) -> np.ndarray:
+        """对音频应用通道处理。time_offset+section_dur 用于自动化插值。"""
         if self.mute:
             return np.zeros_like(audio)
         result = audio.astype(np.float64) * self.volume
         if self.effect_chain is not None:
-            result = process_effects(result, self.effect_chain)
+            if self.automations and section_dur > 0:
+                result = self._apply_with_automation(result, time_offset, section_dur)
+            else:
+                result = process_effects(result, self.effect_chain)
+        return result
+
+    def _apply_with_automation(self, audio, time_offset, section_dur):
+        n = len(audio)
+        sr_int = SR
+        block_samples = int(sr_int * 0.25)
+        if block_samples < 1:
+            block_samples = n
+        result = np.zeros_like(audio)
+        for start in range(0, n, block_samples):
+            end = min(start + block_samples, n)
+            block = audio[start:end]
+            block_center = time_offset + (start + (end - start) / 2) / sr_int
+            chain = _merge_automation_to_chain(self.effect_chain, self.automations, block_center)
+            result[start:end] = process_effects(block, chain)
         return result
 
 
@@ -101,10 +145,12 @@ class Transition:
         "crossfade"  — X 小节的交叉淡化
         "fill"       — 鼓花过渡 (需要 fill_pattern)
         "silence"    — 静音间隔
+        "fx"         — Riser / Transition FX (需要 fx_preset)
     """
     type: str = "immediate"
     bars: float = 0.5               # 过渡时长 (小节)
     fill_pattern: Optional[DrumPattern] = None  # "fill" 类型使用
+    fx_preset: str = "edm_build"    # "fx" 类型使用
     extra_drum_hits: List[Tuple[str, float, float]] = field(default_factory=list)
     # [(track_name, beat_position, velocity), ...] — 过渡加花
 
@@ -231,6 +277,8 @@ def render_song(
     rendered_sections: List[np.ndarray] = []
     section_info: List[dict] = []  # [(start_sample, duration_samples), ...]
 
+    cumulative_time = 0.0
+
     for s_idx, section in enumerate(arrangement.sections):
         # BPM 计算: 优先 TempoLane > section.bpm > arrangement.bpm
         if arrangement.tempo_lane is not None:
@@ -262,7 +310,7 @@ def render_song(
                     t_idx,
                     arrangement.track_channels.get(t_idx, TrackChannel()),
                 )
-                track_audio = channel.apply(track_audio)
+                track_audio = channel.apply(track_audio, cumulative_time, section_dur)
                 if has_stereo and channel.pan != 0.0:
                     track_audio = _apply_pan(track_audio, channel.pan)
                 track_dict[t_idx] = track_audio
@@ -274,7 +322,7 @@ def render_song(
                     drum_track_idx,
                     arrangement.track_channels.get(drum_track_idx, TrackChannel()),
                 )
-                drum_audio = channel.apply(drum_audio)
+                drum_audio = channel.apply(drum_audio, cumulative_time, section_dur)
                 if has_stereo and channel.pan != 0.0:
                     drum_audio = _apply_pan(drum_audio, channel.pan)
                 track_dict[drum_track_idx] = drum_audio
@@ -291,7 +339,7 @@ def render_song(
                     t_idx,
                     arrangement.track_channels.get(t_idx, TrackChannel()),
                 )
-                track_audio = channel.apply(track_audio)
+                track_audio = channel.apply(track_audio, cumulative_time, section_dur)
 
                 # 声像处理
                 if has_stereo and channel.pan != 0.0:
@@ -329,6 +377,7 @@ def render_song(
         sec_audio = np.nan_to_num(sec_audio, nan=0.0, posinf=1.0, neginf=-1.0)
 
         rendered_sections.append(sec_audio)
+        cumulative_time += section_dur
 
     # 处理段落间过渡
     output_chunks = []
@@ -380,6 +429,27 @@ def render_song(
                 silence = np.zeros(trans_samples, dtype=np.float64)
                 output_chunks.append(silence)
                 output_chunks.append(sec_audio)
+
+            elif transition.type == "fx":
+                # Riser / Transition FX
+                try:
+                    from ..sfx.riser import riser_transition
+                    fx_audio = riser_transition(transition.bars, sec_bpm, preset=transition.fx_preset)
+                    fx_samples = len(fx_audio)
+                    output_chunks.pop()  # remove prev
+                    fx_in_prev = min(fx_samples, len(prev))
+                    if fx_in_prev > 0:
+                        prev = prev.copy()
+                        prev[-fx_in_prev:] = prev[-fx_in_prev:] * 0.6 + fx_audio[:fx_in_prev] * 0.4
+                    output_chunks.append(prev)
+                    fx_remaining = fx_audio[fx_in_prev:]
+                    fx_in_sec = min(len(fx_remaining), len(sec_audio))
+                    if fx_in_sec > 0:
+                        sec_audio = sec_audio.copy()
+                        sec_audio[:fx_in_sec] = sec_audio[:fx_in_sec] * 0.6 + fx_remaining[:fx_in_sec] * 0.4
+                    output_chunks.append(sec_audio)
+                except ImportError:
+                    output_chunks.append(sec_audio)
 
             else:  # immediate
                 output_chunks.append(sec_audio)

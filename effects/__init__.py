@@ -1,4 +1,4 @@
-"""效果器模块 —— 滤波器 / 失真 / 混响 / 效果链 / 动态 / EQ / 调制"""
+"""效果器模块 —— 滤波器 / 失真 / 混响 / 效果链 / 动态 / EQ / 调制 / 混音助手"""
 
 from .chain import EffectChain, process_effects
 from .filters import apply_lowpass, apply_highpass, apply_bandpass, apply_notch
@@ -14,4 +14,9 @@ from .flanger import apply_flanger, apply_phaser, apply_delay, apply_pingpong_de
 from .sidechain import (
     SidechainParams, sidechain_duck, sidechain_envelope_method,
     detect_transients, drum_bus_compressor,
+)
+from .mix_assist import (
+    FrequencyConflict, LevelImbalance, MixDiagnosis,
+    analyze_mix, auto_level, ducking_sidechain,
+    freq_slot_allocator, mix_suggestion, STYLE_GUIDES,
 )

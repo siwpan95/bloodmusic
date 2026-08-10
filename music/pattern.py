@@ -64,6 +64,15 @@ class MusicPattern:
                 f"\n  提示: octave_shifts 需要与 notes 一一对应或省略（默认为 0）。"
             )
 
+    def to_motif(self):
+        """将 MusicPattern 转换为 Motif，用于主题动机发展。
+
+        Returns:
+            Motif 对象，可施加变换后再转回 MusicPattern。
+        """
+        from .motif import Motif
+        return Motif.from_music_pattern(self, name=self.name)
+
 
 @dataclass
 class DrumSoundParams:

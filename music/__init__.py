@@ -73,3 +73,11 @@ from .midi_io import (
     music_pattern_to_midi, drum_pattern_to_midi,
     midi_to_patterns, song_to_midi,
 )
+from .motif import (
+    Motif, MotifEvent, DevelopmentPreset,
+    note_to_semitones, semitones_to_note,
+)
+from .loop_utils import (
+    zero_crossing_detect, find_loop_points, seamless_splice,
+    make_loopable, loop_game_bgm, auto_loop, check_loop_quality,
+)
