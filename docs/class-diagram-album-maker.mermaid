@@ -1,0 +1,158 @@
+classDiagram
+    direction TB
+
+    %% ── 配置层 ──
+    class AlbumConfig {
+        +str title
+        +str artist
+        +str genre
+        +int year
+        +str cover
+        +dict pool_raw
+        +dict mix_config_raw
+        +str separate_mode
+        +list~TrackSpec~ tracks
+        +from_yaml(path: str)$ AlbumConfig
+    }
+
+    class TrackSpec {
+        +str title
+        +int bpm
+        +int bars
+        +str key
+        +str style
+        +int seed
+        +list~dict~ extra_instruments
+        +dict mix_config_override
+    }
+
+    %% ── 处理器层 ──
+    class TrackHandler {
+        -TrackSpec spec
+        -InstrumentPool pool
+        -MixConfig mix_config
+        -str separate_mode
+        +process(work_dir: Path) TrackResult
+        -_generate() MultiTrackPattern
+        -_render_stems(multi: MultiTrackPattern, work_dir: Path) list~Path~
+        -_mixdown(sources: list~Path~, work_dir: Path) MixResult
+    }
+
+    class TrackResult {
+        +str title
+        +bool success
+        +Path song_path
+        +Path sources_dir
+        +Path manifest_path
+        +str error
+        +float duration_sec
+        +int bpm
+        +str key
+    }
+
+    class AlbumMaker {
+        -AlbumConfig config
+        +make(out_dir: Path) AlbumResult
+        -_write_album_manifest(results: list~TrackResult~, out_dir: Path) Path
+        -_copy_config_copy(out_dir: Path)
+    }
+
+    class AlbumResult {
+        +str title
+        +Path out_dir
+        +list~TrackResult~ tracks
+        +Path album_manifest_path
+        +int success_count
+        +int failure_count
+        +float total_duration_sec
+    }
+
+    class AlbumReport {
+        +generate(result: AlbumResult)$ str
+        +to_json(result: AlbumResult, path: Path)$
+    }
+
+    %% ── 外部依赖（血限 music 侧，不修改） ──
+    class InstrumentPool {
+        +str name
+        +int bpm
+        +str key
+        +str scale
+        +PoolConfig config
+        +list~PoolInstrument~ instruments
+        +from_yaml(path: str)$ InstrumentPool
+    }
+
+    class PoolGenerator {
+        +InstrumentPool pool
+        +StylePreset style
+        +generate_all(target_bars: int) MultiTrackPattern
+    }
+
+    class MultiTrackPattern {
+        +str name
+        +int bpm
+        +list~MusicPattern~ music_tracks
+        +DrumPattern drum_track
+    }
+
+    class StylePreset {
+        +str name
+        +dict role_params
+        +apply_to(pool: InstrumentPool) InstrumentPool
+    }
+
+    %% ── 外部依赖（bridge 渲染） ──
+    class render_pattern_file {
+        +render_pattern_file(pattern, out_path, duration_sec) Path
+    }
+
+    %% ── 外部依赖（audio_pipeline） ──
+    class mixdown {
+        +mixdown(sources, out_dir, config, fmt, separate_mode, bpm, musical_key) MixResult
+    }
+
+    class MixConfig {
+        +ClippingMode clip_mode
+        +NormalizeMode normalize_mode
+        +int fade_in_ms
+        +int fade_out_ms
+        +int crossfade_ms
+        +float rms_target_db
+        +bool compress
+        +float compress_threshold
+        +float compress_ratio
+    }
+
+    class MixResult {
+        +Path song_path
+        +Path sources_dir
+        +Path manifest_path
+    }
+
+    class Manifest {
+        +str version
+        +str song
+        +int bpm
+        +str musical_key
+        +list~SourceManifestEntry~ sources
+        +str separate_mode
+        +str note
+    }
+
+    %% ── 关系 ──
+    AlbumConfig "1" *-- "1..*" TrackSpec : contains
+    AlbumMaker "1" *-- "1" AlbumConfig : owns
+    AlbumMaker "1" --> "1..*" TrackHandler : creates
+    AlbumMaker "1" --> "1" AlbumResult : returns
+    AlbumResult "1" *-- "1..*" TrackResult : contains
+    AlbumReport ..> AlbumResult : consumes
+    TrackHandler --> PoolGenerator : uses
+    TrackHandler --> StylePreset : uses
+    TrackHandler --> InstrumentPool : builds from YAML
+    TrackHandler --> render_pattern_file : calls per stem
+    TrackHandler --> mixdown : calls per track
+    PoolGenerator --> MultiTrackPattern : returns
+    mixdown --> MixResult : returns
+    mixdown --> MixConfig : consumes
+    MixResult ..> Manifest : writes via manifest.py

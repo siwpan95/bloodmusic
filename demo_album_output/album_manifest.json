@@ -1,0 +1,50 @@
+{
+  "version": "1.0",
+  "album": {
+    "title": "Demo 专辑 — 三界",
+    "artist": "BloodMusic Engine (Demo)",
+    "genre": "game",
+    "year": 2026,
+    "cover": null,
+    "separate_mode": "manifest"
+  },
+  "summary": {
+    "total_tracks": 3,
+    "success_count": 3,
+    "failure_count": 0,
+    "total_duration_sec": 27.123809523809523
+  },
+  "tracks": [
+    {
+      "index": 1,
+      "title": "探索曲 — 漫游",
+      "success": true,
+      "bpm": 100,
+      "key": "Am",
+      "duration_sec": 9.6,
+      "song_path": "track_01_探索曲___漫游\\song_final.wav",
+      "manifest_path": "track_01_探索曲___漫游\\manifest.json"
+    },
+    {
+      "index": 2,
+      "title": "战斗曲 — 脉冲",
+      "success": true,
+      "bpm": 140,
+      "key": "Em",
+      "duration_sec": 6.857142857142857,
+      "song_path": "track_02_战斗曲___脉冲\\song_final.wav",
+      "manifest_path": "track_02_战斗曲___脉冲\\manifest.json"
+    },
+    {
+      "index": 3,
+      "title": "城镇曲 — 暖阳",
+      "success": true,
+      "bpm": 90,
+      "key": "C",
+      "duration_sec": 10.666666666666666,
+      "song_path": "track_03_城镇曲___暖阳\\song_final.wav",
+      "manifest_path": "track_03_城镇曲___暖阳\\manifest.json"
+    }
+  ],
+  "honesty_note": "混音不可逆，算法分离是有损近似。模式A(manifest) 提供 sha256 保真的分轨还原；模式B(algo) 通过 AI 模型重分离，结果仅为有损近似，不可视为原始分轨。"
+}

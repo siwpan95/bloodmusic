@@ -1,0 +1,54 @@
+sequenceDiagram
+    actor User
+    participant CLI as cli.py
+    participant AM as AlbumMaker
+    participant TH as TrackHandler
+    participant PG as PoolGenerator
+    participant Bridge as bridge.renderer
+    participant Mix as audio_pipeline.mixdown
+    participant FS as 文件系统
+
+    User->>CLI: bloodmusic-album make --config album.yaml --out album_output/
+    CLI->>FS: 读取 album.yaml
+    FS-->>CLI: YAML 文本
+    CLI->>CLI: AlbumConfig.from_yaml(path)
+    CLI->>AM: new AlbumMaker(config)
+    CLI->>AM: make(out_dir)
+
+    Note over AM,FS: ── 专辑级准备 ──
+    AM->>FS: 创建 out_dir/
+    AM->>FS: 复制 album.yaml → album.yaml.copy
+    AM->>AM: _build_base_pool() → InstrumentPool
+
+    Note over AM,TH: ── 遍历曲目（循环） ──
+    loop 每首曲目
+        AM->>TH: new TrackHandler(spec, base_pool, mix_config, separate_mode)
+        AM->>TH: process(work_dir)
+
+        Note over TH,PG: ── 阶段 G：生成 ──
+        TH->>TH: _build_pool_for_track() → 应用 style + extra_instruments
+        TH->>PG: PoolGenerator(pool, style).generate_all(bars)
+        PG-->>TH: MultiTrackPattern
+
+        Note over TH,Bridge: ── 阶段 R：渲染分轨 ──
+        TH->>TH: 计算 duration_sec = bars × 60 / bpm
+        loop 每轨 (music_tracks + drum_track)
+            TH->>Bridge: render_pattern_file(pattern, stem_path, duration_sec)
+            Bridge-->>TH: WAV 文件路径
+        end
+
+        Note over TH,Mix: ── 阶段 M：混音 ──
+        TH->>TH: sys.path.insert(0, "G:/tools/audio_pipeline")
+        TH->>Mix: mixdown(sources, work_dir, MixConfig, bpm=..., musical_key=...)
+        Mix->>FS: 拷贝 sources → _sources/
+        Mix->>FS: 写入 manifest.json
+        Mix-->>TH: MixResult(song_path, sources_dir, manifest_path)
+
+        TH-->>AM: TrackResult(success=True, ...)
+    end
+
+    Note over AM,FS: ── 专辑汇总 ──
+    AM->>FS: 写入 album_manifest.json
+    AM->>AM: 生成 AlbumReport
+    AM-->>CLI: AlbumResult
+    CLI-->>User: 打印报告：✓ N 首成功 / ✗ M 首失败

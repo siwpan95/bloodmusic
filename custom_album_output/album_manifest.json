@@ -1,0 +1,70 @@
+{
+  "version": "1.0",
+  "album": {
+    "title": "自定义专辑 — 风格探索",
+    "artist": "BloodMusic Engine",
+    "genre": "soundtrack",
+    "year": 2026,
+    "cover": null,
+    "separate_mode": "manifest"
+  },
+  "summary": {
+    "total_tracks": 5,
+    "success_count": 5,
+    "failure_count": 0,
+    "total_duration_sec": 99.45083028426681
+  },
+  "tracks": [
+    {
+      "index": 1,
+      "title": "冥想 · 晨曦",
+      "success": true,
+      "bpm": 60,
+      "key": "C",
+      "duration_sec": 24.0,
+      "song_path": "track_01_冥想___晨曦\\song_final.wav",
+      "manifest_path": "track_01_冥想___晨曦\\manifest.json"
+    },
+    {
+      "index": 2,
+      "title": "爵士 · 午后",
+      "success": true,
+      "bpm": 110,
+      "key": "F",
+      "duration_sec": 17.454545454545453,
+      "song_path": "track_02_爵士___午后\\song_final.wav",
+      "manifest_path": "track_02_爵士___午后\\manifest.json"
+    },
+    {
+      "index": 3,
+      "title": "地下城 · 深渊",
+      "success": true,
+      "bpm": 95,
+      "key": "Dm",
+      "duration_sec": 12.631578947368421,
+      "song_path": "track_03_地下城___深渊\\song_final.wav",
+      "manifest_path": "track_03_地下城___深渊\\manifest.json"
+    },
+    {
+      "index": 4,
+      "title": "史诗 · 崛起",
+      "success": true,
+      "bpm": 85,
+      "key": "Gm",
+      "duration_sec": 19.764705882352942,
+      "song_path": "track_04_史诗___崛起\\song_final.wav",
+      "manifest_path": "track_04_史诗___崛起\\manifest.json"
+    },
+    {
+      "index": 5,
+      "title": "Lo-Fi · 夜读",
+      "success": true,
+      "bpm": 75,
+      "key": "Am",
+      "duration_sec": 25.6,
+      "song_path": "track_05_Lo-Fi___夜读\\song_final.wav",
+      "manifest_path": "track_05_Lo-Fi___夜读\\manifest.json"
+    }
+  ],
+  "honesty_note": "混音不可逆，算法分离是有损近似。模式A(manifest) 提供 sha256 保真的分轨还原；模式B(algo) 通过 AI 模型重分离，结果仅为有损近似，不可视为原始分轨。"
+}
