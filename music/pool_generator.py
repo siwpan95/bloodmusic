@@ -421,9 +421,9 @@ class PoolGenerator:
 
         # 根据密度计算脉冲数
         steps = 16
-        kick_pulses = max(1, int(steps * pulse_density * 0.7))
-        snare_pulses = max(1, int(steps * pulse_density * 0.5))
-        hihat_pulses = max(1, int(steps * pulse_density * 1.2))
+        kick_pulses = min(steps, max(1, int(steps * pulse_density * 0.7)))
+        snare_pulses = min(steps, max(1, int(steps * pulse_density * 0.5)))
+        hihat_pulses = min(steps, max(1, int(steps * pulse_density * 1.2)))
 
         kick_pattern = euclidean_rhythm(kick_pulses, steps, 0)
         snare_pattern = euclidean_rhythm(snare_pulses, steps, 4)

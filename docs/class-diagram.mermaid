@@ -1,64 +1,329 @@
 classDiagram
-    %% ═══ 新增类/函数（album_generator.py 内） ═══
-    class ALBUM_STYLE_POOLS {
-        <<Dict>>
-        +"01_晨曦序曲": (yaml, style)
-        +"02_星海迷途": (yaml, style)
-        +"03_深海絮语": (yaml, style)
-        +"04_午夜爵士": (yaml, style)
-        +"05_霓虹脉冲": (yaml, style)
-        +"06_英雄远征": (yaml, style)
-        +"07_旧日时光": (yaml, style)
-        +"08_空山鸟语": (yaml, style)
-        +"09_田园小调": (yaml, style)
-        +"10_终章·重生": (yaml, style)
+    direction LR
+
+    %% ══════════════════════════════════════════════
+    %% bridge/models.py —— 桥接层数据模型（全部新增）
+    %% ══════════════════════════════════════════════
+    class MidiAsset {
+        +Path path
+        +str name
+        +str rel_path
+        +str source_group
+        +int size_bytes
+        +int mtime_ns
+        +to_dict() dict
     }
 
-    class generate_album_with_pool_fn {
-        +generate_album_with_pool(pool_dir, output_dir, duration_sec, seed) List~str~
-        -save_wav_pool(audio, filename, output_dir) str
+    class NoteEvent {
+        +int start_tick
+        +int end_tick
+        +int midi_note
+        +int velocity
+        +int channel
+        +int track_index
+        +duration_ticks() int
+        +is_drum() bool
     }
 
-    class cli_main_fn {
-        +cli_main() None
+    class NoteCluster {
+        +int start_tick
+        +int end_tick
+        +List~NoteEvent~ members
+        +root() NoteEvent
+        +upper() List~NoteEvent~
+        +size() int
+        +mean_velocity() float
     }
 
-    %% ═══ 现有模块（仅关系标注） ═══
-    class InstrumentPool {
-        +from_yaml(path) InstrumentPool$
-        +validate() List~str~
-        +get_by_role(role) List~PoolInstrument~
+    class TrackAnalysis {
+        +int track_index
+        +str name
+        +int channel
+        +int program
+        +bool is_drum
+        +str kind
+        +int note_count
+        +int max_polyphony
+        +int pitch_min
+        +int pitch_max
+        +int span_ticks
     }
 
-    class PoolRenderer {
-        +render() Tuple~np.ndarray, Dict~
-        +render_stems_only() Dict~str, np.ndarray~
+    class BridgeIssue {
+        +str level
+        +str code
+        +str message
+        +dict context
     }
 
-    class StylePreset {
-        +apply_to(pool) InstrumentPool
+    class ImportResult {
+        +Path source
+        +int bpm
+        +int ticks_per_beat
+        +float total_beats
+        +List~MusicPattern~ melody_patterns
+        +List~MusicPattern~ chord_patterns
+        +List~DrumPattern~ drum_patterns
+        +MultiTrackPattern multi_track
+        +List~TrackAnalysis~ analyses
+        +List~BridgeIssue~ issues
+        +ok() bool
+        +all_music_patterns() List~MusicPattern~
+        +duration_sec() float
+        +to_dict() dict
     }
 
-    %% ═══ album_generator.py 现有工具函数 ═══
-    class utility_functions {
-        +_to_mono(audio) np.ndarray
-        +_to_stereo(audio) np.ndarray
-        +_mix_audio(main, add, vol) np.ndarray
-        +_fade_edges(audio, fi, fo) np.ndarray
-        +_normalize(audio, peak) np.ndarray
-        +save_wav(audio, filename) str
-        +_mk_drum(name, bpm, kick, snare, hh) DrumPattern
+    class RenderResult {
+        +Path source
+        +List~Path~ audio_files
+        +float duration_sec
+        +str fmt
+        +List~BridgeIssue~ issues
     }
 
-    %% ═══ 关系 ═══
-    generate_album_with_pool_fn ..> ALBUM_STYLE_POOLS : reads
-    generate_album_with_pool_fn ..> InstrumentPool : from_yaml()
-    generate_album_with_pool_fn ..> PoolRenderer : creates & render()
-    generate_album_with_pool_fn ..> utility_functions : reuse
-    generate_album_with_pool_fn ..> StylePreset : apply_to()
-    cli_main_fn ..> generate_album_with_pool_fn : --pool
-    cli_main_fn ..> main_fn : default (legacy)
-
-    class main_fn {
-        +main() None  (原有, 零修改)
+    class BridgeReport {
+        +Path root
+        +List~MidiAsset~ scanned
+        +List~ImportResult~ imported
+        +List~RenderResult~ rendered
+        +List~BridgeIssue~ issues
+        +float elapsed_sec
+        +summary() dict
+        +to_json() str
+        +to_markdown() str
     }
+
+    class BridgeConfig {
+        +Path output_root
+        +int chord_tolerance_ticks
+        +int drum_steps
+        +str drum_bar_policy
+        +str audio_format
+        +str render_mode
+        +bool velocity_to_volume
+        +bool instrument_preset
+        +List~Path~ readonly_roots
+        +from_args(ns) BridgeConfig
+    }
+
+    class TonePreset {
+        +OscType osc_type
+        +float volume
+        +EnvShape env_shape
+        +List harmonics
+        +float reverb_mix
+        +float reverb_decay
+        +float stereo_width
+        +float lp_filter_hz
+        +float vibrato_rate
+        +float vibrato_depth
+        +apply_to(MusicPattern) MusicPattern
+    }
+
+    %% ══════════════════════════════════════════════
+    %% bridge/*.py —— 功能模块（无状态函数集合）
+    %% ══════════════════════════════════════════════
+    class Scanner {
+        <<module>>
+        +DEFAULT_EXCLUDE_DIRS frozenset
+        +DEFAULT_MIDI_SUFFIXES tuple
+        +scan_midi_assets(root, exclude_dirs, suffixes) List~MidiAsset~
+        +is_excluded(parts, exclude_dirs) bool
+    }
+
+    class NoteRange {
+        <<module>>
+        +MIN_SUPPORTED_MIDI int
+        +MAX_SUPPORTED_MIDI int
+        +midi_to_note_name(n) str
+        +safe_note_and_shift(n) tuple
+        +fold_into_range(n) tuple
+        +is_renderable(name) bool
+    }
+
+    class DrumMap {
+        <<module>>
+        +CANONICAL_DRUM_NOTES dict
+        +build_reverse_drum_map(extra) dict
+        +midi_note_to_drum_track(n) str
+        +quantize_to_steps(events, ppq, grid, policy) tuple
+        +default_drum_sounds(names) dict
+    }
+
+    class ChordMerge {
+        <<module>>
+        +default_chord_tolerance(ppq) int
+        +cluster_simultaneous(events, tol) List~NoteCluster~
+        +clusters_to_pattern_fields(clusters, ppq) tuple
+        +repair_negative_gaps(clusters) List~BridgeIssue~
+    }
+
+    class MidiImport {
+        <<module>>
+        +midi_to_patterns_v2(path, ...) ImportResult
+        +import_assets(assets, cfg) List~ImportResult~
+        -_read_events(mid) tuple
+        -_detect_bpm(mid) int
+        -_classify_track(...) TrackAnalysis
+        -_build_melody_pattern(...) MusicPattern
+        -_build_chord_pattern(...) MusicPattern
+        -_build_drum_patterns(...) List~DrumPattern~
+        -_assemble_multi_track(...) MultiTrackPattern
+    }
+
+    class InstrumentMap {
+        <<module>>
+        +GM_FAMILY_PRESETS dict
+        +NAME_HINT_PRESETS dict
+        +preset_for_program(program) TonePreset
+        +preset_for_name(name) TonePreset
+        +resolve_preset(analysis) TonePreset
+    }
+
+    class Renderer {
+        <<module>>
+        +estimate_duration_sec(result) float
+        +render_import_result(result, out_dir, fmt, mode) RenderResult
+        +render_patterns(patterns, out_dir, fmt, preset) List~Path~
+        +render_batch(results, out_dir, fmt) List~RenderResult~
+    }
+
+    class DawExport {
+        <<module>>
+        +DEFAULT_DAW_MIDI_DIRS tuple
+        +patterns_to_midi(result, path, ppq) Path
+        +export_to_daw(result, daw_dir, apply) List~Path~
+        -_assert_write_allowed(path, cfg)
+    }
+
+    class Report {
+        <<module>>
+        +LOG_FORMAT str
+        +get_logger(name) Logger
+        +build_report(...) BridgeReport
+        +write_report(report, out_dir, formats) List~Path~
+    }
+
+    class BridgeCLI {
+        <<module>>
+        +build_parser() ArgumentParser
+        +main(argv) int
+        +cmd_scan(ns) int
+        +cmd_import(ns) int
+        +cmd_render(ns) int
+        +cmd_export_to_daw(ns) int
+        +cmd_doctor(ns) int
+    }
+
+    %% ══════════════════════════════════════════════
+    %% bloodmusic 现有类型（只读复用，零改造）
+    %% ══════════════════════════════════════════════
+    class MusicPattern {
+        <<existing>>
+        +str name
+        +List~str~ notes
+        +List~float~ durations
+        +List~int~ octave_shifts
+        +int bpm
+        +bool loop
+        +OscType osc_type
+        +float volume
+        +EnvShape env_shape
+        +List~List~str~~ chords
+        +__post_init__()
+    }
+
+    class DrumPattern {
+        <<existing>>
+        +str name
+        +int steps
+        +int bpm
+        +dict tracks
+        +dict sounds
+        +bool loop
+        +__post_init__()
+    }
+
+    class MultiTrackPattern {
+        <<existing>>
+        +str name
+        +int bpm
+        +List~MusicPattern~ music_tracks
+        +DrumPattern drum_track
+    }
+
+    class DrumSoundParams {
+        <<existing>>
+        +OscType osc_type
+        +float pitch_hz
+        +float decay
+        +float volume
+        +float hp_hz
+        +float lp_hz
+    }
+
+    class RenderAPI {
+        <<existing>>
+        +render_pattern_to_array(pattern, sec) ndarray
+        +render_drum_pattern(pattern, sec) ndarray
+        +render_multi_track(pattern, sec) ndarray
+    }
+
+    class ExportAPI {
+        <<existing>>
+        +export_audio(sig, path, format) str
+        -_normalize_and_limit(sig) ndarray
+    }
+
+    class MidiExportConst {
+        <<existing>>
+        +MIDI_DRUM_MAP dict
+    }
+
+    class LegacyMidiIO {
+        <<deprecated>>
+        +midi_to_patterns(path) List~MusicPattern~
+    }
+
+    %% ── 关系 ──
+    Scanner ..> MidiAsset : creates
+    MidiImport ..> MidiAsset : consumes
+    MidiImport ..> NoteEvent : creates
+    MidiImport ..> TrackAnalysis : creates
+    MidiImport ..> ImportResult : returns
+    MidiImport ..> ChordMerge : uses
+    MidiImport ..> DrumMap : uses
+    MidiImport ..> NoteRange : uses
+    MidiImport ..> InstrumentMap : uses
+    ChordMerge ..> NoteCluster : creates
+    ChordMerge ..> NoteEvent : consumes
+    ChordMerge ..> BridgeIssue : emits
+    DrumMap ..> MidiExportConst : reverses MIDI_DRUM_MAP
+    DrumMap ..> DrumSoundParams : creates defaults
+    InstrumentMap ..> TonePreset : creates
+    TonePreset ..> MusicPattern : configures
+    ImportResult *-- MusicPattern : melody/chord
+    ImportResult *-- DrumPattern : drums
+    ImportResult *-- MultiTrackPattern : full mix
+    ImportResult *-- TrackAnalysis
+    ImportResult *-- BridgeIssue
+    MultiTrackPattern o-- MusicPattern
+    MultiTrackPattern o-- DrumPattern
+    DrumPattern o-- DrumSoundParams
+    Renderer ..> ImportResult : consumes
+    Renderer ..> RenderAPI : calls
+    Renderer ..> ExportAPI : calls
+    Renderer ..> RenderResult : returns
+    DawExport ..> ImportResult : consumes
+    DawExport ..> MidiExportConst : uses MIDI_DRUM_MAP
+    Report ..> BridgeReport : builds
+    BridgeReport *-- MidiAsset
+    BridgeReport *-- ImportResult
+    BridgeReport *-- RenderResult
+    BridgeCLI ..> Scanner
+    BridgeCLI ..> MidiImport
+    BridgeCLI ..> Renderer
+    BridgeCLI ..> DawExport
+    BridgeCLI ..> Report
+    BridgeCLI ..> BridgeConfig
+    MidiImport ..> LegacyMidiIO : supersedes

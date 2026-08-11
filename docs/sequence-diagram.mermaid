@@ -1,48 +1,144 @@
 sequenceDiagram
-    participant User as 用户
-    participant CLI as cli_main()
-    participant GAP as generate_album_with_pool()
-    participant IP as InstrumentPool
-    participant SP as StylePreset
-    participant PR as PoolRenderer
-    participant PG as PoolGenerator
-    participant UTIL as 工具函数
+    autonumber
+    actor User as 用户 / DAW 操作者
+    participant CLI as bridge/cli.py
+    participant CFG as bridge/config.py<br/>BridgeConfig
+    participant SC as bridge/scanner.py
+    participant IMP as bridge/midi_import.py<br/>midi_to_patterns_v2
+    participant MIDO as mido (第三方)
+    participant CM as bridge/chord_merge.py
+    participant DM as bridge/drum_map.py
+    participant NR as bridge/note_range.py
+    participant IM as bridge/instrument_map.py
+    participant PAT as music/pattern.py<br/>(现有·零改造)
+    participant RD as bridge/renderer.py
+    participant EXP as export/batch.py<br/>export_audio
+    participant DAW as bridge/daw_export.py
+    participant RPT as bridge/report.py
 
-    User->>CLI: python album_generator.py --pool
-
-    Note over CLI: argparse 解析参数
-
-    CLI->>GAP: generate_album_with_pool(duration_sec=120, seed=None)
-
-    loop 每首曲目 (10 首)
-        GAP->>GAP: ALBUM_STYLE_POOLS[name] → (yaml_file, style_name)
-
-        Note over GAP: Lazy import pool 模块
-        GAP->>IP: InstrumentPool.from_yaml(yaml_file)
-        IP-->>GAP: pool
-
-        GAP->>SP: get_style(style_name).apply_to(pool)
-        SP-->>GAP: pool (with style overrides)
-
-        GAP->>PR: PoolRenderer(pool, duration_sec=120, style_name)
-        GAP->>PR: renderer.render()
-
-        Note over PR: Phase 1: generate_all() via PoolGenerator
-        PR->>PG: PoolGenerator(pool, style).generate_all()
-        PG-->>PR: MultiTrackPattern
-
-        Note over PR: Phase 2-5: render tracks → mix → master
-        PR-->>GAP: (final_audio, stems)
-
-        GAP->>UTIL: _to_mono(final_audio)
-        GAP->>UTIL: _fade_edges(audio, 1.0, 3.0)
-        GAP->>UTIL: _normalize(audio)
-        GAP->>UTIL: save_wav_pool(audio, filename)
-
-        alt 单曲失败
-            GAP->>GAP: except Exception → logging.error → continue
-        end
+    %% ═══════════ 阶段 0：环境自检 ═══════════
+    User->>CLI: python -m bloodmusic.bridge doctor
+    CLI->>MIDO: import mido (惰性)
+    alt mido 缺失
+        MIDO--xCLI: ModuleNotFoundError
+        CLI-->>User: exit 1 + "pip install mido>=1.3"
+    else mido 就绪
+        MIDO-->>CLI: version_info
+        CLI-->>User: exit 0 + 输出根目录可写性报告
     end
 
-    GAP-->>CLI: [wav_paths]
-    CLI-->>User: 打印专辑信息 + 输出路径
+    %% ═══════════ 阶段 1：SCAN (P0-2) ═══════════
+    User->>CLI: bridge scan --root G:\midi
+    CLI->>CFG: BridgeConfig.from_args(ns)
+    CFG-->>CLI: cfg (output_root=bridge_output, readonly_roots=[G:\midi])
+    CLI->>SC: scan_midi_assets(root, cfg.exclude_dirs)
+    loop os.walk 自顶向下
+        SC->>SC: dirnames[:] = 剪枝(dist/_internal/build/site-packages/…)
+        SC->>SC: 收集 *.mid / *.midi
+    end
+    SC-->>CLI: List[MidiAsset] (按 rel_path 排序, 恰好 6 个)
+    CLI->>RPT: get_logger().info("scanned=6 excluded=1")
+    CLI-->>User: 表格 / --json 输出
+
+    %% ═══════════ 阶段 2：IMPORT v2 (P0-3 / P0-4) ═══════════
+    User->>CLI: bridge import --root G:\midi
+    CLI->>SC: scan_midi_assets(...)
+    SC-->>CLI: assets[6]
+    loop 对每个 MidiAsset（单文件失败不中断）
+        CLI->>IMP: midi_to_patterns_v2(asset.path, cfg…)
+        IMP->>MIDO: MidiFile(path)
+        MIDO-->>IMP: mid (ticks_per_beat=220, tracks[2])
+        IMP->>IMP: _detect_bpm(mid) —— 跨全部轨扫 set_tempo
+        IMP->>IMP: _read_events(mid) —— delta→绝对 tick, note_on/off 配对
+        IMP-->>IMP: List[NoteEvent] + 轨元数据(name/program/channel)
+        IMP->>IMP: _classify_track() → kind = drum / chord / melody / empty
+
+        alt kind == drum（channel 9 或轨名命中）
+            IMP->>DM: build_reverse_drum_map()
+            DM->>DM: 反转 export/midi_export.py::MIDI_DRUM_MAP
+            DM-->>IMP: {36:"kick", 38:"snare", 42:"hihat", …}
+            IMP->>DM: quantize_to_steps(events, ppq=220, grid=16, policy="extend")
+            DM->>DM: step_ticks = ppq/4 = 55；step = round(tick/step_ticks)
+            DM->>DM: total_steps = ceil(span/step)→向上取整到 16 的倍数 (=64)
+            DM-->>IMP: (tracks{name:[bool]*64}, steps=64, 量化误差统计)
+            IMP->>DM: default_drum_sounds(track_names)
+            DM-->>IMP: {name: DrumSoundParams}
+            IMP->>PAT: DrumPattern(name, steps=64, bpm, tracks, sounds)
+            PAT-->>IMP: DrumPattern（__post_init__ 校验步数一致）
+        else kind == chord / melody
+            IMP->>CM: default_chord_tolerance(ppq) → round(220/16)=14
+            IMP->>CM: cluster_simultaneous(events, tol=14)
+            CM->>CM: 按 start_tick 排序 → 容差内归为同一 NoteCluster
+            CM->>CM: repair_negative_gaps() —— 重叠则截断前一簇时值
+            CM-->>IMP: List[NoteCluster] + issues
+            IMP->>CM: clusters_to_pattern_fields(clusters, ppq)
+            CM->>NR: safe_note_and_shift(root.midi_note)
+            NR-->>CM: ("C3", 0)  —— 根音走 notes + octave_shifts
+            CM->>NR: fold_into_range(upper.midi_note)
+            NR-->>CM: "E3" —— 上方音必须落在 C0–C7（渲染器不对和弦施加 octave_shift）
+            CM-->>IMP: (notes[], durations[], chords[], octave_shifts[], velocities[])
+            IMP->>IM: resolve_preset(analysis) [P1-3]
+            IM->>IM: family = program // 8（Bass prog=33 → family 4）
+            IM-->>IMP: TonePreset(osc_type, env_shape, volume, 效果…)
+            IMP->>PAT: MusicPattern(name, notes, durations, chords, octave_shifts, bpm, loop=False, **preset)
+            PAT-->>IMP: MusicPattern（__post_init__ 校验长度一致）
+        end
+        IMP->>IMP: _assemble_multi_track() —— 共享同一 total_beats 时间轴
+        IMP-->>CLI: ImportResult(melody/chord/drum/multi_track/analyses/issues)
+    end
+    CLI->>RPT: 汇总 issues（不中断）
+
+    %% ═══════════ 阶段 3：RENDER + EXPORT (P0-5) ═══════════
+    User->>CLI: bridge render --root G:\midi --format wav --mode both
+    CLI->>RD: render_import_result(result, out_dir, fmt, mode)
+    RD->>RD: estimate_duration_sec(result) = total_beats × 60 / bpm
+    Note over RD,PAT: 时长必须由 pattern 时值精确推导——<br/>render_pattern_to_array 在 duration 偏大时会自动 tile 造成重复
+    alt mode 含 stems
+        loop 每个 MusicPattern
+            RD->>PAT: render_pattern_to_array(pattern, duration_sec)
+            PAT->>PAT: 逐音振荡 + 包络 + 和弦叠加(chords[idx % len])
+            PAT-->>RD: ndarray
+            RD->>EXP: export_audio(sig, out/stems/<name>.wav, "wav")
+            EXP->>EXP: _normalize_and_limit(-1 dBFS) + soundfile.write
+            EXP-->>RD: path
+        end
+        loop 每个 DrumPattern
+            RD->>PAT: render_drum_pattern(pattern, duration_sec)
+            PAT-->>RD: ndarray
+            RD->>EXP: export_audio(...)
+            EXP-->>RD: path
+        end
+    end
+    alt mode 含 mix
+        RD->>PAT: render_multi_track(multi_track, duration_sec)
+        PAT->>PAT: 逐轨渲染 + EffectChain + 归一化
+        PAT-->>RD: ndarray(float32)
+        RD->>EXP: export_audio(sig, out/mix/<stem>.wav, fmt)
+        EXP-->>RD: path
+    end
+    RD-->>CLI: RenderResult(audio_files, duration_sec, issues)
+
+    %% ═══════════ 阶段 4：REPORT (P1-4) ═══════════
+    CLI->>RPT: build_report(scanned, imported, rendered, issues)
+    RPT-->>CLI: BridgeReport
+    CLI->>RPT: write_report(report, out_dir, ["json","md"])
+    RPT-->>CLI: [report.json, report.md]
+    CLI-->>User: exit 0（全成功）/ 2（部分失败）
+
+    %% ═══════════ 阶段 5：EXPORT-TO-DAW 回流 (P1-2) ═══════════
+    User->>CLI: bridge export-to-daw --file … --daw-dir …\Data\MIDI --apply
+    CLI->>DAW: export_to_daw(result, daw_dir, apply=True)
+    DAW->>DAW: _assert_write_allowed(daw_dir, cfg)
+    alt 未显式 --apply（默认 dry-run）
+        DAW-->>CLI: 仅打印计划写入清单，不落盘
+    else 目标位于 readonly_roots 且非显式 DAW 目录
+        DAW--xCLI: BridgeWriteDenied（硬规则：绝不写 G:\midi）
+    else 允许写入
+        DAW->>MIDO: MidiFile(type=1, ticks_per_beat=480)
+        DAW->>DAW: 旋律/和弦轨 → note_on/off；根音+chords 同 tick 发音
+        DAW->>DAW: 鼓轨 → MIDI_DRUM_MAP 正向映射，channel 9
+        DAW->>MIDO: mid.save(daw_dir/bm_<stem>.mid)
+        MIDO-->>DAW: ok
+        DAW-->>CLI: [写入路径]
+    end
+    CLI-->>User: 提示「DAW 的 Data/MIDI→batch_synthesize 流水线将自动接管」

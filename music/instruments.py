@@ -312,6 +312,41 @@ SYNTH_BASS = InstrumentPreset(
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# 自定义贝斯 / 铜管扩展
+# ═══════════════════════════════════════════════════════════════════════
+
+UPRIGHT_BASS = InstrumentPreset(
+    name="Upright Bass", gm_program=32, category="bass",
+    osc_type=OscType.TRIANGLE, volume=0.2, env_shape=EnvShape.PLUCK,
+    harmonics=[(1.0, 1.0), (2.0, 0.35), (3.0, 0.2), (4.0, 0.1)],
+    vibrato_rate=3.0, vibrato_depth=0.5,
+    reverb_mix=0.2, reverb_decay=1.2, lp_filter_hz=2500, stereo_width=0.2,
+)
+
+DEEP_BASS = InstrumentPreset(
+    name="Deep Bass", gm_program=39, category="bass",
+    osc_type=OscType.SINE, volume=0.22, env_shape=EnvShape.SWELL,
+    harmonics=[(0.5, 0.5), (1.0, 1.0), (1.5, 0.15)],
+    reverb_mix=0.3, reverb_decay=2.5, lp_filter_hz=800, stereo_width=0.0,
+)
+
+WARM_BASS = InstrumentPreset(
+    name="Warm Bass", gm_program=33, category="bass",
+    osc_type=OscType.TRIANGLE, volume=0.2, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.15), (5.0, 0.05)],
+    reverb_mix=0.15, reverb_decay=1.0, lp_filter_hz=1500, stereo_width=0.15,
+)
+
+BRASS_SECTION = InstrumentPreset(
+    name="Brass Section", gm_program=61, category="brass",
+    osc_type=OscType.SAW, volume=0.18, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.3), (4.0, 0.2), (5.0, 0.1), (6.0, 0.05)],
+    vibrato_rate=0.8, vibrato_depth=0.6,
+    reverb_mix=0.25, reverb_decay=1.8, lp_filter_hz=6000, stereo_width=0.4,
+)
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # 分类汇总
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -325,13 +360,15 @@ for _inst in [
     # Strings
     VIOLIN, VIOLA, CELLO, STRING_ENSEMBLE, PIZZICATO,
     # Brass/Woodwind
-    TRUMPET, FLUTE, CLARINET, SAXOPHONE,
+    TRUMPET, FLUTE, CLARINET, SAXOPHONE, BRASS_SECTION,
     # Guitar/Plucked
     ACOUSTIC_GUITAR, ELECTRIC_GUITAR_CLEAN, KOTO, BANJO,
     # Percussion/Mallet
     MUSIC_BOX, VIBRAPHONE, MARIMBA, TUBULAR_BELLS,
     # Synth
     SYNTH_PAD_WARM, SYNTH_PAD_BRIGHT, SYNTH_LEAD, SYNTH_BASS,
+    # Custom Bass
+    UPRIGHT_BASS, DEEP_BASS, WARM_BASS,
 ]:
     key = _inst.name.lower().replace(" ", "_").replace("(", "").replace(")", "")
     INSTRUMENTS[key] = _inst

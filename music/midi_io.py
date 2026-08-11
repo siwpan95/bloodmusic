@@ -13,6 +13,12 @@ MIDI 导入导出 —— MusicPattern ↔ MIDI 双向转换
     >>> from bloodmusic.music.midi_io import music_pattern_to_midi, midi_to_patterns
     >>> music_pattern_to_midi(pattern, "my_melody.mid")
     >>> patterns = midi_to_patterns("my_song.mid")
+
+.. deprecated::
+    本模块的 **导入方向**（``midi_to_patterns``）已被
+    ``bloodmusic.bridge.midi_import.midi_to_patterns_v2`` 取代：
+    旧实现会把和弦拆成连续单音、整体丢弃 GM 鼓轨、且把 PPQ 硬编码成 480。
+    导出方向的三个函数暂无替代，可继续使用。
 """
 
 import os
@@ -215,7 +221,19 @@ def midi_to_patterns(
 ) -> List["MusicPattern"]:
     """从 MIDI 文件导入所有轨道为 MusicPattern 列表。
 
-    每个 MIDI 轨道生成一个 MusicPattern，包含音符序列。
+    @deprecated，请用 bridge.midi_import.midi_to_patterns_v2。
+
+    弃用原因（本函数保留仅为向后兼容，行为不再变更）:
+        1. **和弦被拆成连续单音** —— 同时发音的音符被逐个串成旋律，
+           4 个三和弦会变成 12 个先后弹奏的单音；
+        2. **鼓轨被整体丢弃** —— GM 通道 10 未做识别，鼓素材导入后为空；
+        3. **PPQ 硬编码 480** —— 实测素材 PPQ = 220，时值会被整体算错 ~2.18 倍；
+        4. 超出 C0–C7 的音高会被 note_to_freq() 静默降级为 440Hz。
+
+    替代方案:
+        >>> from bloodmusic.bridge import midi_to_patterns_v2   # doctest: +SKIP
+        >>> result = midi_to_patterns_v2("song.mid")            # doctest: +SKIP
+        >>> result.melody_patterns, result.chord_patterns, result.drum_patterns  # doctest: +SKIP
 
     Args:
         filepath: 输入 MIDI 文件路径

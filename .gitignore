@@ -5,6 +5,9 @@ skill/output_beats/
 skill/bloodmusic-beats/scripts/output_beats/
 *.wav
 
+# bridge 子包默认输出根（R2：音频 / report.json / report.md / bm_*.mid 全部落这里）
+bridge_output/
+
 # Secrets / tokens
 *令牌*
 *token*

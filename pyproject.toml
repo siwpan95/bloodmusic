@@ -12,6 +12,7 @@ dependencies = [
     "scipy>=1.10",
     "sounddevice>=0.4.6",
     "soundfile>=0.12.1",
+    "mido>=1.3,<2.0",
 ]
 
 [project.optional-dependencies]
@@ -21,7 +22,7 @@ gui = ["tkinter"]
 bloodmusic = "bloodmusic.cli:main"
 
 [tool.setuptools]
-packages = ["bloodmusic", "core", "effects", "music", "sfx", "export", "playback", "gui"]
+packages = ["bloodmusic", "core", "effects", "music", "sfx", "export", "playback", "gui", "bridge"]
 
 [tool.setuptools.package-dir]
 bloodmusic = "."
@@ -32,6 +33,7 @@ sfx = "sfx"
 export = "export"
 playback = "playback"
 gui = "gui"
+bridge = "bridge"
 
 [tool.pytest.ini_options]
 markers = [
