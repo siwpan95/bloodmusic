@@ -32,6 +32,7 @@ class AlbumResult:
         out_dir: 输出根目录
         tracks: 各曲目结果列表
         album_manifest_path: album_manifest.json 路径
+        video_bgm_path: 视频 BGM 输出路径（仅当指定 --video 时）
         success_count: 成功曲目数
         failure_count: 失败曲目数
         total_duration_sec: 总时长（秒）
@@ -40,6 +41,7 @@ class AlbumResult:
     out_dir: Path = field(default_factory=Path)
     tracks: list[TrackResult] = field(default_factory=list)
     album_manifest_path: Path | None = None
+    video_bgm_path: Path | None = None
     success_count: int = 0
     failure_count: int = 0
     total_duration_sec: float = 0.0
@@ -69,12 +71,20 @@ class AlbumMaker:
         """
         self.config = config
 
-    def make(self, out_dir: str | Path, *, parallel: bool = False) -> AlbumResult:
+    def make(
+        self,
+        out_dir: str | Path,
+        *,
+        parallel: bool = False,
+        video_path: str | None = None,
+    ) -> AlbumResult:
         """执行整张专辑制作。
 
         Args:
             out_dir: 输出根目录（如 album_output/）
             parallel: 是否并行生成曲目（默认 False）
+            video_path: 视频文件路径。指定后会将首支成功曲目作为 BGM
+                嵌入视频（使用 VideoProcessor.mux_audio_video）。
 
         Returns:
             AlbumResult（单曲目失败不中断，继续处理其余）
@@ -123,6 +133,26 @@ class AlbumMaker:
         album_result.album_manifest_path = self._write_album_manifest(
             album_result, out_dir, cover_path=cover_path
         )
+
+        # ── 视频 BGM：专辑完成后，可选地将母带嵌入视频 ──
+        if video_path:
+            try:
+                video_output = self._mux_video_bgm(
+                    video_path=video_path,
+                    album_output=out_dir,
+                    result=album_result,
+                )
+                album_result.video_bgm_path = video_output
+                self._update_manifest_video_bgm(out_dir, video_output)
+                logger.info(f"视频 BGM 已输出: {video_output}")
+            except FileNotFoundError as exc:
+                logger.error(f"视频 BGM 失败（文件不存在）: {exc}")
+            except RuntimeError as exc:
+                logger.error(f"视频 BGM 失败: {exc}")
+            except Exception as exc:
+                logger.error(
+                    f"视频 BGM 异常: {type(exc).__name__}: {exc}"
+                )
 
         logger.info(
             f"专辑完成: {self.config.title} — "
@@ -329,6 +359,106 @@ class AlbumMaker:
                 sort_keys=False,
                 indent=2,
             )
+
+    # ── 视频 BGM ──
+
+    def _mux_video_bgm(
+        self,
+        video_path: str,
+        album_output: Path,
+        result: AlbumResult,
+    ) -> Path:
+        """将专辑首支成功曲目作为 BGM 嵌入视频。
+
+        逻辑：
+        1. 取第一首成功曲目的 song_final.wav 作为 BGM
+        2. 调用 VideoProcessor.mux_audio_video(mode=REPLACE)
+        3. 返回输出视频路径
+
+        Args:
+            video_path: 源视频文件路径
+            album_output: 专辑输出根目录
+            result: AlbumResult（用于获取成功曲目）
+
+        Returns:
+            输出视频文件的 Path
+
+        Raises:
+            FileNotFoundError: 视频文件或音频文件不存在
+            RuntimeError: 没有成功曲目 或 ffmpeg 执行失败 或 依赖缺失
+        """
+        # 尽早校验输入，避免延迟到 import 阶段才报错
+        video_path_obj = Path(video_path)
+        if not video_path_obj.is_file():
+            raise FileNotFoundError(f"视频文件不存在: {video_path}")
+
+        # 取第一首成功曲目的成品 WAV
+        audio_path: Path | None = None
+        for track in result.tracks:
+            if track.success and track.song_path is not None and track.song_path.is_file():
+                audio_path = track.song_path
+                break
+
+        if audio_path is None:
+            raise RuntimeError("没有成功的曲目可用作 BGM")
+
+        # 延迟导入 remix 依赖（避免 album_maker 直接依赖 pydub/ffmpeg）
+        try:
+            from core.video_processor import VideoProcessor, MuxMode
+        except ImportError as exc:
+            raise RuntimeError(
+                f"无法加载 VideoProcessor（缺少 remix 依赖）: {exc}"
+            ) from exc
+
+        # 输出路径：album_output 下，保留原视频扩展名
+        video_suffix = video_path_obj.suffix or ".mp4"
+        output_path = album_output / f"video_bgm{video_suffix}"
+
+        logger.info(
+            f"视频 BGM 合成: 视频={video_path_obj.name}, "
+            f"音频={audio_path.name}"
+        )
+
+        vp = VideoProcessor()
+        abs_output = vp.mux_audio_video(
+            video_path=str(video_path_obj),
+            audio_path=str(audio_path),
+            output_path=str(output_path),
+            mode=MuxMode.REPLACE,
+        )
+
+        return Path(abs_output)
+
+    def _update_manifest_video_bgm(
+        self,
+        out_dir: Path,
+        video_output: Path,
+    ) -> None:
+        """更新 album_manifest.json，写入 video_bgm 信息。
+
+        Args:
+            out_dir: 专辑输出根目录
+            video_output: 视频 BGM 输出路径
+        """
+        manifest_path = out_dir / "album_manifest.json"
+        if not manifest_path.is_file():
+            logger.warning("album_manifest.json 不存在，跳过 video_bgm 记录")
+            return
+
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest = json.load(f)
+
+        manifest["video_bgm"] = {
+            "path": str(video_output.relative_to(out_dir)),
+            "abs_path": str(video_output),
+            "mode": "REPLACE",
+            "description": "首支成功曲目替换原视频音轨",
+        }
+
+        with open(manifest_path, "w", encoding="utf-8") as f:
+            json.dump(manifest, f, indent=2, ensure_ascii=False)
+
+        logger.info(f"album_manifest 已更新 video_bgm 记录")
 
     @staticmethod
     def _safe_dirname(name: str) -> str:

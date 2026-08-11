@@ -65,7 +65,7 @@ def _cmd_make(args: argparse.Namespace) -> int:
     # 执行
     out_dir = Path(args.out) if args.out else Path("./album_output")
     maker = AlbumMaker(config)
-    result = maker.make(out_dir, parallel=args.parallel)
+    result = maker.make(out_dir, parallel=args.parallel, video_path=args.video)
 
     # 报告
     report = AlbumReport.generate(result)
@@ -270,6 +270,7 @@ def build_parser() -> argparse.ArgumentParser:
 示例:
   bloodmusic-album make --demo --out ./album_output
   bloodmusic-album make --config album.yaml --out ./album_output --parallel
+  bloodmusic-album make --demo --out ./album_output --video ./input.mp4
   bloodmusic-album restore --album ./album_output --track 1
   bloodmusic-album doctor
   bloodmusic-album list-styles
@@ -295,6 +296,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_make.add_argument(
         "-v", "--verbose", action="store_true", help="详细日志输出"
+    )
+    p_make.add_argument(
+        "--video", type=str, default=None, help="视频文件路径（可选），将专辑首支曲目作为 BGM 嵌入视频"
     )
 
     # restore

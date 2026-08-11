@@ -1,0 +1,90 @@
+# ① 真实采样 + 合成混编演示专辑（使用 audio_separator 已有 stems）
+album:
+  title: 采样+合成 混编演示
+  artist: BloodMusic Engine
+  genre: experimental
+  year: 2026
+  cover: null
+
+instrument_pool:
+  name: 真实采样混合乐池
+  bpm: 110
+  key: C
+  scale: major
+  global_volume: 0.9
+  generation:
+    diversity: 0.5
+    humanize: true
+    seed: 2026
+    chord_progression: dreamy
+  instruments:
+  # ── 真实采样乐器（来自 audio_separator 分离的 stems）──
+  - name: 真实伴奏采样
+    role: chord
+    engine: sampler
+    sample_path: G:/tools/audio_separator/no_vocals.wav
+    volume: 0.75
+    pan: -0.1
+  - name: 真实人声采样
+    role: melody
+    engine: sampler
+    sample_path: G:/tools/audio_separator/vocals.wav
+    volume: 0.65
+    pan: 0.15
+  # ── 合成乐器（补充采样没有的声部）──
+  - name: 合成鼓组
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+  - name: 合成贝斯
+    role: bass
+    engine: subtractive
+    preset: deep_bass
+    volume: 0.9
+    pan: 0.0
+  - name: 合成铺底
+    role: pad
+    engine: granular
+    preset: bright_pad
+    volume: 0.45
+    pan: 0.3
+
+mix_config:
+  clip_mode: soft
+  normalize_mode: rms
+  rms_target_db: -2.0
+  fade_in_ms: 60
+  fade_out_ms: 250
+  compress: true
+  compress_threshold: -18.0
+  compress_ratio: 3.0
+  low_pass_cutoff: 0
+  high_pass_cutoff: 0
+
+separate_mode: manifest
+
+tracks:
+# 1 — 采样为主 + 合成节奏（jazz 风格）
+- title: 混编曲 · 采样爵士
+  bpm: 100
+  bars: 16
+  key: C
+  style: jazz
+  seed: 111
+
+# 2 — 纯电子合成（无采样，对比组）
+- title: 合成曲 · 纯电子
+  bpm: 128
+  bars: 16
+  key: Am
+  style: electronic
+  seed: 222
+
+# 3 — Lo-Fi 氛围（采样旋律 + synth 铺底）
+- title: 混编曲 · Lo-Fi
+  bpm: 80
+  bars: 16
+  key: F
+  style: lofi
+  seed: 333

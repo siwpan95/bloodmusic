@@ -1,0 +1,83 @@
+# ② 三路径混编专辑：MIDI + Synth + Sampler 共存
+album:
+  title: 三路径混编专辑
+  artist: BloodMusic Engine
+  genre: soundtrack
+  year: 2026
+
+instrument_pool:
+  name: 三路径共用乐池
+  bpm: 120
+  key: C
+  scale: major
+  global_volume: 0.9
+  generation:
+    diversity: 0.4
+    humanize: true
+    seed: 42
+    chord_progression: dreamy
+  instruments:
+  # 合成乐器（供 synth/sampler 路径用）
+  - name: 钢琴旋律
+    role: melody
+    engine: wavetable
+    preset: acoustic_grand_piano
+    volume: 0.85
+  - name: 弦乐铺底
+    role: chord
+    engine: fm_advanced
+    preset: warm_pad
+    volume: 0.7
+  - name: 低音贝斯
+    role: bass
+    engine: subtractive
+    preset: deep_bass
+    volume: 0.9
+  - name: 鼓组
+    role: drum
+    engine: noise
+    volume: 0.85
+  # 真实采样（供 sampler 路径用）
+  - name: 真实伴奏
+    role: chord
+    engine: sampler
+    sample_path: G:/tools/audio_separator/no_vocals.wav
+    volume: 0.7
+
+mix_config:
+  clip_mode: soft
+  normalize_mode: rms
+  rms_target_db: -2.0
+  fade_in_ms: 50
+  fade_out_ms: 200
+  compress: true
+  compress_threshold: -18.0
+  compress_ratio: 3.0
+
+separate_mode: manifest
+
+tracks:
+# 1 — MIDI 路径（从 .mid 导入）
+- title: MIDI · 钢琴独奏
+  bpm: 120
+  bars: 16
+  key: C
+  style: classical
+  seed: 111
+  midi_path: G:/midi/MusicStudio/Data/MIDI/Piano.mid
+
+# 2 — Synth 路径（纯合成）
+- title: Synth · 电子舞曲
+  bpm: 130
+  bars: 16
+  key: Am
+  style: electronic
+  seed: 222
+
+# 3 — Sampler + Synth 混合
+- title: 混合 · 采样氛围
+  bpm: 90
+  bars: 16
+  key: F
+  style: ambient
+  seed: 333

@@ -1,0 +1,42 @@
+{
+  "title": "三路径混编专辑",
+  "out_dir": "G:\\tools\\bloodmusic\\three_path_output",
+  "summary": {
+    "total_tracks": 3,
+    "success_count": 3,
+    "failure_count": 0,
+    "total_duration_sec": 26.05128205128205
+  },
+  "tracks": [
+    {
+      "title": "MIDI · 钢琴独奏",
+      "success": true,
+      "bpm": 120,
+      "key": "C",
+      "duration_sec": 8.0,
+      "song_path": "G:\\tools\\bloodmusic\\three_path_output\\track_01_MIDI___钢琴独奏\\song_final.wav",
+      "manifest_path": "G:\\tools\\bloodmusic\\three_path_output\\track_01_MIDI___钢琴独奏\\manifest.json",
+      "sources_dir": "G:\\tools\\bloodmusic\\three_path_output\\track_01_MIDI___钢琴独奏\\_sources"
+    },
+    {
+      "title": "Synth · 电子舞曲",
+      "success": true,
+      "bpm": 130,
+      "key": "Am",
+      "duration_sec": 7.384615384615385,
+      "song_path": "G:\\tools\\bloodmusic\\three_path_output\\track_02_Synth___电子舞曲\\song_final.wav",
+      "manifest_path": "G:\\tools\\bloodmusic\\three_path_output\\track_02_Synth___电子舞曲\\manifest.json",
+      "sources_dir": "G:\\tools\\bloodmusic\\three_path_output\\track_02_Synth___电子舞曲\\_sources"
+    },
+    {
+      "title": "混合 · 采样氛围",
+      "success": true,
+      "bpm": 90,
+      "key": "F",
+      "duration_sec": 10.666666666666666,
+      "song_path": "G:\\tools\\bloodmusic\\three_path_output\\track_03_混合___采样氛围\\song_final.wav",
+      "manifest_path": "G:\\tools\\bloodmusic\\three_path_output\\track_03_混合___采样氛围\\manifest.json",
+      "sources_dir": "G:\\tools\\bloodmusic\\three_path_output\\track_03_混合___采样氛围\\_sources"
+    }
+  ]
+}

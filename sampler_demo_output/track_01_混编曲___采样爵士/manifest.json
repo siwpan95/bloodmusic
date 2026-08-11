@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-11T22:38:21",
+  "song": "song_final.wav",
+  "bpm": 100,
+  "musical_key": "C",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；模式A=复用源分轨(真无损100%)，模式B=算法重分离(有损近似, SDR≈9–12dB，非无损还原)",
+  "sources": [
+    {
+      "output_name": "合成贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\stems\\合成贝斯.wav",
+      "sha256": "5da4e3450faa2b4438269471d5cf5b25af1c93dde080f0728f62340865f48a25"
+    },
+    {
+      "output_name": "合成铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\stems\\合成铺底.wav",
+      "sha256": "bb3146039648a531cddc801159df85a1758394fd048b19d18c8ed87b72c004ca"
+    },
+    {
+      "output_name": "合成鼓组.wav",
+      "instrument_class": "synth",
+      "original_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\stems\\合成鼓组.wav",
+      "sha256": "671532741e83b660640abdf1db657d325fe688c24e37614338ed20022d48e858"
+    },
+    {
+      "output_name": "真实伴奏采样.wav",
+      "instrument_class": "synth",
+      "original_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\stems\\真实伴奏采样.wav",
+      "sha256": "c26fd774391b656d4313a7bfe1f4d1d0f9e133c3dc218e5016e01718bbe91254"
+    },
+    {
+      "output_name": "真实人声采样.wav",
+      "instrument_class": "synth",
+      "original_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\stems\\真实人声采样.wav",
+      "sha256": "49ad33ec69b9771f76cc277568055d3bc1bcb541b92da2c505ab670d1073891a"
+    }
+  ]
+}

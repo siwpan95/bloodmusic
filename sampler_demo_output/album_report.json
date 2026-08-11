@@ -1,0 +1,42 @@
+{
+  "title": "采样+合成 混编演示",
+  "out_dir": "G:\\tools\\bloodmusic\\sampler_demo_output",
+  "summary": {
+    "total_tracks": 3,
+    "success_count": 3,
+    "failure_count": 0,
+    "total_duration_sec": 29.1
+  },
+  "tracks": [
+    {
+      "title": "混编曲 · 采样爵士",
+      "success": true,
+      "bpm": 100,
+      "key": "C",
+      "duration_sec": 9.6,
+      "song_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\song_final.wav",
+      "manifest_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\manifest.json",
+      "sources_dir": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_01_混编曲___采样爵士\\_sources"
+    },
+    {
+      "title": "合成曲 · 纯电子",
+      "success": true,
+      "bpm": 128,
+      "key": "Am",
+      "duration_sec": 7.5,
+      "song_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_02_合成曲___纯电子\\song_final.wav",
+      "manifest_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_02_合成曲___纯电子\\manifest.json",
+      "sources_dir": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_02_合成曲___纯电子\\_sources"
+    },
+    {
+      "title": "混编曲 · Lo-Fi",
+      "success": true,
+      "bpm": 80,
+      "key": "F",
+      "duration_sec": 12.0,
+      "song_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_03_混编曲___Lo-Fi\\song_final.wav",
+      "manifest_path": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_03_混编曲___Lo-Fi\\manifest.json",
+      "sources_dir": "G:\\tools\\bloodmusic\\sampler_demo_output\\track_03_混编曲___Lo-Fi\\_sources"
+    }
+  ]
+}
