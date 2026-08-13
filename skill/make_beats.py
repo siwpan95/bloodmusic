@@ -42,10 +42,13 @@ def save_wav(audio: np.ndarray, filename: str):
     if peak > 0:
         audio = audio / peak * 0.95
     base, ext = os.path.splitext(filename)
+    if not ext:
+        ext = ".wav"  # 调用方未带扩展名时默认 WAV
     stamped = f"{base}_{TIMESTAMP}{ext}"
     path = os.path.join(OUTPUT_DIR, stamped)
     wavfile.write(path, SR, (audio * 32767).astype(np.int16))
     print(f"  [OK] 已生成: {stamped}")
+    return path
 
 
 def manual_808_beat(bpm: int, bars: int, kick_hits: list, snare_hits: list,
@@ -525,6 +528,92 @@ def make_ambient_beat():
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# 真实采样节拍（反哺 album_maker.sample_pool 的自动采样池）
+# ═══════════════════════════════════════════════════════════════════════
+
+def make_sampled_beat(bpm: int | None = None, bars: int = 4, style: str | None = None) -> str | None:
+    """用真实采样（radio_music_stems / 特殊乐器）制作节拍。
+
+    优先用真实歌曲拆出的 drums/bass，不足时回退 808 合成鼓。
+    指定 style 时，BPM 从 style_db 编配策略随机选取。
+    """
+    import sys as _sys
+    _bloodmusic_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    if _bloodmusic_root not in _sys.path:
+        _sys.path.insert(0, _bloodmusic_root)
+
+    try:
+        from bloodmusic.album_maker.sample_pool import auto_build_pool
+        from bloodmusic.music.sampler import load_sample, play_sample
+    except Exception as e:
+        print(f"  [跳过] 采样池不可用: {e}")
+        return None
+
+    # style_db：按风格随机 BPM
+    if style:
+        try:
+            import random as _r
+            from bloodmusic.album_maker.style_db import get_style
+            s = get_style(style)
+            if s and bpm is None:
+                bpm = _r.randint(*s["bpm_range"])
+        except Exception:
+            pass
+    if bpm is None:
+        bpm = 100
+
+    pool = auto_build_pool(max_per_role=2, include_synth_fallback=False)
+    sampled = [i for i in pool["instruments"] if i.get("engine") == "sampler"]
+
+    if not sampled:
+        print("  [跳过] 无真实采样")
+        return None
+
+    beat_dur = 60.0 / bpm
+    total_dur = bars * 4.0 * beat_dur
+    result = np.zeros(int(total_dur * SR))
+
+    # 按角色选采样：drum 优先，bass 其次
+    drum_samples = [i for i in sampled if i["role"] == "drum"]
+    bass_samples = [i for i in sampled if i["role"] == "bass"]
+
+    placed = 0
+    # 鼓：每拍触发一次
+    if drum_samples:
+        drum = drum_samples[0]
+        sample = load_sample(drum["sample_path"], name=drum["name"], root_note="C4")
+        for beat in range(bars * 4):
+            seg = play_sample(sample, target_sr=SR, duration=0.3, volume=drum["volume"])
+            pos = int(beat * beat_dur * SR)
+            end = min(pos + len(seg), len(result))
+            result[pos:end] += seg[:end - pos]
+            placed += 1
+
+    # 贝斯：每 2 拍触发一次（低音线）
+    if bass_samples:
+        bass = bass_samples[0]
+        from bloodmusic.core.note_utils import note_to_freq
+        bass_notes = ["C2", "G2", "A2", "F2"]
+        sample = load_sample(bass["sample_path"], name=bass["name"], root_note="C2")
+        for i in range(0, bars * 4, 2):
+            freq = note_to_freq(bass_notes[i // 2 % len(bass_notes)])
+            seg = play_sample(sample, target_freq=freq, target_sr=SR,
+                              duration=beat_dur * 1.5, volume=bass["volume"])
+            pos = int(i * beat_dur * SR)
+            end = min(pos + len(seg), len(result))
+            result[pos:end] += seg[:end - pos]
+            placed += 1
+
+    if placed == 0:
+        print("  [跳过] 采样无法用于节拍")
+        return None
+
+    audio = np.clip(result / max(np.max(np.abs(result)), 1e-8), -1, 1)
+    n_sampled = len(drum_samples) + len(bass_samples)
+    return save_wav(audio, f"sampled_beat_{bpm}bpm_{n_sampled}src")
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # 主函数
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -541,6 +630,7 @@ def main():
         make_drum_only_beat()
         make_edm_beat()
         make_ambient_beat()
+        make_sampled_beat()  # 真实采样节拍（反哺 quick 模式）
 
         print(f"\n{'=' * 60}")
         print(f"  全部完成！输出目录: {OUTPUT_DIR}")

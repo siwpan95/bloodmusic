@@ -26,7 +26,8 @@ import yaml
 
 # ── Paths ──────────────────────────────────────────────────
 PROJECT_ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
-ALBUM_GEN = PROJECT_ROOT / "album_generator.py"
+# album_generator.py 已归档（被 album_maker/ 子包替代），测试继续验证归档代码
+ALBUM_GEN = PROJECT_ROOT / "archive" / "album_generator.py"
 POOL_DIR = PROJECT_ROOT / "music" / "pool_presets"
 SKILL_MD = PROJECT_ROOT / "skill" / "bloodmusic-beats" / "SKILL.md"
 
@@ -251,44 +252,58 @@ def test_cli_default_runs_legacy():
 # ═════════════════════════════════════════════════════════════
 
 def test_pool_imports_are_lazy():
-    """InstrumentPool, PoolRenderer, get_style only imported inside generate_album_with_pool()."""
+    """Pool modules imported lazily inside functions, never at module top level.
+
+    Uses AST analysis (not string matching) so docstring examples and comments
+    are not mistaken for real imports.
+    """
     source = ALBUM_GEN.read_text(encoding="utf-8")
+    tree = ast.parse(source)
 
-    # These imports should ONLY appear inside generate_album_with_pool() definition
-    # (i.e., after 'def generate_album_with_pool' and before the next top-level 'def ')
-    lines = source.split("\n")
-    pool_func_start = None
-    pool_func_end = None
+    pool_modules = {
+        "bloodmusic.music.instrument_pool",
+        "bloodmusic.music.pool_renderer",
+        "bloodmusic.music.pool_styles",
+    }
 
-    for i, line in enumerate(lines):
-        if "def generate_album_with_pool(" in line:
-            pool_func_start = i
-        if pool_func_start is not None and i > pool_func_start:
-            if line.startswith("def ") and "generate_album_with_pool" not in line:
-                pool_func_end = i
-                break
+    # 1. Reject any pool import that is a direct child of the Module node
+    #    (i.e. a real top-level import statement). Imports inside function
+    #    bodies are nested under FunctionDef, not Module, so they are allowed.
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, ast.ImportFrom) and node.module in pool_modules:
+            pytest.fail(
+                f"Pool module '{node.module}' imported at module top level "
+                f"(line {node.lineno}) — lazy import violation!"
+            )
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if alias.name in pool_modules:
+                    pytest.fail(
+                        f"Pool module '{alias.name}' imported at module top level "
+                        f"(line {node.lineno}) — lazy import violation!"
+                    )
 
-    if pool_func_end is None:
-        pool_func_end = len(lines)
+    # 2. Confirm the pool modules ARE lazily imported somewhere inside a
+    #    function body (otherwise lazy loading is not implemented at all).
+    found_in_func: set[str] = set()
 
-    # Extract lines outside the function
-    before_func = "\n".join(lines[:pool_func_start])
-    after_func = "\n".join(lines[pool_func_end:])
+    def _scan_func(func_node):
+        for child in ast.walk(func_node):
+            if isinstance(child, ast.ImportFrom) and child.module in pool_modules:
+                found_in_func.add(child.module)
+            elif isinstance(child, ast.Import):
+                for alias in child.names:
+                    if alias.name in pool_modules:
+                        found_in_func.add(alias.name)
 
-    pool_imports = ["from bloodmusic.music.instrument_pool import InstrumentPool",
-                    "from bloodmusic.music.pool_renderer import PoolRenderer",
-                    "from bloodmusic.music.pool_styles import get_style"]
+    for node in ast.iter_child_nodes(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            _scan_func(node)
 
-    for imp in pool_imports:
-        # Should be present in the function body
-        func_body = "\n".join(lines[pool_func_start:pool_func_end])
-        assert imp in func_body, (
-            f"Pool import not found in generate_album_with_pool(): {imp}"
-        )
-        # Should NOT be at module level (top-level import)
-        assert imp not in before_func + "\n" + after_func, (
-            f"Pool import leaked to module level: {imp} — lazy import violation!"
-        )
+    missing = pool_modules - found_in_func
+    assert not missing, (
+        f"Pool modules never lazily imported inside any function: {missing}"
+    )
 
 
 # ═════════════════════════════════════════════════════════════

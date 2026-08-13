@@ -479,3 +479,62 @@ LAYERED_SFX_PRESETS = [
 ]
 
 LAYERED_SFX_BY_NAME = {p.name: p for p in LAYERED_SFX_PRESETS}
+
+
+# ============================================================
+# 多声部叠加混合（仿 bfxr Mixer 的 N 路叠加，不限数量）
+# ============================================================
+
+def mix_voices(
+    voices: List,
+    weights: Optional[List[float]] = None,
+    normalize: bool = True,
+    target_dbfs: float = -1.0,
+) -> np.ndarray:
+    """将任意 N 个 SynthVoice 加权叠加为单段音频。
+
+    仿 bfxr 的 Mixer（最多 5 路叠加），此处不限数量。每个 voice
+    用 synthesize_voice 合成后按权重累加，输出统一归一化到
+    target_dbfs（默认 -1dBFS）并硬限幅，保证无削波。
+
+    Args:
+        voices: SynthVoice 列表（长度可不一致，按最长对齐补零）
+        weights: 各 voice 的权重（None = 全部 1.0）
+        normalize: 是否归一化到 target_dbfs（False 保留原始电平）
+        target_dbfs: 归一化目标峰值 (dBFS)
+
+    Returns:
+        float32 混合音频 (mono)
+
+    Raises:
+        ValueError: voices 为空或 weights 长度不匹配
+    """
+    from ..core.voice import SynthVoice, synthesize_voice
+
+    if not voices:
+        raise ValueError("mix_voices requires at least one SynthVoice")
+    if not all(isinstance(v, SynthVoice) for v in voices):
+        raise TypeError("all voices must be SynthVoice instances")
+    if weights is None:
+        weights = [1.0] * len(voices)
+    if len(weights) != len(voices):
+        raise ValueError(
+            f"weights length {len(weights)} != voices length {len(voices)}"
+        )
+
+    rendered = [synthesize_voice(v) for v in voices]
+    max_len = max(len(a) for a in rendered)
+    mix = np.zeros(max_len, dtype=np.float64)
+    for audio, w in zip(rendered, weights):
+        if w == 0.0:
+            continue
+        padded = np.zeros(max_len, dtype=np.float64)
+        padded[: len(audio)] = audio
+        mix += padded * w
+
+    if normalize and max_len > 0:
+        peak = float(np.max(np.abs(mix))) if mix.size else 0.0
+        if peak > 0:
+            target = 10.0 ** (target_dbfs / 20.0)
+            mix = mix * (target / peak)
+    return np.clip(mix, -1.0, 1.0).astype(np.float32)

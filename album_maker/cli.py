@@ -10,18 +10,30 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
 
-# ── sys.path 注入 audio_pipeline + remix ──
-# CRITICAL: remix 必须在 bloodmusic 之前，因为 bloodmusic 也有 core/ 子包
-_AUDIO_PIPELINE_ROOT = Path(r"G:\tools\audio_pipeline")
-_REMIX_ROOT = Path(r"G:\tools\remix")
+# ── sys.path 注入（内部自包含） ──
+# pipeline/ 和 remix/ 已迁移到 bloodmusic 内部
+_AUDIO_PIPELINE_ROOT = Path(__file__).resolve().parents[1] / "pipeline"
+_REMIX_ROOT = Path(__file__).resolve().parents[1] / "remix"
 for _root in (_REMIX_ROOT, _AUDIO_PIPELINE_ROOT):
     _root_str = str(_root)
     while _root_str in sys.path:
         sys.path.remove(_root_str)
     sys.path.insert(0, _root_str)
+
+# ── PATH 注入 (remix 内置 ffmpeg) ──
+_REMIX_BIN = str(_REMIX_ROOT / "bin")
+if _REMIX_BIN not in os.environ.get("PATH", ""):
+    os.environ["PATH"] = _REMIX_BIN + os.pathsep + os.environ.get("PATH", "")
+
+# 默认输出根（绝对路径，固定到 bloodmusic 项目内）
+_BLOODMUSIC_ROOT = Path(__file__).resolve().parents[1]
+_QUICK_DEFAULT_OUT = str(_BLOODMUSIC_ROOT / "album_maker_quick")
+_JAM_DEFAULT_OUT = str(_BLOODMUSIC_ROOT / "album_maker_jam")
+_MAKE_DEFAULT_OUT = str(_BLOODMUSIC_ROOT / "album_output")
 
 logger = logging.getLogger(__name__)
 
@@ -62,8 +74,16 @@ def _cmd_make(args: argparse.Namespace) -> int:
         logger.error("请指定 --config <album.yaml> 或 --demo")
         return 1
 
+    # --auto-pool：用真实采样池覆盖 instrument_pool
+    if args.auto_pool:
+        from .sample_pool import auto_build_pool
+        pool = auto_build_pool()
+        config.pool_raw = pool
+        n_sampled = sum(1 for i in pool["instruments"] if i.get("engine") == "sampler")
+        logger.info(f"--auto-pool: 使用 {n_sampled} 件真实采样 + 合成器补位")
+
     # 执行
-    out_dir = Path(args.out) if args.out else Path("./album_output")
+    out_dir = Path(args.out) if args.out else Path(_MAKE_DEFAULT_OUT)
     maker = AlbumMaker(config)
     result = maker.make(out_dir, parallel=args.parallel, video_path=args.video)
 
@@ -220,17 +240,21 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
 # ═══════════════════════════════════════════════════════════════════════
 
 def _cmd_list_styles(args: argparse.Namespace) -> int:
-    """列出所有可用风格预设。"""
-    try:
-        from bloodmusic.music.pool_styles import STYLES
-    except ImportError as exc:
-        print(f"错误: 无法加载 bloodmusic — {exc}")
-        return 1
+    """列出所有可用风格预设（含编配策略）。"""
+    from .style_db import STYLE_DB
 
-    print("可用风格预设 (12 种):")
+    print("风格编配策略（quick/style/jam/make/beat 共用）:")
     print("-" * 60)
-    for name, style in STYLES.items():
-        print(f"  {name:16s} — {style.description}")
+    for name, s in sorted(STYLE_DB.items()):
+        bpm = f"{s['bpm_range'][0]}-{s['bpm_range'][1]}"
+        keys = "/".join(s["keys"][:4])
+        scales = "/".join(s["scales"][:2])
+        progs = ", ".join(s["progressions"][:3])
+        print(f"  {name:14s} BPM {bpm:>8s}")
+        print(f"  {'':14s} 调: {keys}  调式: {scales}")
+        print(f"  {'':14s} 和声: {progs}")
+        print(f"  {'':14s} 乐器: {', '.join(s['instruments'][:3])}  节奏: {s['drum_style']}")
+        print()
     return 0
 
 
@@ -256,7 +280,80 @@ def _cmd_list_pools(args: argparse.Namespace) -> int:
     return 0
 
 
+# ── 快速单曲命令 ────────────────────────────────────────────
+
+def _cmd_quick(args: argparse.Namespace) -> int:
+    """随机风格快速单曲"""
+    from .quick import QuickMaker
+    import random
+    if args.seed is not None:
+        random.seed(args.seed)
+    result = QuickMaker.random(out_dir=args.out, seed=args.seed)
+    print(f"\n🎲 {result.title}")
+    print(f"   风格={result.style}  BPM={result.bpm}  Key={result.key}  Bars={result.bars}")
+    if result.wave_path:
+        print(f"   📁 {result.wave_path}  ({result.duration_sec:.1f}s)")
+    return 0
+
+
+def _cmd_style(args: argparse.Namespace) -> int:
+    """指定风格快速单曲"""
+    from .quick import QuickMaker, STYLE_DB
+    if args.style_name not in STYLE_DB:
+        print(f"未知风格: {args.style_name}")
+        print(f"可用: {', '.join(STYLE_DB.keys())}")
+        return 1
+    result = QuickMaker.style(args.style_name, out_dir=args.out,
+                               bpm=args.bpm, bars=args.bars, seed=args.seed)
+    print(f"\n🎵 {result.title}")
+    print(f"   风格={result.style}  BPM={result.bpm}  Key={result.key}  Bars={result.bars}")
+    if result.wave_path:
+        print(f"   📁 {result.wave_path}  ({result.duration_sec:.1f}s)")
+    return 0
+
+
+def _cmd_jam(args: argparse.Namespace) -> int:
+    """即兴连续生成"""
+    from .quick import QuickMaker
+    results = QuickMaker.jam(count=args.count, out_dir=args.out)
+    ok = sum(1 for r in results if r.wave_path)
+    print(f"\n🎸 {ok}/{args.count} 成功 → {args.out}")
+    return 0 if ok == args.count else 1
+
+
+def _cmd_sample_album(args: argparse.Namespace) -> int:
+    """采样专辑 — 仅从 radio_music_stems 挑 bass/drums/other 生成专辑"""
+    from .sample_album import make_sample_album
+
+    styles = None
+    if args.styles:
+        styles = [s.strip() for s in args.styles.split(",") if s.strip()]
+
+    print(f"🎧 采样专辑生成中: {args.tracks} 曲")
+    print(f"   stems 目录: {args.stems or 'G:\\radio_music_stems'}")
+    if styles:
+        print(f"   风格白名单: {', '.join(styles)}")
+
+    result = make_sample_album(
+        stems_dir=args.stems,
+        n_tracks=args.tracks,
+        styles=styles,
+        seed=args.seed,
+        out_dir=args.out,
+        allow_same_song=args.allow_same_song,
+        album_title=args.title,
+    )
+
+    print(f"\n✅ 采样专辑完成: {result.success_count}/{len(result.tracks)} 曲")
+    print(f"   输出: {result.out_dir}")
+    for t in result.tracks:
+        mark = "✓" if t.success else "✗"
+        print(f"   {mark} {t.title} ({t.duration_sec:.1f}s)")
+    return 0 if result.success_count == len(result.tracks) else 1
+
+
 # ═══════════════════════════════════════════════════════════════════════
+# 命令行解析器
 # main
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -289,7 +386,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--demo", action="store_true", help="使用内置 demo 配置（零配置体验）"
     )
     p_make.add_argument(
-        "--out", type=str, default="./album_output", help="输出目录（默认 ./album_output）"
+        "--auto-pool", action="store_true",
+        help="自动扫描真实采样池构建乐器池（覆盖 YAML 中的 instrument_pool）"
+    )
+    p_make.add_argument(
+        "--out", type=str, default=_MAKE_DEFAULT_OUT, help="输出目录（默认 bloodmusic/album_output）"
     )
     p_make.add_argument(
         "--parallel", action="store_true", help="并行生成曲目（P1）"
@@ -329,6 +430,38 @@ def build_parser() -> argparse.ArgumentParser:
     # list-pools
     sub.add_parser("list-pools", help="列出内置乐器池模板")
 
+    # ── 快速单曲 (整合 album_generator.py + skill/make_beats.py) ──
+    p_quick = sub.add_parser("quick", help="🎲 随机风格快速单曲（零配置）")
+    p_quick.add_argument("--out", default=_QUICK_DEFAULT_OUT, help="输出目录")
+    p_quick.add_argument("--seed", type=int, default=None, help="随机种子")
+
+    p_style = sub.add_parser("style", help="🎵 指定风格快速单曲")
+    p_style.add_argument("style_name", help="风格名（classical/jazz/electronic/...）")
+    p_style.add_argument("--bpm", type=int, default=None)
+    p_style.add_argument("--bars", type=int, default=None)
+    p_style.add_argument("--out", default=_QUICK_DEFAULT_OUT)
+    p_style.add_argument("--seed", type=int, default=None)
+
+    p_jam = sub.add_parser("jam", help="🎸 即兴模式 — 连续生成 N 首随机曲")
+    p_jam.add_argument("--count", type=int, default=5, help="生成数量（默认 5）")
+    p_jam.add_argument("--out", default=_JAM_DEFAULT_OUT)
+    p_jam.add_argument("--seed", type=int, default=None)
+
+    # ── 采样专辑 (仅从 radio_music_stems 挑 bass/drums/other) ──
+    p_sample = sub.add_parser(
+        "sample-album", help="🎧 采样专辑 — 仅从 radio_music_stems 随机挑 bass/drums/other 按风格生成专辑"
+    )
+    p_sample.add_argument("--stems", type=str, default=None,
+                          help="stems 目录（默认 G:\\radio_music_stems）")
+    p_sample.add_argument("--tracks", type=int, default=8, help="曲目数（默认 8）")
+    p_sample.add_argument("--styles", type=str, default=None,
+                          help="逗号分隔的风格白名单（默认全部 12 种）")
+    p_sample.add_argument("--seed", type=int, default=None, help="随机种子")
+    p_sample.add_argument("--out", type=str, default=None, help="输出目录")
+    p_sample.add_argument("--title", type=str, default="Sample Collage", help="专辑名")
+    p_sample.add_argument("--allow-same-song", action="store_true",
+                          help="允许同一首歌的多个 stem 同时出现")
+
     return parser
 
 
@@ -356,6 +489,10 @@ def main(argv: list[str] | None = None) -> int:
         "doctor": _cmd_doctor,
         "list-styles": _cmd_list_styles,
         "list-pools": _cmd_list_pools,
+        "quick": _cmd_quick,
+        "style": _cmd_style,
+        "jam": _cmd_jam,
+        "sample-album": _cmd_sample_album,
     }
 
     handler = commands.get(args.command)

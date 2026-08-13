@@ -644,7 +644,13 @@ class TestArchitectureRules(unittest.TestCase):
         offenders: list[str] = []
         for path in self.PACKAGE_ROOT.rglob("*.py"):
             parts = set(path.relative_to(self.PACKAGE_ROOT).parts)
-            if parts & {"bridge", "tests", "build", "dist", "__pycache__", ".git"}:
+            # Only scan the core engine packages (core/effects/music/sfx/
+            # export/playback/gui/interactive). Extension layers (album_maker,
+            # pipeline, remix, skill) are legitimate consumers of bridge and
+            # may import it; .pass/ holds QA scripts, not product code.
+            if parts & {"bridge", "tests", "build", "dist", "__pycache__", ".git",
+                         ".pass", "album_maker", "album_maker_quick", "pipeline",
+                         "remix", "skill", "bloodmusic.egg-info"}:
                 continue
             try:
                 tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"))

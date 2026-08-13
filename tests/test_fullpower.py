@@ -17,6 +17,7 @@ import tempfile
 import unittest
 
 import numpy as np
+import pytest
 
 from bloodmusic.core.constants import SR
 
@@ -450,22 +451,33 @@ class TestAutomationFunctionality(unittest.TestCase):
                            "filter_sweep should change audio output")
 
     def test_filter_sweep_peak_different(self):
-        """带 filter_sweep 的音频峰值应与不带的不同"""
+        """带 filter_sweep 的音频高频能量应显著低于不带（低通衰减高频）。
+
+        峰值比较不可靠：渲染输出会归一化，峰值被拉到接近同一电平。
+        改用二阶差分能量（高频近似）之比，线性归一化不改变比值。
+        注意 start_hz 不能贴近 Nyquist（22050），否则扫频前段几乎不衰减、
+        整体效果被稀释。
+        """
         with_auto, without_auto = self._render_with_without_automation({
             "filter_sweep": {
-                "start_hz": 20000,
-                "end_hz": 400,
-                "mid_hz": 20000,
-                "mid_time_ratio": 0.3,
+                "start_hz": 8000,
+                "end_hz": 200,
+                "mid_hz": 3000,
+                "mid_time_ratio": 0.5,
                 "type": "lowpass",
-                "q": 1.0,
+                "q": 2.0,
+                "interpolate": "smooth",
             },
         })
-        peak_with = np.max(np.abs(with_auto))
-        peak_without = np.max(np.abs(without_auto))
-        # 峰值应不同（滤波器衰减了高频）
-        self.assertNotAlmostEqual(peak_with, peak_without, places=2,
-                                  msg="filter_sweep should affect peak amplitude")
+
+        def _hf_energy(sig):
+            hf = np.diff(sig, n=2)
+            return float(np.sum(hf ** 2))
+
+        self.assertLess(
+            _hf_energy(with_auto), _hf_energy(without_auto) * 0.5,
+            "lowpass filter_sweep should attenuate high-frequency energy",
+        )
 
     def test_volume_curve_works(self):
         """volume_curve 正确改变音量"""
@@ -588,11 +600,21 @@ class TestAutomationFunctionality(unittest.TestCase):
 
         self.assertIn("Track1", stems)
         self.assertIn("Track2", stems)
-        # Track1 开头应接近零（volume_curve 淡入）
-        early_peak1 = np.max(np.abs(stems["Track1"][:int(0.1 * SR)]))
-        early_peak2 = np.max(np.abs(stems["Track2"][:int(0.1 * SR)]))
-        self.assertLess(early_peak1, early_peak2 * 0.5,
-                        "Track1 should fade in while Track2 starts at full volume")
+        # Track1 淡入：前 25% 能量应远低于后 25%；Track2 无淡入：前后接近。
+        # 0.1s 短窗口受音符起音随机性影响会 flaky，改用前后段能量比。
+        n = len(stems["Track1"])
+        q = n // 4
+        e1_early = float(np.sum(stems["Track1"][:q] ** 2))
+        e1_late = float(np.sum(stems["Track1"][-q:] ** 2))
+        e2_early = float(np.sum(stems["Track2"][:q] ** 2))
+        e2_late = float(np.sum(stems["Track2"][-q:] ** 2))
+        ratio1 = e1_early / max(e1_late, 1e-12)
+        ratio2 = e2_early / max(e2_late, 1e-12)
+        self.assertLess(
+            ratio1, ratio2 * 0.5,
+            "Track1 volume_curve fade-in should make its early/late "
+            "energy ratio much lower than Track2",
+        )
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1074,6 +1096,7 @@ class TestPoolAutomationInheritance(unittest.TestCase):
 # 8. --fullpower CLI 端到端
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.slow
 class TestFullpowerCLIEndToEnd(unittest.TestCase):
     """--fullpower 端到端集成测试"""
 
@@ -1142,10 +1165,10 @@ class TestFullpowerCLIEndToEnd(unittest.TestCase):
         import importlib
         import sys
 
-        # 确保可以导入 _generate_fullpower_album
+        # 确保可以导入 _generate_fullpower_album（album_generator.py 已归档到 archive/）
         album_gen_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "album_generator.py",
+            "archive", "album_generator.py",
         )
 
         spec = importlib.util.spec_from_file_location(

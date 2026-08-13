@@ -7,6 +7,10 @@ name = "bloodmusic"
 version = "2.0.0"
 description = "程序化游戏音频合成引擎"
 requires-python = ">=3.10"
+authors = [
+    { name = "siwpan" },
+]
+license = { text = "MIT" }
 dependencies = [
     "numpy>=1.24",
     "scipy>=1.10",

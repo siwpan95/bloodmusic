@@ -421,22 +421,24 @@ class RealtimeMusicEngine:
             freq = note_to_freq(f"{note_name}{layer.base_octave}")
             wave = oscillator(t, freq, osc_type)
 
-            # 节奏门控
-            if osc_type != OscType.NOISE_WHITE:
-                # 基于节拍的门控
-                phase_in_beat = (self._t % beat_dur) / beat_dur
-                gate = 1.0
-                for pattern_dur in layer.rhythm_pattern:
-                    if phase_in_beat < pattern_dur:
-                        gate = 1.0
-                    else:
-                        gate = 0.5  # 弱拍
-                    # 简化: 只考虑第一个节奏值
-                    break
-
-                if gate < 0.6:
-                    # skip rhythm processing for simplicity
-                    pass
+            # 节奏门控：根据 rhythm_pattern（每个元素为一个节拍相位段的
+            # 占宽，取值 0~1）把每一拍切成若干段，逐样本在强拍(1.0)/弱拍
+            # (0.5) 之间切换，从而让 layer 的节奏律动真正生效。
+            if osc_type != OscType.NOISE_WHITE and layer.rhythm_pattern:
+                pattern = np.asarray(layer.rhythm_pattern, dtype=np.float32)
+                pattern = pattern[pattern > 0]
+                if pattern.size:
+                    # 归一化占宽，得到 [0,1) 的节拍相位边界
+                    boundaries = np.cumsum(pattern / pattern.sum())
+                    boundaries = np.clip(boundaries, 0.0, 1.0)
+                    # 每样本在拍内的相位 [0,1)
+                    phase = ((t % beat_dur) / beat_dur).astype(np.float64)
+                    # 落入的段索引：第一个边界 > phase 的段
+                    seg_idx = np.searchsorted(boundaries, phase, side="right")
+                    seg_idx = np.clip(seg_idx, 0, len(boundaries) - 1)
+                    # 偶数段=强拍(1.0)，奇数段=弱拍(0.5)
+                    gate = np.where(seg_idx % 2 == 1, 0.5, 1.0)
+                    wave = wave * gate.astype(np.float32)
 
             result += wave * 0.3 / len(layer.notes)
 

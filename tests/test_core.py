@@ -218,9 +218,10 @@ class TestNoteUtils(unittest.TestCase):
         """A4 应映射到 440Hz"""
         self.assertAlmostEqual(note_to_freq("A4"), 440.0, places=1)
 
-    def test_unknown_note_returns_440(self):
-        """未知音符应返回 440Hz"""
-        self.assertAlmostEqual(note_to_freq("X9"), 440.0)
+    def test_unknown_note_raises(self):
+        """未知音符应显式抛出 ValueError（不再静默回退 440Hz）"""
+        with self.assertRaises(ValueError):
+            note_to_freq("X9")
 
     def test_note_with_underscore(self):
         """下划线音符名应被正确处理"""

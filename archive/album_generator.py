@@ -1,10 +1,22 @@
 #!/usr/bin/env python3
 """
+.. deprecated:: 2026-08-12
+    此文件已被 album_maker/ 子包替代。
+    请使用 album_maker 的快速单曲模式:
+
+        python -m bloodmusic.album_maker.cli quick       # 随机风格单曲
+        python -m bloodmusic.album_maker.cli style jazz  # 指定风格
+        python -m bloodmusic.album_maker.cli jam         # 即兴模式
+
+    旧版专辑生成请使用:
+        python -m bloodmusic.album_maker.cli make --demo
+
 BloodMusic 纯音乐专辑生成器 — 《血音幻境》 BloodSound Fantasia
 ================================================================
 使用 BloodMusic 全引擎能力，生成 10 首不同风格的纯音乐曲目。
 涵盖：古典/钢琴、新世纪、氛围、爵士、电子、影视史诗、
       Lo-Fi、冥想、民谣、史诗终章。
+
 
 引擎: SongArrangement + EffectChain + Automation + BassSynth
      + Harmony + FM/KS 合成 + 多波形振荡器

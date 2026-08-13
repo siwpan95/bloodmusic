@@ -798,6 +798,13 @@ class PoolRenderer:
             arrangement = self._build_arrangement(tracks)
             mixer = self._build_mixer(tracks, stems)
             arrangement.mixer = mixer
+            # 挂接预渲染 stems（Phase 2 已应用 automation），
+            # 防止 render_song 从原始 pattern 重渲染覆盖 automation 效果
+            arrangement.pre_rendered_stems = {
+                i: stems[track.name]
+                for i, track in enumerate(tracks.music_tracks)
+                if track.name in stems
+            }
             from .arrangement import render_song
             return render_song(arrangement)
         except Exception as e:

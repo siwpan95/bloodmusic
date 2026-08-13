@@ -42,15 +42,28 @@ NOTES: dict[str, float] = {
 
 
 def note_to_freq(note: str) -> float:
-    """音符名 → 频率 (Hz)。未知音符返回 440Hz。
+    """音符名 → 频率 (Hz)。
+
+    对非法输入（空串、缺少八度数字、未知音名）抛出 ValueError，
+    而非静默回退到 440Hz，避免拼写错误被悄悄吞掉导致难以调试。
 
     Args:
         note: 音符名，如 "C4", "Eb_4", "G#3"
     Returns:
         频率 (Hz)
+    Raises:
+        ValueError: 当音符名格式非法或音名未知时
     """
-    normalized = note.replace("_", "")
-    return NOTES.get(normalized, 440.0)
+    if not note or not isinstance(note, str):
+        raise ValueError(f"非法音符名: {note!r} (需类似 'C4' / 'G#3')")
+    normalized = note.replace("_", "").strip()
+    # 必须以数字八度结尾
+    if not normalized[-1].isdigit():
+        raise ValueError(f"音符名缺少八度数字: {note!r}")
+    freq = NOTES.get(normalized)
+    if freq is None:
+        raise ValueError(f"未知音符名: {note!r}")
+    return freq
 
 
 def midi_to_freq(midi_note: int) -> float:

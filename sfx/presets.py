@@ -273,3 +273,70 @@ SYSTEM_FX_PRESETS: Dict[str, SynthVoice] = {
         harmonics=[(0.5, 0.4), (2.0, 0.2)],
     ),
 }
+
+
+# ═══════════════════════════════════════════════════════════════
+#  游戏通用音效（sfxr 经典 8 类对标）
+# ═══════════════════════════════════════════════════════════════
+# 对标 sfxr 家族 (pickupCoin / laserShoot / explosion / powerUp /
+# hitHurt / jump / blipSelect / random) 的经典游戏音效分类，
+# 用 BloodMusic 合成能力（谐波/包络/滤波/失真）实现，音色现代化。
+GAME_FX_PRESETS: Dict[str, SynthVoice] = {
+    # 拾取金币 — 清脆短促的高频"叮"（sfxr pickupCoin）
+    "pickup_coin": SynthVoice(
+        freq=988.0, osc_type=OscType.SQUARE, duration=0.09,
+        volume=0.5, env_shape=EnvShape.PERCUSSIVE, pitch_mod=7,
+        harmonics=[(2.0, 0.35), (3.0, 0.15)],
+        effect_chain=EffectChain(lp_filter_hz=9000, reverb_mix=0.08),
+    ),
+    # 激光射击 — 频率骤降的锯齿波（sfxr laserShoot）
+    "laser_shoot": SynthVoice(
+        freq=1800.0, osc_type=OscType.SAW, duration=0.12,
+        volume=0.55, env_shape=EnvShape.PERCUSSIVE, pitch_mod=-12,
+        harmonics=[(0.5, 0.3)],
+        effect_chain=EffectChain(lp_filter_hz=6000, hp_filter_hz=120,
+                                  distortion=0.15, bit_crush=10),
+    ),
+    # 爆炸 — 低频噪声长衰减（sfxr explosion）
+    "explosion": SynthVoice(
+        freq=90.0, osc_type=OscType.NOISE_BROWN, duration=0.7,
+        volume=0.7, env_shape=EnvShape.PERCUSSIVE, pitch_mod=-6,
+        harmonics=[(0.5, 0.5)],
+        effect_chain=EffectChain(lp_filter_hz=900, distortion=0.35,
+                                  reverb_mix=0.2, reverb_decay=0.9),
+    ),
+    # 能力提升 — 上行滑音感（sfxr powerUp）
+    "power_up": SynthVoice(
+        freq=440.0, osc_type=OscType.TRIANGLE, duration=0.35,
+        volume=0.55, env_shape=EnvShape.SWELL, pitch_mod=5,
+        harmonics=[(2.0, 0.2)],
+        effect_chain=EffectChain(reverb_mix=0.15, chorus_mix=0.15,
+                                  chorus_rate=2.0),
+    ),
+    # 受击 — 短促锯齿骤降（sfxr hitHurt）
+    "hit_hurt": SynthVoice(
+        freq=280.0, osc_type=OscType.SAW, duration=0.16,
+        volume=0.6, env_shape=EnvShape.PERCUSSIVE, pitch_mod=-8,
+        effect_chain=EffectChain(lp_filter_hz=3500, distortion=0.3,
+                                  bit_crush=8),
+    ),
+    # 跳跃 — 上行滑音（sfxr jump）
+    "jump": SynthVoice(
+        freq=330.0, osc_type=OscType.SQUARE, duration=0.14,
+        volume=0.5, env_shape=EnvShape.PERCUSSIVE, pitch_mod=9,
+        harmonics=[(1.5, 0.15)],
+        effect_chain=EffectChain(lp_filter_hz=5000),
+    ),
+    # UI 选择 — 极短 blip（sfxr blipSelect）
+    "blip_select": SynthVoice(
+        freq=1200.0, osc_type=OscType.SINE, duration=0.04,
+        volume=0.4, env_shape=EnvShape.PERCUSSIVE,
+    ),
+    # 随机拾取 — 与金币区分的另一种拾取（sfxr random 风格）
+    "random_pick": SynthVoice(
+        freq=660.0, osc_type=OscType.TRIANGLE, duration=0.1,
+        volume=0.5, env_shape=EnvShape.PLUCK, pitch_mod=-3,
+        harmonics=[(2.0, 0.25)],
+        effect_chain=EffectChain(reverb_mix=0.12, reverb_decay=0.3),
+    ),
+}

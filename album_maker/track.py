@@ -19,23 +19,33 @@ album_maker/track.py — 单曲目全流程处理器
 from __future__ import annotations
 
 import logging
+import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-# ── sys.path 注入 audio_pipeline + remix ──
+logger = logging.getLogger(__name__)
+
+# ── sys.path 注入 audio_pipeline + remix（环境变量可配置） ──
 # CRITICAL: remix 必须在 bloodmusic 之前，因为 bloodmusic 也有 core/ 子包
 # bloodmusic 内部使用相对导入 (.core)，不受影响
-_AUDIO_PIPELINE_ROOT = Path(r"G:\tools\audio_pipeline")
-_REMIX_ROOT = Path(r"G:\tools\remix")
+_AUDIO_PIPELINE_ROOT = Path(os.environ.get(
+    "BLOODMUSIC_AUDIO_PIPELINE", r"G:\tools\audio_pipeline",
+))
+_REMIX_ROOT = Path(os.environ.get(
+    "BLOODMUSIC_REMIX", r"G:\tools\remix",
+))
 for _root in (_REMIX_ROOT, _AUDIO_PIPELINE_ROOT):
     _root_str = str(_root)
+    if not _root.is_dir():
+        logger.warning(
+            "外部依赖路径不存在: %s（可用环境变量 BLOODMUSIC_AUDIO_PIPELINE / "
+            "BLOODMUSIC_REMIX 覆盖默认值）", _root_str,
+        )
     # 移除已存在的重复项
     while _root_str in sys.path:
         sys.path.remove(_root_str)
     sys.path.insert(0, _root_str)
-
-logger = logging.getLogger(__name__)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -66,6 +76,46 @@ class TrackResult:
     duration_sec: float = 0.0
     bpm: int = 120
     key: str = "C"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 辅助函数
+# ═══════════════════════════════════════════════════════════════════════
+
+def _auto_notes(role: str, bpm: int, duration_sec: float) -> list[str]:
+    """根据角色自动生成音符序列，让采样随律动多次触发。"""
+    beat_sec = 60.0 / max(1, bpm)
+    n_beats = max(1, int(duration_sec / beat_sec))
+
+    if role == "drum":
+        # 每拍 / 每半拍触发（取根音即可）
+        interval = max(1, n_beats // 4) if n_beats >= 4 else 1
+        return ["C4"] * max(4, n_beats // interval)
+
+    elif role == "bass":
+        # 每 2 拍切换低音
+        intervals = ["C3", "G2", "A2", "F2"]
+        result = []
+        for i in range(0, n_beats, 2):
+            result.append(intervals[i // 2 % len(intervals)])
+        return result if len(result) >= 4 else ["C3"] * 4
+
+    elif role == "melody":
+        # 每拍换音，在 C4 附近小范围走动
+        pool = ["C4", "D4", "E4", "F4", "G4", "A4", "G4", "E4"]
+        return [pool[i % len(pool)] for i in range(max(4, n_beats))]
+
+    elif role == "chord":
+        # 每 2-4 拍换和弦根音
+        intervals = ["C4", "F4", "G4", "A3"]
+        result = []
+        for i in range(0, n_beats, 3):
+            result.append(intervals[i // 3 % len(intervals)])
+        return result if len(result) >= 3 else ["C4"] * 3
+
+    else:
+        # pad / fx：稀疏触发
+        return ["C4"] * max(2, n_beats // 4)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -206,7 +256,7 @@ class TrackHandler:
         if self.spec.seed is not None:
             pool.config.seed = self.spec.seed
 
-        # 应用风格预设
+        # 应用风格预设（pool_styles）
         if self.spec.style:
             try:
                 style = get_style(self.spec.style)
@@ -215,6 +265,9 @@ class TrackHandler:
                 logger.warning(
                     f"未知风格 '{self.spec.style}'，使用 pool 默认参数"
                 )
+
+        # 叠加 style_db 编配策略（随机 chord_progression + scale）
+        pool = self._apply_style_db(pool)
 
         # 追加 extra_instruments
         if self.spec.extra_instruments:
@@ -244,6 +297,40 @@ class TrackHandler:
                     note_sequence=inst_data.get("note_sequence"),
                 )
                 pool.instruments.append(inst)
+
+        return pool
+
+    def _apply_style_db(self, pool: "InstrumentPool") -> "InstrumentPool":
+        """叠加 style_db 编配策略：随机 chord_progression + scale。
+
+        在 pool_styles 应用之后调用，用联网调研的风格数据增强随机性。
+        仅在 style_db 中存在该风格时生效，否则保持 pool 原样。
+        """
+        if not self.spec.style:
+            return pool
+
+        try:
+            from .style_db import get_style as get_style_db
+        except ImportError:
+            return pool
+
+        style_db = get_style_db(self.spec.style)
+        if not style_db:
+            return pool
+
+        import random as _random
+
+        # 随机 chord_progression（若 pool.config 未显式设置）
+        if style_db.get("progressions") and pool.config.chord_progression in (None, ""):
+            pool.config.chord_progression = _random.choice(style_db["progressions"])
+
+        # 随机 scale（若 pool.scale 为默认 major）
+        if style_db.get("scales") and getattr(pool, "scale", "major") == "major":
+            pool.scale = _random.choice(style_db["scales"])
+
+        # 随机 key（若 spec 未显式指定，且 pool.key 为默认 C）
+        if style_db.get("keys") and getattr(pool, "key", "C") == "C" and self.spec.key == "C":
+            pool.key = _random.choice(style_db["keys"])
 
         return pool
 
@@ -455,58 +542,41 @@ class TrackHandler:
                 )
                 continue
 
-            # 构建音符序列
+            # 构建音符序列（无序列时根据角色自动生成节奏）
             if inst.note_sequence:
                 notes: list = [
                     n for n in inst.note_sequence if n is not None
                 ]
             else:
-                notes = ["C4"]
+                notes = _auto_notes(inst.role, pool.bpm, duration_sec)
 
-            # 渲染音频
+            # 渲染音频（按音符序列逐个触发采样）
             total_samples = int(duration_sec * SR)
             audio = np.zeros(total_samples, dtype=np.float64)
             beat_dur = 60.0 / max(1, pool.bpm)
 
-            if inst.note_sequence:
-                # 有 note_sequence：按序列播放
-                raw_notes = inst.note_sequence
-                dur_beats = duration_sec / beat_dur / max(1, len(raw_notes))
-                current_sample = 0
-                for note_str in raw_notes:
-                    dur_sec_i = dur_beats * beat_dur
-                    dur_samples_i = int(dur_sec_i * SR)
-                    if dur_samples_i <= 0:
-                        continue
-                    if note_str is not None:
-                        try:
-                            target_freq = note_to_freq(note_str)
-                        except Exception:
-                            target_freq = sample.root_freq
-                        seg = play_sample(
-                            sample,
-                            target_freq=target_freq,
-                            duration=dur_sec_i,
-                            volume=inst.volume,
-                            target_sr=SR,
-                        )
-                        end_pos = min(current_sample + len(seg), total_samples)
-                        audio[current_sample:end_pos] += seg[
-                            :end_pos - current_sample
-                        ]
-                    current_sample += dur_samples_i
-                    if current_sample >= total_samples:
-                        break
-            else:
-                # 无 note_sequence：整段播放采样
+            dur_per_note_sec = duration_sec / max(1, len(notes))
+            current_sample = 0
+            for note_str in notes:
+                dur_samples_i = int(dur_per_note_sec * SR)
+                if dur_samples_i <= 0:
+                    continue
+                try:
+                    target_freq = note_to_freq(note_str)
+                except Exception:
+                    target_freq = sample.root_freq
                 seg = play_sample(
                     sample,
-                    duration=duration_sec,
+                    target_freq=target_freq,
+                    duration=dur_per_note_sec,
                     volume=inst.volume,
                     target_sr=SR,
                 )
-                end_pos = min(len(seg), total_samples)
-                audio[:end_pos] += seg[:end_pos]
+                end_pos = min(current_sample + len(seg), total_samples)
+                audio[current_sample:end_pos] += seg[:end_pos - current_sample]
+                current_sample += dur_samples_i
+                if current_sample >= total_samples:
+                    break
 
             # 限幅
             peak = np.max(np.abs(audio))

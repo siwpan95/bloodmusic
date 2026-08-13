@@ -4,6 +4,7 @@ BloodMusic 快捷入口 -- 程序化游戏音频合成引擎
 
 用法:
   python main.py                     # GUI 工作站模式（默认）
+  python main.py --maker             # 制作工作室（单曲/专辑/Beats）
   python main.py --cli batch ...     # 命令行模式（委托给 cli.py）
   python main.py --demo              # 引擎能力演示
   python main.py --check             # 检查依赖和环境
@@ -24,7 +25,10 @@ import textwrap
 from pathlib import Path
 
 # ---------- 路径注入 ----------
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
+# main.py 位于包目录 bloodmusic/ 内，包根即其直接父目录（parent），
+# 而非再上一级（parent.parent），否则 python main.py 直接运行时会把
+# 错误的上层目录注入 sys.path，导致内部 `from bloodmusic...` 导入失败。
+_PROJECT_ROOT = Path(__file__).resolve().parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
@@ -351,10 +355,22 @@ def main():
                         help="交互式教程模式（等同 --demo）")
     parser.add_argument("--check", action="store_true",
                         help="检查依赖和环境")
+    parser.add_argument("--maker", action="store_true",
+                        help="启动制作工作室 GUI（单曲/专辑/Beats）")
     parser.add_argument("--config", type=str,
                         help="从配置文件加载音频参数")
 
     args = parser.parse_args(raw_args)
+
+    # --maker: 制作工作室（独立启动，不需完整工作站）
+    if args.maker:
+        try:
+            from bloodmusic.gui.maker_gui import MakerGUI
+            MakerGUI().root.mainloop()
+            return
+        except Exception as e:
+            print(f"[!] 制作工作室启动失败 ({e})", file=sys.stderr)
+            return 1
 
     # --check: 依赖检查
     if args.check:
@@ -395,9 +411,14 @@ def main():
     if not results["sounddevice"][0]:
         print("[!] sounddevice 缺失，预览功能将不可用。")
     if not results["tkinter"][0]:
-        print("[X] tkinter 缺失，无法启动 GUI。请安装系统 tkinter 包。")
-        print("    或用: python main.py --cli batch 使用命令行模式。")
-        sys.exit(1)
+        # 自动降级到 CLI 模式，而非直接崩溃退出
+        print("[!] tkinter 缺失，无法启动 GUI 工作站。")
+        print("    已自动降级到命令行模式 (python main.py --cli batch)。")
+        print("    如需 GUI，请安装系统 tkinter 包 (如: apt install python3-tk)。\n")
+        sys.argv = ["bloodmusic", "batch", "-o",
+                    export_defaults.get("default_output", "./audio_output")]
+        from bloodmusic.cli import main as cli_main
+        return cli_main()
 
     try:
         from bloodmusic.gui.workstation import GameAudioWorkstationGUI
@@ -409,8 +430,12 @@ def main():
         root.protocol("WM_DELETE_WINDOW", lambda: (app.player.stop(), root.destroy()))
         root.mainloop()
     except ImportError as e:
-        print(f"GUI 模式启动失败: {e}", file=sys.stderr)
-        sys.exit(1)
+        # tkinter 在入口处被判断为可用但运行时导入失败，同样降级
+        print(f"[!] GUI 模式启动失败 ({e})，自动降级到命令行模式。", file=sys.stderr)
+        sys.argv = ["bloodmusic", "batch", "-o",
+                    export_defaults.get("default_output", "./audio_output")]
+        from bloodmusic.cli import main as cli_main
+        return cli_main()
     except Exception as e:
         print(f"运行时错误: {e}", file=sys.stderr)
         import traceback

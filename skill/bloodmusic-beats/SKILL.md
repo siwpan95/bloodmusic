@@ -22,7 +22,7 @@ description: >
 
 Use the BloodMusic engine (at `G:\tools\bloodmusic`) to programmatically synthesize beats, drum patterns, full music arrangements, and complete songs. Generate WAV audio files by combining 808 drum synthesis, Euclidean rhythms, music presets, custom patterns, bass synthesis, harmony generation, effects chains, and automation lanes.
 
-The engine also includes the **InstrumentPool** system — define a multi-instrument ensemble via YAML, pick a StylePreset, and render a complete arrangement with one call. Use `album_generator.py --pool` to generate a 10-track multi-style album from pool presets.
+The engine also includes the **InstrumentPool** system — define a multi-instrument ensemble via YAML, pick a StylePreset, and render a complete arrangement with one call. Use the `album_maker` subpackage (`python -m bloodmusic.album_maker.cli make`) to generate a multi-style album from pool presets. The legacy `album_generator.py` script is archived at `archive/album_generator.py`.
 
 ## Quick Start — Generate All Beat Styles
 
@@ -414,14 +414,19 @@ wavfile.write("output.wav", 44100, (final_audio * 32767).astype(np.int16))
 ```bash
 cd G:\tools\bloodmusic
 
-# Pool 模式：使用 10 个 album YAML + InstrumentPool 自动生成
-python album_generator.py --pool
+# 专辑模式（album_maker 子包，替代已归档的 album_generator.py）
+python -m bloodmusic.album_maker.cli make --demo
 
-# 自定义参数
-python album_generator.py --pool --duration 180 --seed 42
+# 自定义 YAML 专辑配置
+python -m bloodmusic.album_maker.cli make -c custom_album.yaml
 
-# Legacy 模式（原有手写编曲，不变）
-python album_generator.py
+# 快速单曲 / 指定风格
+python -m bloodmusic.album_maker.cli quick
+python -m bloodmusic.album_maker.cli style jazz
+
+# 旧版归档脚本（10 首手写编曲 + --pool/--fullpower 模式，保留于 archive/）
+python archive/album_generator.py
+python archive/album_generator.py --pool --duration 180 --seed 42
 ```
 
 Pool 模式会遍历 `music/pool_presets/album_*.yaml` 中的 10 个风格配置，
@@ -589,7 +594,7 @@ Comprehensive API reference covering all classes, parameters, and code examples 
 - `album_finale_rebirth.yaml` — 10 终章·重生 (史诗终章, battle)
 
 每个 YAML 文件包含该曲目的乐器组合、BPM、调性、音阶、效果链和生成参数。
-与 `album_generator.py --pool` 配合使用。
+与 `album_maker` 子包或归档脚本 `archive/album_generator.py --pool` 配合使用。
 
 ### docs/PRD-instrument-pool.md
 InstrumentPool 系统的产品需求文档，包含完整的功能规格、用户故事和使用场景。

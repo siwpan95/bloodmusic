@@ -185,6 +185,11 @@ class SongArrangement:
     mixer: Optional["SongMixer"] = None   # 总线混音器 (可选)
     tempo_lane: Optional["TempoLane"] = None  # BPM 自动化曲线 (P1)
     global_volume: float = 0.9
+    #: 预渲染分轨 {轨道索引: 全曲时长音频}。设置后 render_song 优先使用
+    #: 这些音频（按 section 时间窗口切片/循环）而不是从 MusicPattern
+    #: 重新渲染 — 保证 PoolRenderer 在 stem 阶段应用的 automation
+    #: (filter_sweep / volume_curve) 不被重渲染覆盖。
+    pre_rendered_stems: Optional[Dict[int, np.ndarray]] = None
 
     def add_section(
         self,
@@ -240,6 +245,32 @@ class SongArrangement:
 # ═══════════════════════════════════════════════════════════════════════
 # 核心渲染函数
 # ═══════════════════════════════════════════════════════════════════════
+
+def _stem_or_render(
+    arrangement: "SongArrangement",
+    t_idx: int,
+    pattern: MusicPattern,
+    section_dur: float,
+    cumulative_time: float,
+    master_sr: int,
+) -> np.ndarray:
+    """优先使用预渲染 stem（按 section 时间窗口切片 + 循环填充）。
+
+    当 SongArrangement.pre_rendered_stems 提供该轨音频时，直接复用 —
+    保证 PoolRenderer 在 stem 阶段应用的 automation (filter_sweep /
+    volume_curve) 不会被重新渲染覆盖。否则回退到从 pattern 渲染。
+    """
+    stems = arrangement.pre_rendered_stems
+    if stems is None or t_idx not in stems:
+        return render_pattern_to_array(pattern, section_dur)
+    stem = stems[t_idx]
+    n_needed = int(section_dur * master_sr)
+    if len(stem) == 0:
+        return np.zeros(n_needed, dtype=np.float64)
+    start_i = int(cumulative_time * master_sr)
+    idx = (start_i + np.arange(n_needed)) % len(stem)
+    return stem[idx]
+
 
 def render_song(
     arrangement: SongArrangement,
@@ -305,7 +336,10 @@ def render_song(
             track_dict: Dict[int, np.ndarray] = {}
 
             for t_idx, pattern in enumerate(section.music_patterns):
-                track_audio = render_pattern_to_array(pattern, section_dur)
+                track_audio = _stem_or_render(
+                    arrangement, t_idx, pattern,
+                    section_dur, cumulative_time, master_sr,
+                )
                 channel = section.track_channels.get(
                     t_idx,
                     arrangement.track_channels.get(t_idx, TrackChannel()),
@@ -332,7 +366,10 @@ def render_song(
         else:
             # 渲染每个旋律轨道
             for t_idx, pattern in enumerate(section.music_patterns):
-                track_audio = render_pattern_to_array(pattern, section_dur)
+                track_audio = _stem_or_render(
+                    arrangement, t_idx, pattern,
+                    section_dur, cumulative_time, master_sr,
+                )
 
                 # 获取轨道通道参数
                 channel = section.track_channels.get(
