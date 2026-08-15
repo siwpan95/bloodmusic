@@ -9,15 +9,20 @@ mido 及其依赖 + PortAudio 动态库 portaudio.dll）接入项目，使项目
 
 用法（在项目根目录 X:\\audio-generation-master 下执行）：
     python deploy.py
+    # 或本脚本位于子目录时（如 bloodmusic_deploy/deploy.py）：
+    python bloodmusic_deploy/deploy.py
+
+脚本会自动定位项目根目录（含 __init__.py 的目录）与 lib/ 目录，因此无论
+deploy.py 与 lib/ 处于「项目根目录」还是「bloodmusic_deploy/ 子目录」均可工作。
 
 脚本会：
-  1. 确认 lib/ 已存在（请先把部署包里的 lib/ 复制到项目根目录）。
+  1. 确认 lib/ 已存在（请先把部署包里的 lib/ 放到项目根目录或本脚本同级目录）。
   2. 幂等地在 __init__.py 顶部注入「本地依赖引导」代码（已注入则跳过）。
   3. 幂等地在 main.py 的路径注入块后注入同一段「本地依赖引导」代码
      （保证 `python main.py --check` / `--demo` 等也能从 lib/ 找到依赖）。
   4. 在项目根目录创建指向自身的 `bloodmusic` 目录联结(junction)：
         X:\\audio-generation-master\\bloodmusic  ->  X:\\audio-generation-master
-     这样 `python -m bloodmusic` 能正确解析包名（项目目录名为
+     让 `python -m bloodmusic` 能正确解析包名（项目目录名为
      audio-generation-master，包名是 bloodmusic，需注册一次）。
      该步骤不依赖 pip，且无需管理员权限（junction 与普通符号链接不同，
      不需要 Developer Mode）。
@@ -31,73 +36,109 @@ import os
 import sys
 import subprocess
 
-ROOT = os.path.dirname(os.path.abspath(__file__))
-LIB = os.path.join(ROOT, "lib")
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# 项目根目录：若本脚本与 __init__.py 同级，则根即本目录；
+# 若本脚本位于子目录（如 bloodmusic_deploy/），则根为父目录。
+if os.path.isfile(os.path.join(SCRIPT_DIR, "__init__.py")):
+    ROOT = SCRIPT_DIR
+else:
+    ROOT = os.path.dirname(SCRIPT_DIR)
+
+# lib 位置：优先本脚本同级 lib/，否则项目根 lib/
+if os.path.isdir(os.path.join(SCRIPT_DIR, "lib")):
+    LIB = os.path.join(SCRIPT_DIR, "lib")
+else:
+    LIB = os.path.join(ROOT, "lib")
+
 INIT = os.path.join(ROOT, "__init__.py")
 MAIN = os.path.join(ROOT, "main.py")
-# 项目目录名为 audio-generation-master，包名是 bloodmusic；
-# 创建一个指向自身的目录联结，让 `python -m bloodmusic` 能找到包。
+# 创建 <ROOT>\bloodmusic junction -> <ROOT> 以解析包名
 PKG_LINK = os.path.join(ROOT, "bloodmusic")
 MARKER = "# 本地依赖引导 (local dependency bootstrap)"
 
 
-def _dump_dll_variants():
-    return ("portaudio.dll", "libportaudio-2.dll", "libportaudio.dll")
+def _lib_finder_block():
+    """返回注入用的一段代码：根据 __file__ 所在目录在多个候选位置中查找 lib/。"""
+    return (
+        "# ───────────────────────────────────────────────────────────────\n"
+        "# 本地依赖引导 (local dependency bootstrap)\n"
+        "# 从「项目根目录」的 lib/ 加载第三方库，实现依赖全部内置于项目、无需 pip 安装。\n"
+        "# 同时把 lib/ 加入 PATH，使 sounddevice 能找到 PortAudio 动态库 (portaudio.dll)。\n"
+        "# 兼容两种布局：lib/ 在项目根目录，或 lib/ 在 bloodmusic_deploy/ 子目录。\n"
+        "# 本段幂等，可安全重复执行；如不需要本地依赖可整段删除。\n"
+        "# ───────────────────────────────────────────────────────────────\n"
+        "import os as _bm_os\n"
+        "import sys as _bm_sys\n"
+        "_BM_CANDIDATES = [\n"
+        "    _bm_os.path.join(_bm_os.path.dirname(_bm_os.path.abspath(__file__)), \"lib\"),\n"
+        "    _bm_os.path.join(_bm_os.path.dirname(_bm_os.path.abspath(__file__)), \"bloodmusic_deploy\", \"lib\"),\n"
+        "]\n"
+        "_BM_LIB = None\n"
+        "for _bm_c in _BM_CANDIDATES:\n"
+        "    if _bm_os.path.isdir(_bm_c):\n"
+        "        _BM_LIB = _bm_c\n"
+        "        break\n"
+        "if _BM_LIB is None:\n"
+        "    _BM_LIB = _BM_CANDIDATES[0]\n"
+        "if _bm_os.path.isdir(_BM_LIB):\n"
+        "    if _BM_LIB not in _bm_sys.path:\n"
+        "        _bm_sys.path.insert(0, _BM_LIB)\n"
+        "    _bm_path = _bm_os.environ.get(\"PATH\", \"\")\n"
+        "    if _BM_LIB not in _bm_path:\n"
+        "        _bm_os.environ[\"PATH\"] = _BM_LIB + _bm_os.pathsep + _bm_path\n"
+        "    for _bm_name in (\"portaudio.dll\", \"libportaudio-2.dll\", \"libportaudio.dll\"):\n"
+        "        _bm_dll = _bm_os.path.join(_BM_LIB, _bm_name)\n"
+        "        if _bm_os.path.exists(_bm_dll):\n"
+        "            try:\n"
+        "                import ctypes as _bm_ct\n"
+        "                _bm_ct.CDLL(_bm_dll)\n"
+        "            except Exception:\n"
+        "                pass\n"
+        "            break\n"
+        "\n"
+    )
 
 
-BOOTSTRAP = '''# ───────────────────────────────────────────────────────────────────────────
-# 本地依赖引导 (local dependency bootstrap)
-# 从「项目根目录」下的 lib/ 加载第三方库，实现依赖全部内置于项目、无需 pip 安装。
-# 同时把 lib/ 加入 PATH，使 sounddevice 能找到 PortAudio 动态库 (portaudio.dll)。
-# 本段幂等，可安全重复执行；如不需要本地依赖可整段删除。
-# ───────────────────────────────────────────────────────────────────────────
-import os as _bm_os
-import sys as _bm_sys
-
-_BM_LIB = _bm_os.path.join(_bm_os.path.dirname(_bm_os.path.abspath(__file__)), "lib")
-if _bm_os.path.isdir(_BM_LIB):
-    if _BM_LIB not in _bm_sys.path:
-        _bm_sys.path.insert(0, _BM_LIB)
-    _bm_path = _bm_os.environ.get("PATH", "")
-    if _BM_LIB not in _bm_path:
-        _bm_os.environ["PATH"] = _BM_LIB + _bm_os.pathsep + _bm_path
-    for _bm_name in ("portaudio.dll", "libportaudio-2.dll", "libportaudio.dll"):
-        _bm_dll = _bm_os.path.join(_BM_LIB, _bm_name)
-        if _bm_os.path.exists(_bm_dll):
-            try:
-                import ctypes as _bm_ct
-                _bm_ct.CDLL(_bm_dll)
-            except Exception:
-                pass
-            break
-
-'''
+BOOTSTRAP = _lib_finder_block()
 
 # 用于 main.py 的变体：main.py 已定义 _PROJECT_ROOT，直接复用它定位 lib/。
-BOOTSTRAP_MAIN = '''# ───────────────────────────────────────────────────────────────────────────
-# 本地依赖引导 (local dependency bootstrap)
-# 从「项目根目录」下的 lib/ 加载第三方库，使 `python main.py` 也能从 lib/ 找到依赖。
-# 与 __init__.py 中的引导逻辑一致，幂等、可安全重复执行、可整段删除。
-# ───────────────────────────────────────────────────────────────────────────
-import os as _bm_os
-_BM_LIB = _bm_os.path.join(str(_PROJECT_ROOT), "lib")
-if _bm_os.path.isdir(_BM_LIB):
-    if _BM_LIB not in sys.path:
-        sys.path.insert(0, _BM_LIB)
-    _bm_path = _bm_os.environ.get("PATH", "")
-    if _BM_LIB not in _bm_path:
-        _bm_os.environ["PATH"] = _BM_LIB + _bm_os.pathsep + _bm_path
-    for _bm_name in ("portaudio.dll", "libportaudio-2.dll", "libportaudio.dll"):
-        _bm_dll = _bm_os.path.join(_BM_LIB, _bm_name)
-        if _bm_os.path.exists(_bm_dll):
-            try:
-                import ctypes as _bm_ct
-                _bm_ct.CDLL(_bm_dll)
-            except Exception:
-                pass
-            break
-
-'''
+BOOTSTRAP_MAIN = (
+    "# ───────────────────────────────────────────────────────────────\n"
+    "# 本地依赖引导 (local dependency bootstrap)\n"
+    "# 从「项目根目录」的 lib/ 加载第三方库，使 `python main.py` 也能从 lib/ 找到依赖。\n"
+    "# 兼容两种布局：lib/ 在项目根目录，或 lib/ 在 bloodmusic_deploy/ 子目录。\n"
+    "# 与 __init__.py 中的引导逻辑一致，幂等、可安全重复执行、可整段删除。\n"
+    "# ───────────────────────────────────────────────────────────────\n"
+    "import os as _bm_os\n"
+    "_BM_CANDIDATES = [\n"
+    "    _bm_os.path.join(str(_PROJECT_ROOT), \"lib\"),\n"
+    "    _bm_os.path.join(str(_PROJECT_ROOT), \"bloodmusic_deploy\", \"lib\"),\n"
+    "]\n"
+    "_BM_LIB = None\n"
+    "for _bm_c in _BM_CANDIDATES:\n"
+    "    if _bm_os.path.isdir(_bm_c):\n"
+    "        _BM_LIB = _bm_c\n"
+    "        break\n"
+    "if _BM_LIB is None:\n"
+    "    _BM_LIB = _BM_CANDIDATES[0]\n"
+    "if _bm_os.path.isdir(_BM_LIB):\n"
+    "    if _BM_LIB not in sys.path:\n"
+    "        sys.path.insert(0, _BM_LIB)\n"
+    "    _bm_path = _bm_os.environ.get(\"PATH\", \"\")\n"
+    "    if _BM_LIB not in _bm_path:\n"
+    "        _bm_os.environ[\"PATH\"] = _BM_LIB + _bm_os.pathsep + _bm_path\n"
+    "    for _bm_name in (\"portaudio.dll\", \"libportaudio-2.dll\", \"libportaudio.dll\"):\n"
+    "        _bm_dll = _bm_os.path.join(_BM_LIB, _bm_name)\n"
+    "        if _bm_os.path.exists(_bm_dll):\n"
+    "            try:\n"
+    "                import ctypes as _bm_ct\n"
+    "                _bm_ct.CDLL(_bm_dll)\n"
+    "            except Exception:\n"
+    "                pass\n"
+    "            break\n"
+    "\n"
+)
 
 
 def _insert_after(content, anchor, block):
@@ -106,7 +147,6 @@ def _insert_after(content, anchor, block):
     if idx == -1:
         return None
     insert_at = idx + len(anchor)
-    # 找到 anchor 行尾
     nl = content.find("\n", insert_at)
     if nl == -1:
         nl = len(content)
@@ -180,7 +220,6 @@ def _remove_existing_link(link):
             os.unlink(link)
             return True
         if _is_junction(link):
-            # 用 rmdir 删除 junction（junction 是空目录重解析点）
             os.rmdir(link)
             return True
     except OSError:
@@ -193,7 +232,6 @@ def register_package():
     if _junction_target_is_correct(PKG_LINK):
         print("      已存在正确的 bloodmusic 联结，跳过。")
         return
-    # 如果已存在但指向错误，先尝试清除（仅限联结/符号链接）
     if os.path.exists(PKG_LINK) or os.path.islink(PKG_LINK):
         if not _remove_existing_link(PKG_LINK):
             print("! 已存在 %s 且无法自动移除，请手动删除后再运行。" % PKG_LINK)
@@ -250,8 +288,9 @@ def _try_os_symlink(link, target):
 def main():
     print("BloodMusic 本地依赖部署")
     print("项目根目录:", ROOT)
+    print("lib 目录   :", LIB)
     if not os.path.isdir(LIB):
-        print("! 未找到 lib/ 目录。请先把部署包中的 lib/ 复制到项目根目录。")
+        print("! 未找到 lib/ 目录。请先把部署包中的 lib/ 复制到项目根目录（或本脚本同级目录）。")
         sys.exit(1)
     print("[0/4] 检测到 lib/ :", LIB)
     patch_init()
