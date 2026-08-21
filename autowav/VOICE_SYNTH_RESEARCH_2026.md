@@ -138,3 +138,22 @@
 - OpenUTAU：openutau.com（开源歌声合成平台，支持 DiffSinger 声库）；社区中文声库（RiaDiffSinger 等）
 - 桌面/云端：网易 X Studio（xstudio.music.163.com，免费，12+ AI 歌手，演唱+说话双模式）；ACE Studio（acestudio.cn，免费基础版，80+ 商用 AI 歌手，MIDI+歌词驱动）；MiniMax Audio / Suno（云端付费）
 - 本机实测：torch CUDA 探测输出（见第四节）
+
+---
+
+## 六、档 B 落地（2026-08-21，bloodmusic 镜像 Phase 2）
+
+依据本报告 1a/1b 路线实现 `autowav/vocal_tts.py`（有词、无旋律的念白）：
+
+| 项 | 实现 |
+|---|---|
+| 后端 sapi（默认） | Windows System.Speech（系统自带，零 pip 依赖、离线）；经 PowerShell 子进程 SetOutputToWaveFile 落盘后读回（不捕获管道，适配受限沙箱）；中文语音按 Huihui/Kangkang/Yaoyao 自动选择；rate(-10..10)/volume(0..100) 可调 |
+| 后端 piper（可选） | 懒加载：未安装或缺少 .onnx 模型时抛带安装指引的 RuntimeError，调用方自动降级到 sapi（零依赖护城河不变） |
+| 统一入口 | `speak(text, backend="sapi"|"piper", ...)`；CLI：`python -m bloodmusic.autowav.vocal_tts` |
+| 实测 | 本机 2 个 SAPI 语音（Microsoft Huihui Desktop 中文 + Zira 英文）；中文念白 5.2s / peak 0.93 / 22050Hz |
+
+用法：
+```python
+from bloodmusic.autowav.vocal_tts import speak
+audio = speak("欢迎来到 BloodMusic", backend="sapi", rate=1)
+```

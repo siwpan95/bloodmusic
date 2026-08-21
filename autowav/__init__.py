@@ -48,6 +48,13 @@ from vocal_formant import (  # noqa: E402
     sing,
 )
 
+from vocal_tts import (  # noqa: E402
+    speak,
+    sapi_speak,
+    piper_speak,
+    list_sapi_voices,
+)
+
 __all__ = [
     "generate_music",
     "generate_music_by_duration",
@@ -65,4 +72,8 @@ __all__ = [
     "pinyin_to_vowel",
     "vocal_note",
     "sing",
+    "speak",
+    "sapi_speak",
+    "piper_speak",
+    "list_sapi_voices",
 ]

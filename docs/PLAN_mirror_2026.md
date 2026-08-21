@@ -3,7 +3,7 @@
 > 版本：2026-08 · 依据：用户裁定（2026-08）
 > 原则：**互为镜像、代码不共享**——musickit 只作功能结构参考；
 > bloodmusic 用自身合成引擎独立实现所有对应功能，两项目各自演进。
-> 状态：Phase 1 已落地（autowav 并入 + mirror 包骨架），Phase 2/3 待排期。
+> 状态：Phase 1 已落地（autowav 并入 + mirror 包骨架）；Phase 2 已落地（65 风格全量细调 + 固定专辑镜像 + GUI 页签 + 人声档 B）；Phase 3 待排期。
 
 ---
 
@@ -59,7 +59,7 @@
 
 | musickit | bloodmusic 对应物 |
 |---|---|
-| acapella 采样池（真人声切片） | autowav/vocal_formant.py（Klatt 共振峰人声：8 元音 + 哼鸣 + 拼音韵母映射） |
+| acapella 采样池（真人声切片） | autowav/vocal_formant.py（Klatt 共振峰人声：8 元音 + 哼鸣 + 拼音韵母映射）+ autowav/vocal_tts.py（人声档 B：SAPI/Piper 念白） |
 | （无——采样不作曲） | autowav/（14 调式、13 和弦进行、马尔可夫旋律、对位、曲式 ABA/AABA/ABAC、鼓机、MIDI 导入导出桥） |
 | — | autowav/backend.py（symbolic 默认 / acestep 可选懒加载，Hybrid 种子路线） |
 
@@ -101,11 +101,19 @@ bloodmusic/
 - [x] mirror/ 全模块实现：taxonomy/pools/manifest/styles/structure/selection/mixer_styles/renderer/report/cli（65 风格 / 13 池 / 24 混音师 / 5 曲式）
 - [x] 冒烟：python -m bloodmusic.mirror --remix 产出纯生成 WAV + report
 
-### Phase 2（待排期）
-- [ ] 65 风格完整数据（每风格乐器词→引擎/预设细调，对齐 musickit styles/*.json 语义）
-- [ ] 13 池全部声色细化（现为代表性预设，扩为每池多子类，镜像 subcategory 维度）
-- [ ] mirror/album.py 固定风格专辑（镜像 burbidge_album：同一生成 stems × 24 混音师）
-- [ ] maker_gui 集成 mirror 页签（镜像 musickit remix/gui/main_window.py）
+### Phase 2（已落地，2026-08-21）
+- [x] 65 风格完整数据：每风格独立 BPM 区间/鼓组构成/贝斯与旋律轨乐器词/点缀层/
+      鼓密度/人声开关/调式偏好（scales），且调式与调性自动匹配（小调式→小调调号）
+- [x] mirror/album.py 固定风格专辑（镜像 burbidge_album：同一干声 stems
+      × 24 混音师签名链，输出 album/<slug>/01_<style>.wav + album_manifest.json + index.html；
+      冒烟验证两位混音师输出差异显著）
+- [x] maker_gui 集成镜像页签（风格 65/曲式 5/混音师 24 + 后台生成 + 试听）
+- [x] 渲染单遍化重构：render_full_tracks() 共用核心（run_remix 与 album 共用），
+      曲式编排改为分段增益曲线（段界 1024 点平滑），渲染耗时减半
+- [x] 人声档 B：autowav/vocal_tts.py —— SAPI 念白（Windows System.Speech，
+      零 pip 依赖、离线、中文语音自动选择）+ Piper 可选后端（缺失优雅降级）；
+      冒烟：Huihui 中文语音 5.2s 念白 peak 0.93
+- [ ] 13 池声色细化扩子类（保留在 Phase 3 待排期）
 
 ### Phase 3（待排期）
 - [ ] mirror/radio.py 本地机生成电台 + 流服务（镜像 mixer_radio/mixer_stream）

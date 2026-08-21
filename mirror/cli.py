@@ -86,6 +86,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--list-mixers", action="store_true", help="列出 24 混音师")
     parser.add_argument("--list-structures", action="store_true", help="列出曲式模板")
     parser.add_argument("--build-pools", action="store_true", help="生成 13 池索引 JSON（--out 指定路径）")
+    parser.add_argument("--build-album", action="store_true",
+                        help="固定 stems × N 混音师专辑（镜像 burbidge_album；--album-mixers 指定混音师）")
+    parser.add_argument("--album-mixers", default="all",
+                        help="专辑混音师列表：all 或逗号分隔 slug（默认 all=24 位）")
 
     args = parser.parse_args(argv)
 
@@ -100,6 +104,17 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.build_pools:
         return _cmd_build_pools(args)
+    if args.build_album:
+        from .album import build_album
+        slugs = None
+        if args.album_mixers and args.album_mixers != "all":
+            slugs = [s.strip() for s in args.album_mixers.split(",") if s.strip()]
+        result = build_album(
+            out_dir=args.out, style=args.style, seed=args.seed, bars=args.bars,
+            bpm=args.bpm, mixer_slugs=slugs, fmt=args.format,
+        )
+        print(f"专辑完成: {result.out_dir}（{len(result.tracks)} 位混音师）")
+        return 0
     return _cmd_remix(args)
 
 

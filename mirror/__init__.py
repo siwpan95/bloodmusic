@@ -51,7 +51,8 @@ from .mixer_styles import (
     apply_master_chain,
 )
 from .report import RemixReport
-from .renderer import run_remix, RemixResult
+from .renderer import run_remix, RemixResult, render_full_tracks
+from .album import build_album, AlbumResult
 
 __version__ = "1.0.0"
 
@@ -82,4 +83,7 @@ __all__ = [
     "RemixReport",
     "run_remix",
     "RemixResult",
+    "render_full_tracks",
+    "build_album",
+    "AlbumResult",
 ]

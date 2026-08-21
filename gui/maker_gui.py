@@ -7,10 +7,11 @@
     from bloodmusic.gui.maker_gui import MakerGUI
     MakerGUI(parent_window)   # 以 Toplevel 子窗口打开
 
-三页签:
+四页签:
     单曲 — QuickMaker 12 风格（或随机），BPM/小节/种子可调，生成后可试听
     专辑 — Demo 专辑或自定义 YAML，后台生成 + 进度，完成后可查看报告
     Beats — 7 种 beat 风格（trap/boom bap/lofi/battle/drum only/edm/ambient）
+    镜像 — mirror 机生成混音（65 风格/曲式/24 混音师，镜像 musickit 采样混音）
 
 生成任务在后台线程执行（避免 GUI 冻结），经 queue 回传主线程更新界面。
 """
@@ -37,6 +38,9 @@ from bloodmusic.album_maker.album import AlbumMaker
 from bloodmusic.album_maker.config import AlbumConfig
 from bloodmusic.album_maker.demo_config import make_demo_config
 from bloodmusic.core.constants import SR
+
+# 镜像层（机生成混音，musickit 采样混音的镜像）
+from bloodmusic.mirror import STYLE_SLUGS, list_structures, list_mixers, run_remix
 
 # beats 工具（skill/make_beats.py，动态加载避免顶层依赖）
 _BEATS_PATH = _PROJECT_ROOT / "skill" / "make_beats.py"
@@ -101,6 +105,7 @@ class MakerGUI:
         self._tab_single()
         self._tab_album()
         self._tab_beats()
+        self._tab_mirror()
 
         # 底部状态栏
         self._status = tk.Label(self.root, text="就绪", bg=self.PANEL,
@@ -456,6 +461,120 @@ class MakerGUI:
         self._run_bg(task, handle_done, handle_error)
         self.beat_result.config(text=f"⏳ {name} 生成中…")
         self.beat_play_btn.config(state=tk.DISABLED)
+
+    # ── 页签 4: 镜像（机生成混音） ────────────────────────
+
+    def _tab_mirror(self):
+        frame = ttk.Frame(self._notebook, padding=12)
+        self._notebook.add(frame, text=" 镜像 ")
+
+        tk.Label(frame, text="纯机生成混音（musickit 纯采样混音的镜像）— 65 风格 × 5 曲式 × 24 混音师",
+                 bg=self.BG, fg=self.FG, anchor=tk.W).pack(fill=tk.X)
+
+        row1 = ttk.Frame(frame)
+        row1.pack(fill=tk.X, pady=4)
+        ttk.Label(row1, text="风格:").pack(side=tk.LEFT)
+        self.mirror_style_var = tk.StringVar(value="(随机)")
+        ttk.Combobox(row1, textvariable=self.mirror_style_var,
+                     values=["(随机)"] + list(STYLE_SLUGS),
+                     state="readonly", width=20).pack(side=tk.LEFT, padx=6)
+        ttk.Label(row1, text="曲式:").pack(side=tk.LEFT, padx=(12, 0))
+        self.mirror_struct_var = tk.StringVar(value="classic_drop")
+        ttk.Combobox(row1, textvariable=self.mirror_struct_var,
+                     values=list_structures(), state="readonly", width=20
+                     ).pack(side=tk.LEFT, padx=6)
+
+        row2 = ttk.Frame(frame)
+        row2.pack(fill=tk.X, pady=4)
+        ttk.Label(row2, text="混音师:").pack(side=tk.LEFT)
+        self.mirror_mixer_var = tk.StringVar(value="(随机)")
+        ttk.Combobox(row2, textvariable=self.mirror_mixer_var,
+                     values=["(随机)"] + list_mixers(),
+                     state="readonly", width=20).pack(side=tk.LEFT, padx=6)
+        ttk.Label(row2, text="BPM:").pack(side=tk.LEFT, padx=(12, 0))
+        self.mirror_bpm_var = self._var_int()
+        ttk.Entry(row2, textvariable=self.mirror_bpm_var, width=7).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(row2, text="小节:").pack(side=tk.LEFT)
+        self.mirror_bars_var = self._var_int()
+        ttk.Entry(row2, textvariable=self.mirror_bars_var, width=7).pack(side=tk.LEFT, padx=(0, 12))
+        ttk.Label(row2, text="种子:").pack(side=tk.LEFT)
+        self.mirror_seed_var = self._var_int()
+        ttk.Entry(row2, textvariable=self.mirror_seed_var, width=9).pack(side=tk.LEFT)
+
+        row3 = ttk.Frame(frame)
+        row3.pack(fill=tk.X, pady=4)
+        ttk.Label(row3, text="输出:").pack(side=tk.LEFT)
+        self.mirror_out_var = tk.StringVar(value=str(_PROJECT_ROOT / "mirror_output"))
+        ttk.Entry(row3, textvariable=self.mirror_out_var).pack(
+            side=tk.LEFT, fill=tk.X, expand=True, padx=6)
+        ttk.Button(row3, text="浏览…",
+                   command=lambda: self._browse_dir(self.mirror_out_var)
+                   ).pack(side=tk.LEFT)
+
+        btn_row = ttk.Frame(frame)
+        btn_row.pack(fill=tk.X, pady=8)
+        self.mirror_btn = ttk.Button(btn_row, text="🎧 生成镜像混音",
+                                     command=self._generate_mirror)
+        self.mirror_btn.pack(side=tk.LEFT)
+        self.mirror_play_btn = ttk.Button(btn_row, text="▶ 试听",
+                                          command=self._on_play_last,
+                                          state=tk.DISABLED)
+        self.mirror_play_btn.pack(side=tk.LEFT, padx=6)
+        ttk.Button(btn_row, text="📁 打开目录",
+                   command=lambda: self._open_dir(self.mirror_out_var.get())
+                   ).pack(side=tk.LEFT)
+
+        self.mirror_result = tk.Label(frame, text="选择参数后点击生成（默认 16 小节约 30 秒）",
+                                      bg=self.BG, fg=self.FG, justify=tk.LEFT,
+                                      anchor=tk.W, wraplength=700)
+        self.mirror_result.pack(fill=tk.X, pady=6)
+
+    def _generate_mirror(self):
+        try:
+            bpm = self._parse_opt_int(self.mirror_bpm_var)
+            bars = self._parse_opt_int(self.mirror_bars_var)
+            seed = self._parse_opt_int(self.mirror_seed_var)
+        except ValueError:
+            messagebox.showwarning("输入无效", "BPM / 小节 / 种子必须是整数或留空")
+            return
+        style = self.mirror_style_var.get()
+        structure = self.mirror_struct_var.get()
+        mixer = self.mirror_mixer_var.get()
+        out_dir = self.mirror_out_var.get().strip() or None
+
+        def task():
+            return run_remix(
+                count=1,
+                seed=seed,
+                bars=bars if bars is not None else 16,
+                bpm=bpm,
+                structure=structure,
+                style=None if style == "(随机)" else style,
+                mixer_style=None if mixer == "(随机)" else mixer,
+                out_dir=out_dir or "mirror_output",
+                fmt="wav",
+                release_safe=True,
+            )[0]
+
+        def handle_done(result):
+            self._on_task_done(result)
+            wav = str(result.song_path) if result.song_path else None
+            self._last_audio_path = wav
+            rep = result.report
+            self.mirror_result.config(
+                text=f"✅ {rep.prompt['style']} · {rep.bpm}BPM · {rep.bars} 小节 · "
+                     f"曲式 {rep.structure} · 混音师 {rep.mixer_style} · {rep.duration_sec}s"
+                     f"\n→ {wav}\n分轨: {len(rep.stems)} 条 · license_tier=selfgen")
+            self.mirror_play_btn.config(state=tk.NORMAL if wav else tk.DISABLED)
+            self.mirror_btn.config(state=tk.NORMAL)
+
+        def handle_error(err):
+            self.mirror_btn.config(state=tk.NORMAL)
+            self._on_task_error(err)
+
+        self.mirror_btn.config(state=tk.DISABLED)
+        self.mirror_result.config(text="⏳ 机生成混音中…（视小节数约 5~60 秒）")
+        self._run_bg(task, handle_done, handle_error)
 
     # ── 试听 ─────────────────────────────────────────────────
 

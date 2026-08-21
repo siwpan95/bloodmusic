@@ -20,8 +20,8 @@
 - **批量导出** — WAV / OGG / FLAC，含归一化 + 限幅
 - **GUI 工作站** — Tkinter 预览/导出/波形可视化/实时参数滑块
 - **制作工作室 GUI** — 单曲/专辑/Beats 三页签统一界面
-- **AutoWav 作曲核心**（autowav/，自 wav_music_gen 并入）— 14 调式、13 和弦进行、加权马尔可夫旋律、对位、曲式、鼓机，零依赖；Klatt 共振峰人声（8 元音吟唱/哼鸣 + 拼音韵母映射）；MIDI 导入导出桥；symbolic 默认 / acestep 可选懒加载
-- **镜像层**（mirror/）— 与 musickit（纯采样混音项目）互为镜像的纯机生成混音：13 机生成声池（同名 13 池）、63 风格提示词、5 曲式模板、24 混音师签名链，license_tier 恒 selfgen（详见 docs/PLAN_mirror_2026.md）
+- **AutoWav 作曲核心**（autowav/，自 wav_music_gen 并入）— 14 调式、13 和弦进行、加权马尔可夫旋律、对位、曲式、鼓机，零依赖；Klatt 共振峰人声（8 元音吟唱/哼鸣 + 拼音韵母映射）；**人声档 B：SAPI 念白**（vocal_tts，中文语音自动选择，Piper 可选降级）；MIDI 导入导出桥；symbolic 默认 / acestep 可选懒加载
+- **镜像层**（mirror/）— 与 musickit（纯采样混音项目）互为镜像的纯机生成混音：13 机生成声池（同名 13 池）、65 风格提示词（Phase 2 全量精调）、5 曲式模板、24 混音师签名链、固定 stems×24 混音师专辑镜像（mirror/album.py）、制作工作室镜像页签，license_tier 恒 selfgen（详见 docs/PLAN_mirror_2026.md）
 
 ## 快速开始
 
@@ -44,9 +44,14 @@ python -m bloodmusic.album_maker.cli make --demo --out ./album_output
 # 镜像层：纯机生成混音（musickit 采样混音的镜像，参数同名）
 python -m bloodmusic.mirror --remix --bars 16 --bpm 140 --seed 42
 python -m bloodmusic.mirror --list-styles --list-mixers
+python -m bloodmusic.mirror --build-album --style lofi --seed 42 --bars 16   # 固定 stems × 24 混音师专辑
 
 # AutoWav 算法作曲（自 wav_music_gen 并入）
 python -m bloodmusic.autowav --random --duration 60
+
+# 人声档 B：语音念白（SAPI 零依赖，中文语音自动选择）
+python -m bloodmusic.autowav.vocal_tts "你好，血音" --out n.wav
+python -m bloodmusic.autowav.vocal_tts --list-voices
 
 # 提交+推送到 Gitee（无需 git 命令，基于 dulwich；令牌用环境变量）
 set GITEE_TOKEN=xxxxxxxx

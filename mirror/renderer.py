@@ -4,9 +4,13 @@ renderer.py —— 机生成混音主流程（镜像 musickit remix/main.py::run
 
 流程（与采样侧同构）：
     提示词(styles.generate_prompt) → 选源(selection.select_sources)
-    → 逐源合成(pools.render_source) → 曲式编排(structure，段落强度/层进出)
+    → 逐源合成(pools.render_source，全长一次渲染) → 曲式编排
+    （structure 分段增益曲线：段落强度/层进出，段界 1024 点平滑防咔哒）
     → 分轨总线链(mixer_styles.apply_bus_chain) → 求和混音
     → 母带链(apply_master_chain，峰值 -1.5 dBFS) → 导出成品 + stems + manifest + report
+
+render_full_tracks() 为共用核心：固定 stems（源分轨 + 总线链），
+供 run_remix 与 mirror/album.py（固定风格专辑镜像）复用。
 """
 
 from __future__ import annotations
@@ -22,10 +26,10 @@ import numpy as np
 from bloodmusic.core.constants import SR
 from bloodmusic.export.batch import export_audio
 
-from .styles import generate_prompt, get_style, list_styles
+from .styles import generate_prompt, list_styles
 from .structure import resolve_structure, list_structures
 from .selection import select_sources, SourceSpec
-from .mixer_styles import resolve_style, apply_bus_chain, apply_master_chain, MIXER_STYLES
+from .mixer_styles import resolve_style, apply_bus_chain, apply_master_chain, MixerStyle
 from .manifest import SourceManifestEntry, write_pool_manifest, PoolManifest, sha256_file
 from .report import RemixReport
 from .pools import render_source
@@ -33,6 +37,9 @@ from .pools import render_source
 # 角色基础电平（镜像采样侧分轨增益约定）
 _ROLE_GAIN = {"drum": 0.9, "bass": 0.8, "guita": 0.65, "pad": 0.5,
               "melody": 0.6, "vocal": 0.7, "fx": 0.4}
+
+# 段界平滑宽度（样本），避免分段增益切换产生咔哒
+_RAMP = 1024
 
 
 @dataclass
@@ -55,6 +62,67 @@ def _section_gain(section_intensity: float, role: str, skeleton_only: bool) -> f
 
 def _safe_stem(name: str) -> str:
     return "".join(c if (c.isalnum() or c in "_-") else "_" for c in name).strip("_") or "stem"
+
+
+def render_full_tracks(
+    prompt,
+    bars: int,
+    bpm: int,
+    mixer_style_slug: str | None,
+    seed: int,
+    bus: bool = True,
+) -> tuple[list[SourceSpec], list[np.ndarray], MixerStyle]:
+    """渲染固定 stems：按提示词选源 → 全长合成 → （可选）逐源总线链。
+
+    Args:
+        prompt: styles.Prompt。
+        bars: 全长小节数。
+        bpm: 速度。
+        mixer_style_slug: 混音师 slug（random 时按种子复现）。
+        seed: 选源/合成种子（同 seed 得同 stems，可复现）。
+        bus: True=应用总线链（run_remix 用）；False=原始干声
+             （album 镜像用：同一干声 stems 供 24 位混音师各自着色）。
+
+    Returns:
+        (specs, tracks, style)：源规格、全长分轨、混音师签名。
+    """
+    specs = select_sources(prompt, bars, seed=seed)
+    mstyle = resolve_style(mixer_style_slug)
+
+    tracks: list[np.ndarray] = []
+    for spec in specs:
+        seg = render_source(
+            spec, bpm=bpm, key=prompt.key, bars=bars,
+            intensity=0.8, seed=spec.seed, volume=spec.volume,
+        )
+        tracks.append(apply_bus_chain(seg, spec.role, mstyle) if bus else seg)
+    return specs, tracks, mstyle
+
+
+def _arrangement_curve(
+    spec: SourceSpec,
+    sections,
+    bpm: int,
+    total_n: int,
+) -> np.ndarray:
+    """构建某源的全长增益曲线：段落强度 × 层进出，段界平滑。"""
+    beat = 60.0 / max(1, bpm)
+    curve = np.zeros(total_n, dtype=np.float64)
+    bar_pos = 0
+    for sec in sections:
+        g = _section_gain(sec.intensity, spec.role, sec.skeleton_only)
+        if g > 0.0:
+            g *= _ROLE_GAIN.get(spec.role, 0.5)
+            i0 = int(bar_pos * 4 * beat * SR)
+            i1 = int((bar_pos + sec.bars) * 4 * beat * SR)
+            i0 = max(0, min(i0, total_n))
+            i1 = max(i0, min(i1, total_n))
+            curve[i0:i1] = g
+        bar_pos += sec.bars
+    if np.any(curve):
+        kernel = np.ones(_RAMP, dtype=np.float64) / _RAMP
+        curve = np.convolve(curve, kernel, mode="same")
+    return curve
 
 
 def run_remix(
@@ -99,59 +167,43 @@ def run_remix(
         trng = random.Random(track_seed)
 
         # ── 1. 提示词 ──
-        slug = style or (rng.choice(list_styles()) if style is None else style)
-        prompt = generate_prompt(slug if style else None, seed=track_seed)
-        if style:
-            prompt = generate_prompt(style, seed=track_seed)
+        prompt = generate_prompt(style, seed=track_seed)
         track_bpm = bpm or prompt.bpm
         structure_name = structure or trng.choice(list_structures())
         sections = resolve_structure(structure_name, bars)
-
-        # ── 2. 选源 ──
-        specs = select_sources(prompt, bars, seed=track_seed)
-
-        # ── 3. 逐源合成 + 曲式编排 ──
-        total_sec = sum(s.bars for s in sections) * 4 * 60.0 / max(1, track_bpm)
+        total_bars = sum(s.bars for s in sections)
+        total_sec = total_bars * 4 * 60.0 / max(1, track_bpm)
         total_n = int(total_sec * SR)
-        beat = 60.0 / max(1, track_bpm)
-        stems_dir = out_root / f"track_{i + 1:02d}_{slug}_{_safe_stem(structure_name)}" / "stems"
-        stems_dir.mkdir(parents=True, exist_ok=True)
 
+        # ── 2+3. 选源 + 全长合成（单遍渲染，含总线链）──
+        specs, tracks, mstyle = render_full_tracks(
+            prompt, total_bars, track_bpm, mixer_style, track_seed,
+        )
+
+        # ── 4. 曲式编排：分段增益曲线加权求和 ──
         mixed = np.zeros(total_n, dtype=np.float64)
+        for spec, tr in zip(specs, tracks):
+            curve = _arrangement_curve(spec, sections, track_bpm, total_n)
+            n = min(len(tr), total_n)
+            mixed[:n] += tr[:n] * curve[:n]
+
+        # ── 5. 母带 ──
+        mixed = apply_master_chain(mixed, mstyle)
+
+        # ── 6. 导出成品 + 分轨 + manifest + report ──
+        track_dir = out_root / f"track_{i + 1:02d}_{prompt.style}_{_safe_stem(structure_name)}"
+        stems_dir = track_dir / "stems"
+        stems_dir.mkdir(parents=True, exist_ok=True)
+        song_name = f"song_final.{fmt}"
+        song_path = track_dir / song_name
+        export_audio(mixed, str(song_path), format=fmt)
+
         stem_files: list[str] = []
         manifest_entries: list[SourceManifestEntry] = []
-
-        bar_pos = 0
-        for sec in sections:
-            sec_start = bar_pos * 4 * beat
-            sec_n = int(sec.bars * 4 * beat * SR)
-            for spec in specs:
-                # 每源按段落渲染（loop 素材天然支持任意小节数）
-                seg = render_source(
-                    spec, bpm=track_bpm, key=prompt.key, bars=sec.bars,
-                    intensity=sec.intensity, seed=spec.seed + bar_pos,
-                    volume=spec.volume,
-                )
-                gain = _section_gain(sec.intensity, spec.role, sec.skeleton_only)
-                if gain <= 0.0:
-                    continue
-                g = gain * _ROLE_GAIN.get(spec.role, 0.5)
-                i0 = int(sec_start * SR)
-                end = min(i0 + len(seg), total_n)
-                mixed[i0:end] += seg[:end - i0] * g
-            bar_pos += sec.bars
-
-        # ── 4. 分轨导出（整曲重渲染一遍，便于 stems/ 留档） ──
-        #     （骨架+点缀全层、强度 0.8，作为"源分轨"保留）
-        mstyle = resolve_style(mixer_style)  # 整曲一位混音师（random 时按种子复现）
-        for spec in specs:
-            seg_full = render_source(spec, bpm=track_bpm, key=prompt.key, bars=sum(s.bars for s in sections),
-                                     intensity=0.8, seed=spec.seed, volume=spec.volume)
-            # 总线链
-            seg_full = apply_bus_chain(seg_full, spec.role, mstyle)
+        for spec, tr in zip(specs, tracks):
             name = _safe_stem(f"{spec.pool}__{spec.name}")
             stem_path = stems_dir / f"{name}.wav"
-            export_audio(seg_full, str(stem_path), format="wav")
+            export_audio(tr, str(stem_path), format="wav")
             stem_files.append(stem_path.name)
             manifest_entries.append(SourceManifestEntry(
                 file=f"stems/{stem_path.name}",
@@ -167,29 +219,18 @@ def run_remix(
                 seed=spec.seed,
             ))
 
-        # ── 5. 母带 ──
-        mixed = apply_master_chain(mixed, mstyle)
-
-        # ── 6. 导出成品 ──
-        track_dir = stems_dir.parent
-        song_name = f"song_final.{fmt}"
-        song_path = track_dir / song_name
-        export_audio(mixed, str(song_path), format=fmt)
-
-        # ── 7. manifest + report ──
-        pool_manifest = PoolManifest(
-            pool=slug,
+        write_pool_manifest(track_dir / "manifest.json", PoolManifest(
+            pool=prompt.style,
             generated=datetime.now().isoformat(timespec="seconds"),
             entries=manifest_entries,
-        )
-        write_pool_manifest(track_dir / "manifest.json", pool_manifest)
+        ))
 
         report = RemixReport(
-            title=f"{slug} · {track_seed}",
+            title=f"{prompt.style} · {track_seed}",
             prompt=prompt.as_dict(),
             seed=track_seed,
             bpm=track_bpm,
-            bars=sum(s.bars for s in sections),
+            bars=total_bars,
             structure=structure_name,
             mixer_style=mstyle.slug,
             release_safe=bool(release_safe),
