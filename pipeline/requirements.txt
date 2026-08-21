@@ -1,22 +1,13 @@
-# requirements.txt —— 编排层自身依赖声明（仅文档说明）
+# audio_pipeline 依赖说明（纯合成流水线）
 #
-# 本工具运行于 F:\Python314。它**不引入新重包**，仅复用已装环境：
-#   - bloodmusic（editable 安装，提供 bridge / music.sampler，纯逻辑 + numpy/scipy/soundfile/mido）
-#   - remix（sys.path 注入后 import core.audio_mixer / core.audio_loader，依赖 pydub + numpy）
-#   - pydub（remix 依赖，已装；Python 3.14 需 audioop-lts 提供标准库 audioop）
-#   - audio_separator 通过 subprocess 调用其自有 venv（torch 重包留在 venv 内）
+# 运行环境：
+#   - bloodmusic（editable 安装，提供 bridge 合成，纯逻辑 + numpy/scipy/soundfile/mido）
+#   - remix（内置 ffmpeg，pydub + audioop-lts）
 #
-# 若需在本环境显式补齐：
-#   pip install audioop-lts pydub numpy
-#   pip install -e G:\tools\bloodmusic
-# （remix / audio_separator 按各自 README 准备，本工具不修改其源码）
-
-# ── 编排进程自身使用的第三方（均已在 F:\Python314 可用） ──
-# audioop-lts      # Python 3.14 下 pydub 所需的 audioop 标准库替代
-# pydub
-# numpy
-# 其余（scipy / soundfile / mido / torch 等）来自 bloodmusic / audio_separator 各自环境
-
-# ── 运行入口 ──
-#   F:\Python314\python.exe G:\tools\audio_pipeline\cli.py doctor
-#   F:\Python314\python.exe G:\tools\audio_pipeline\cli.py run --workspace <dir> --songs <a.mp3> <b.mp3>
+# 本工具自身仅依赖：
+#   - pydub（混音/格式转换，pin 到 remix/bin 的 ffmpeg）
+#   - audioop-lts（pydub 的 audioop 替代，Python 3.13+ 必需）
+#
+# 其余（numpy / scipy / soundfile / mido 等）来自 bloodmusic 环境
+pydub>=0.25
+audioop-lts>=0.2

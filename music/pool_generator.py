@@ -132,14 +132,6 @@ class PoolGenerator:
 
         for instrument in self.pool.instruments:
             try:
-                # SAMPLER 引擎：跳过合成生成，由 album_maker 的 TrackHandler 负责
-                if instrument.engine == SynthEngine.SAMPLER:
-                    logger.info(
-                        f"  🎧 sampler: {instrument.name} — 跳过合成生成，"
-                        f"交由 TrackHandler 渲染"
-                    )
-                    continue
-
                 # 如果 instrument 没有自己的 automation，使用 pool 级别的
                 if instrument.automation is None and self.pool.automation is not None:
                     instrument.automation = self.pool.automation

@@ -6,27 +6,8 @@ skill/output_beats/
 skill/bloodmusic-beats/scripts/output_beats/
 *.wav
 
-# 采样专辑输出（含 _sources 采样副本 + manifest）
-album_output_samples/
-
-# 下载的音效素材（数百 MB，不入库）
-sfx/sounds/
-
 # remix 引擎的 ffmpeg/ffprobe 二进制
 remix/bin/
-
-# 音效爬虫 + 反检测（合规敏感，不入库）
-sfx/crawl.py
-sfx/crawler_core.py
-sfx/dl_sounds.py
-sfx/sfx_utils.py
-sfx/player.py
-sfx/gui.py
-sfx/sources/
-sfx/sources_pubdom.py
-sfx/sources_sfx.py
-sfx/stealth.min.js
-sfx/requirements.txt
 
 # bridge 子包默认输出根（R2：音频 / report.json / report.md / bm_*.mid 全部落这里）
 bridge_output/
@@ -61,3 +42,19 @@ _*.txt
 # Pool mode output directories
 album_output_pool/
 album_output_fullpower/
+
+
+# 镜像层/新并入包的生成输出
+mirror_output/
+autowav/output/
+demo_album_output/
+custom_album_output/
+album_maker_jam/
+remix/output/
+.pytest_cache/
+
+# 外部音频文件（一律不入库：零采样纯度）
+*.mp3
+*.flac
+*.ogg
+*.mp4

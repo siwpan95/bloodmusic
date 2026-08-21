@@ -254,7 +254,7 @@ wavfile.write("output.wav", 44100, (final_audio * 32767).astype(np.int16))
 **生成整张专辑（10 首多风格纯音乐）**：
 
 ```bash
-cd G:\tools\bloodmusic
+cd G:\tools\audio\bloodmusic
 python album_generator.py --pool
 ```
 

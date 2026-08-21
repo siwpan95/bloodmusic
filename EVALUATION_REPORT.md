@@ -2,7 +2,7 @@
 
 > 评估方式：本地代码审查 + 联网调研同类项目对比
 > 评估日期：2026-08-13
-> 项目路径：`G:\tools\bloodmusic`
+> 项目路径：`G:\tools\audio\bloodmusic`
 > 版本：v2.0.0（8 次提交，活跃开发期 2026-08-10 ~ 08-13）
 
 ---
@@ -152,7 +152,7 @@ LICENSE 写 MIT + copyright siwpan，README 写"内部项目，全哥创建"，p
 
 ### 5.7 依赖外部项目硬编码路径
 
-`album_maker/track.py` 顶部 `sys.path.insert(0, r"G:\tools\audio_pipeline")` 硬编码绝对路径，跨机器/跨环境不可移植。
+`album_maker/track.py` 顶部 `sys.path.insert(0, r"G:\tools\audio\audio_pipeline")` 硬编码绝对路径，跨机器/跨环境不可移植。
 
 ---
 

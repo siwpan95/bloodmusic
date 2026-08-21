@@ -6,7 +6,7 @@ album_maker/track.py — 单曲目全流程处理器
     （跳过 PoolGenerator 合成）
   - midi_path 为空: PoolGenerator → bridge render stems → mixdown → manifest
     （行为不变）
-  - 两者可共存: MIDI stems + sampler stems 合并进入 mixdown
+  - 两者可共存: MIDI stems + synth stems 合并进入 mixdown
 
 任何阶段失败均返回 success=False 的 TrackResult，不抛异常。
 
@@ -30,10 +30,10 @@ logger = logging.getLogger(__name__)
 # CRITICAL: remix 必须在 bloodmusic 之前，因为 bloodmusic 也有 core/ 子包
 # bloodmusic 内部使用相对导入 (.core)，不受影响
 _AUDIO_PIPELINE_ROOT = Path(os.environ.get(
-    "BLOODMUSIC_AUDIO_PIPELINE", r"G:\tools\audio_pipeline",
+    "BLOODMUSIC_AUDIO_PIPELINE", r"G:\tools\audio\audio_pipeline",
 ))
 _REMIX_ROOT = Path(os.environ.get(
-    "BLOODMUSIC_REMIX", r"G:\tools\remix",
+    "BLOODMUSIC_REMIX", r"G:\tools\audio\remix",
 ))
 for _root in (_REMIX_ROOT, _AUDIO_PIPELINE_ROOT):
     _root_str = str(_root)
@@ -76,46 +76,6 @@ class TrackResult:
     duration_sec: float = 0.0
     bpm: int = 120
     key: str = "C"
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# 辅助函数
-# ═══════════════════════════════════════════════════════════════════════
-
-def _auto_notes(role: str, bpm: int, duration_sec: float) -> list[str]:
-    """根据角色自动生成音符序列，让采样随律动多次触发。"""
-    beat_sec = 60.0 / max(1, bpm)
-    n_beats = max(1, int(duration_sec / beat_sec))
-
-    if role == "drum":
-        # 每拍 / 每半拍触发（取根音即可）
-        interval = max(1, n_beats // 4) if n_beats >= 4 else 1
-        return ["C4"] * max(4, n_beats // interval)
-
-    elif role == "bass":
-        # 每 2 拍切换低音
-        intervals = ["C3", "G2", "A2", "F2"]
-        result = []
-        for i in range(0, n_beats, 2):
-            result.append(intervals[i // 2 % len(intervals)])
-        return result if len(result) >= 4 else ["C3"] * 4
-
-    elif role == "melody":
-        # 每拍换音，在 C4 附近小范围走动
-        pool = ["C4", "D4", "E4", "F4", "G4", "A4", "G4", "E4"]
-        return [pool[i % len(pool)] for i in range(max(4, n_beats))]
-
-    elif role == "chord":
-        # 每 2-4 拍换和弦根音
-        intervals = ["C4", "F4", "G4", "A3"]
-        result = []
-        for i in range(0, n_beats, 3):
-            result.append(intervals[i // 3 % len(intervals)])
-        return result if len(result) >= 3 else ["C4"] * 3
-
-    else:
-        # pad / fx：稀疏触发
-        return ["C4"] * max(2, n_beats // 4)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -162,8 +122,8 @@ class TrackHandler:
 
         流程分支：
             - 若 spec.midi_path 非空：MIDI 导入 → render stems，跳过 PoolGenerator 合成
-            - 若 spec.midi_path 为空：走 synth/sampler 原路径（行为不变）
-            - 两者可共存：MIDI stems + sampler stems 合并进入 mixdown
+            - 若 spec.midi_path 为空：走 synth 原路径（行为不变）
+            - 两者可共存：MIDI stems + synth stems 合并进入 mixdown
         """
         try:
             work_dir = Path(work_dir)
@@ -172,24 +132,21 @@ class TrackHandler:
             # 计算 duration_sec
             duration_sec = self.spec.bars * 60.0 / max(1, self.spec.bpm)
 
-            # 构建曲目专属 pool（sampler 乐器仍需此步骤）
+            # 构建曲目专属 pool
             track_pool = self._build_pool_for_track()
 
             # 阶段 M0：MIDI 导入 + 渲染 stems（若指定了 midi_path）
             midi_paths = self._render_midi_stems(work_dir, duration_sec)
 
-            # 阶段 G：生成（仅 synth/sampler 路径，MIDI 路径跳过 PoolGenerator）
+            # 阶段 G：生成（synth 路径，MIDI 路径跳过 PoolGenerator）
             synth_paths: list[Path] = []
             if not self.spec.midi_path:
                 multi = self._generate(track_pool)
                 stems_dir = work_dir / "stems"
                 synth_paths = self._render_stems(multi, stems_dir, duration_sec)
 
-            # 阶段 S：采样器渲染（SAMPLER 乐器，MIDI 与 synth 路径均可用）
-            sampler_paths = self._render_sampler_stems(track_pool, work_dir, duration_sec)
-
-            # 合并所有 stems（MIDI + synth + sampler）
-            all_stems = midi_paths + synth_paths + sampler_paths
+            # 合并所有 stems（MIDI + synth）
+            all_stems = midi_paths + synth_paths
             if not all_stems:
                 return TrackResult(
                     title=self.spec.title,
@@ -293,7 +250,6 @@ class TrackHandler:
                     preset=inst_data.get("preset"),
                     volume=float(inst_data.get("volume", 0.8)),
                     pan=float(inst_data.get("pan", 0.0)),
-                    sample_path=str(inst_data.get("sample_path", "")),
                     note_sequence=inst_data.get("note_sequence"),
                 )
                 pool.instruments.append(inst)
@@ -489,117 +445,6 @@ class TrackHandler:
 
         return stem_paths
 
-    # ── 阶段 S：采样器渲染 ──
-
-    def _render_sampler_stems(
-        self,
-        pool: "InstrumentPool",
-        work_dir: Path,
-        duration_sec: float,
-    ) -> list[Path]:
-        """为 pool 中的 SAMPLER 乐器加载采样并渲染为 WAV。
-
-        Args:
-            pool: 曲目专属 InstrumentPool（已应用 style）
-            work_dir: 曲目工作目录
-            duration_sec: 目标时长（秒）
-
-        Returns:
-            采样器产出的 WAV 文件路径列表
-        """
-        from bloodmusic.music.instrument_pool import SynthEngine
-        from bloodmusic.music.sampler import load_sample, play_sample
-        from bloodmusic.core.note_utils import note_to_freq
-        from bloodmusic.core.constants import SR
-        from bloodmusic.export.batch import export_audio
-        import numpy as np
-
-        stems_dir = work_dir / "stems"
-        stems_dir.mkdir(parents=True, exist_ok=True)
-
-        sampler_paths: list[Path] = []
-
-        for inst in pool.instruments:
-            if inst.engine != SynthEngine.SAMPLER:
-                continue
-
-            if not inst.sample_path:
-                logger.warning(
-                    f"SAMPLER 乐器 '{inst.name}' 缺少 sample_path，跳过"
-                )
-                continue
-
-            # 加载采样
-            try:
-                sample = load_sample(
-                    inst.sample_path,
-                    name=inst.name,
-                    root_note="C4",
-                )
-            except Exception as exc:
-                logger.warning(
-                    f"加载采样失败 ({inst.name}): {inst.sample_path} — {exc}"
-                )
-                continue
-
-            # 构建音符序列（无序列时根据角色自动生成节奏）
-            if inst.note_sequence:
-                notes: list = [
-                    n for n in inst.note_sequence if n is not None
-                ]
-            else:
-                notes = _auto_notes(inst.role, pool.bpm, duration_sec)
-
-            # 渲染音频（按音符序列逐个触发采样）
-            total_samples = int(duration_sec * SR)
-            audio = np.zeros(total_samples, dtype=np.float64)
-            beat_dur = 60.0 / max(1, pool.bpm)
-
-            dur_per_note_sec = duration_sec / max(1, len(notes))
-            current_sample = 0
-            for note_str in notes:
-                dur_samples_i = int(dur_per_note_sec * SR)
-                if dur_samples_i <= 0:
-                    continue
-                try:
-                    target_freq = note_to_freq(note_str)
-                except Exception:
-                    target_freq = sample.root_freq
-                seg = play_sample(
-                    sample,
-                    target_freq=target_freq,
-                    duration=dur_per_note_sec,
-                    volume=inst.volume,
-                    target_sr=SR,
-                )
-                end_pos = min(current_sample + len(seg), total_samples)
-                audio[current_sample:end_pos] += seg[:end_pos - current_sample]
-                current_sample += dur_samples_i
-                if current_sample >= total_samples:
-                    break
-
-            # 限幅
-            peak = np.max(np.abs(audio))
-            if peak > 1.0:
-                audio = audio / peak * 0.95
-
-            # 写出 WAV
-            safe_name = self._safe_stem(inst.name)
-            out_path = stems_dir / f"{safe_name}.wav"
-            try:
-                export_audio(
-                    np.asarray(audio, dtype=np.float64),
-                    str(out_path),
-                    format="wav",
-                )
-                sampler_paths.append(out_path)
-                logger.info(f"  🎧 sampler 渲染: {out_path.name}")
-            except Exception as exc:
-                logger.warning(
-                    f"  sampler 渲染失败 ({inst.name}): {exc}"
-                )
-
-        return sampler_paths
 
     # ── 阶段 M：混音 ──
 

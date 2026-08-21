@@ -5,7 +5,7 @@
 | 文档版本 | v1.0 |
 | 架构师 | 高见远（software-architect） |
 | 上游输入 | PM 的 PRD + F1–F4 实测发现 + 主理人 Q1–Q7 决策 |
-| 目标仓库 | `G:\tools\bloodmusic\`（BloodMusic v2.0.0） |
+| 目标仓库 | `G:\tools\audio\bloodmusic\`（BloodMusic v2.0.0） |
 | 交付形态 | bloodmusic 子包 `bloodmusic/bridge/`（Q1 已拍板） |
 | 本文性质 | **只做设计与任务分解，不含实现代码** |
 
@@ -166,10 +166,10 @@
 ## 2. 文件列表（最终文件树）
 
 > 对主理人给出的划分：**确认 7 项全部保留**，并基于 F5–F12 **补充 6 个模块**。
-> 补充理由逐条标注在「新增理由」列。全部路径相对 `G:\tools\bloodmusic\`。
+> 补充理由逐条标注在「新增理由」列。全部路径相对 `G:\tools\audio\bloodmusic\`。
 
 ```
-G:\tools\bloodmusic\
+G:\tools\audio\bloodmusic\
 ├── requirements.txt                      [改] +1 行
 ├── pyproject.toml                        [改] +3 处（dependencies / packages / package-dir）
 │

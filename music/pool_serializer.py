@@ -317,7 +317,6 @@ class PoolSerializer:
             volume=data.get("volume", 1.0),
             note_sequence=note_sequence,
             octave=data.get("octave"),
-            sample_path=data.get("sample_path", ""),
         )
 
 

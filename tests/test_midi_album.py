@@ -5,7 +5,7 @@ Tests for album_maker MIDI path support.
 Verifies that TrackSpec with midi_path set:
   1. Produces WAV stems from MIDI import (not PoolGenerator)
   2. Generates a valid mixdown WAV
-  3. Does NOT break the synth/sampler path (midi_path="" should behave unchanged)
+  3. Does NOT break the synth path (midi_path="" should behave unchanged)
 """
 
 import os
@@ -351,7 +351,7 @@ def test_midi_path_file_not_found_does_not_crash():
         midi_path="Z:/nonexistent/ghost.mid",
     )
     # Use an empty pool (no instruments) — MIDI path failure + no synth fallback
-    # + no sampler instruments → should fail gracefully, no crash
+    # → should fail gracefully, no crash
     from bloodmusic.music.instrument_pool import (
         InstrumentPool,
         PoolConfig,
@@ -368,10 +368,10 @@ def test_midi_path_file_not_found_does_not_crash():
         )
 
         result = handler.process(work_dir)
-        # MIDI import fails, no synth stems (midi_path non-empty skips PoolGenerator),
-        # no sampler stems → should fail gracefully with error message
+        # MIDI import fails, no synth stems (midi_path non-empty skips PoolGenerator)
+        # → should fail gracefully with error message
         assert not result.success, (
-            "Should fail when midi_path is invalid and no synth/sampler fallback"
+            "Should fail when midi_path is invalid and no synth fallback"
         )
         assert result.error is not None
         assert "未产生任何 WAV" in result.error or "wav" in result.error.lower()

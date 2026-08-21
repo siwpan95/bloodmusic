@@ -5,7 +5,7 @@
 | 文档版本 | v1.0 |
 | 架构师 | 高见远（software-architect） |
 | 上游输入 | PM 的 PRD + 主理人已拍板决策（R1–R4 延续 + 依赖隔离） |
-| 目标仓库 | `G:\tools\bloodmusic\`（BloodMusic v2.0.0） |
+| 目标仓库 | `G:\tools\audio\bloodmusic\`（BloodMusic v2.0.0） |
 | 交付形态 | bloodmusic 子包 `bloodmusic/album_maker/` |
 | 本文性质 | **只做设计与任务分解，不含实现代码** |
 
@@ -20,7 +20,7 @@
 | 挑战 | 分析 | 方案 |
 |------|------|------|
 | **PoolGenerator → WAV 分轨渲染** | `MultiTrackPattern` 内含 `MusicPattern` 列表 + 可选 `DrumPattern`，但无批量渲染的"导出 API"。pattern.py 提供了 `render_pattern_to_array()`（旋律）和 `render_drum_pattern()`（鼓），以及 `generate_music_wav()`（单轨落盘）。bridge 的 `render_pattern_file()` 封装了单个 pattern 的渲染+落盘 | **复用 bridge 的 `render_pattern_file()`**（已封装单 pattern→WAV 落盘），逐轨调用。每首曲目的 drum + 各 music track 各自调用一次 |
-| **audio_pipeline 进程内引用** | audio_pipeline 与 bloodmusic 在同一 Python env，但其包路径不在 bloodmusic 下 | `sys.path.insert(0, r"G:\tools\audio_pipeline")` 在 `track.py` 模块顶部执行一次，后续 `from mixdown import mixdown, MixResult` 等直接可用 |
+| **audio_pipeline 进程内引用** | audio_pipeline 与 bloodmusic 在同一 Python env，但其包路径不在 bloodmusic 下 | `sys.path.insert(0, r"G:\tools\audio\audio_pipeline")` 在 `track.py` 模块顶部执行一次，后续 `from mixdown import mixdown, MixResult` 等直接可用 |
 | **单曲目失败不中断整张专辑** | `PoolGenerator.generate_all()` 内部已对单乐器失败做了 try/except + logger.warning（不抛异常，跳过该乐器继续）。但混音阶段可能抛异常 | `TrackHandler.process()` 顶层 try/except，捕获所有异常 → 填充 `TrackResult(error=...)` + `success=False`，不向上抛。`AlbumMaker.make()` 遍历 tracks 时每首独立 try |
 | **依赖隔离（R1：album_maker 进程内无 torch）** | `separate_back` 的模式 B 需要 `audio_separator`（torch），模式 A 仅做文件复制 | album_maker **仅调用模式 A（manifest 复制）**。restore 命令如需模式 B → subprocess 调用 audio_pipeline 的 CLI，进程隔离 |
 | **R4 延续（bloodmusic 渲染侧零改造）** | 不修改 `music/pattern.py` / `export/batch.py` / `export/midi_export.py` | 只调用 bridge 的 `render_pattern_file()`（已在 R4 范围内），不触及渲染内核 |
@@ -680,15 +680,15 @@ sequenceDiagram
 
 | 依赖模块 | 路径 | 引用方式 | 用途 |
 |---------|------|---------|------|
-| `bloodmusic.music.pool_generator` | `G:\tools\bloodmusic\music\pool_generator.py` | `from bloodmusic.music.pool_generator import PoolGenerator` | 分轨生成 |
-| `bloodmusic.music.instrument_pool` | `G:\tools\bloodmusic\music\instrument_pool.py` | `from bloodmusic.music.instrument_pool import InstrumentPool, PoolConfig, PoolInstrument` | 乐器池构造 |
-| `bloodmusic.music.pool_styles` | `G:\tools\bloodmusic\music\pool_styles.py` | `from bloodmusic.music.pool_styles import STYLES, StylePreset` | 风格预设 |
-| `bloodmusic.music.pattern` | `G:\tools\bloodmusic\music\pattern.py` | `from bloodmusic.music.pattern import MusicPattern, DrumPattern, MultiTrackPattern` | 数据类型（只读） |
-| `bloodmusic.bridge.renderer` | `G:\tools\bloodmusic\bridge\renderer.py` | `from bloodmusic.bridge.renderer import render_pattern_file` | 单轨 WAV 渲染 |
-| `audio_pipeline.mixdown` | `G:\tools\audio_pipeline\mixdown.py` | `sys.path` 注入后 `from mixdown import mixdown, MixResult` | 混音 + 分轨保留 |
-| `audio_pipeline.manifest` | `G:\tools\audio_pipeline\manifest.py` | `sys.path` 注入后 `from manifest import Manifest, SourceManifestEntry, write_manifest, read_manifest, sha256_file` | 清单读写 |
-| `audio_pipeline.separate_back` | `G:\tools\audio_pipeline\separate_back.py` | `sys.path` 注入后 `from separate_back import separate_back` | restore 命令 |
-| `remix.core.audio_mixer` | `G:\tools\remix\core\audio_mixer.py` | 间接（通过 audio_pipeline） | MixConfig 构造 |
+| `bloodmusic.music.pool_generator` | `G:\tools\audio\bloodmusic\music\pool_generator.py` | `from bloodmusic.music.pool_generator import PoolGenerator` | 分轨生成 |
+| `bloodmusic.music.instrument_pool` | `G:\tools\audio\bloodmusic\music\instrument_pool.py` | `from bloodmusic.music.instrument_pool import InstrumentPool, PoolConfig, PoolInstrument` | 乐器池构造 |
+| `bloodmusic.music.pool_styles` | `G:\tools\audio\bloodmusic\music\pool_styles.py` | `from bloodmusic.music.pool_styles import STYLES, StylePreset` | 风格预设 |
+| `bloodmusic.music.pattern` | `G:\tools\audio\bloodmusic\music\pattern.py` | `from bloodmusic.music.pattern import MusicPattern, DrumPattern, MultiTrackPattern` | 数据类型（只读） |
+| `bloodmusic.bridge.renderer` | `G:\tools\audio\bloodmusic\bridge\renderer.py` | `from bloodmusic.bridge.renderer import render_pattern_file` | 单轨 WAV 渲染 |
+| `audio_pipeline.mixdown` | `G:\tools\audio\audio_pipeline\mixdown.py` | `sys.path` 注入后 `from mixdown import mixdown, MixResult` | 混音 + 分轨保留 |
+| `audio_pipeline.manifest` | `G:\tools\audio\audio_pipeline\manifest.py` | `sys.path` 注入后 `from manifest import Manifest, SourceManifestEntry, write_manifest, read_manifest, sha256_file` | 清单读写 |
+| `audio_pipeline.separate_back` | `G:\tools\audio\audio_pipeline\separate_back.py` | `sys.path` 注入后 `from separate_back import separate_back` | restore 命令 |
+| `remix.core.audio_mixer` | `G:\tools\audio\remix\core\audio_mixer.py` | 间接（通过 audio_pipeline） | MixConfig 构造 |
 
 #### 5.2 不需要的依赖
 
@@ -706,7 +706,7 @@ sequenceDiagram
 import sys
 from pathlib import Path
 
-_AUDIO_PIPELINE_ROOT = Path(r"G:\tools\audio_pipeline")
+_AUDIO_PIPELINE_ROOT = Path(r"G:\tools\audio\audio_pipeline")
 if str(_AUDIO_PIPELINE_ROOT) not in sys.path:
     sys.path.insert(0, str(_AUDIO_PIPELINE_ROOT))
 
@@ -815,7 +815,7 @@ album_output/
 | **目标** | 集成 audio_pipeline 的 mixdown，完成单曲目全流程 |
 | **产出文件** | `track.py`（`_mixdown()` 方法 + 完整 `process()`）, `album.py`（AlbumMaker 骨架） |
 | **依赖** | T02（TrackHandler 生成/渲染能力） |
-| **具体工作** | 1. `track.py` 模块顶部添加 `sys.path.insert(0, r"G:\tools\audio_pipeline")`，在 `_mixdown()` 方法内延迟 import `mixdown` / `MixResult`<br>2. `track.py` 实现 `_mixdown()`：将 stems WAV 路径列表传给 `mixdown(sources, out_dir, MixConfig, bpm=..., musical_key=...)`，返回 `MixResult`<br>3. `track.py` 完善 `process()`：串联生成 → 渲染 → 混音三个阶段<br>4. `album.py` 定义 `AlbumResult` dataclass<br>5. `album.py` 定义 `AlbumMaker.__init__()` 和 `_build_base_pool()` <br>6. `album.py` 定义 `AlbumMaker.make()` 第一版：串行遍历 tracks，创建 TrackHandler，调用 process()，汇总结果（不含 album_manifest 写入） |
+| **具体工作** | 1. `track.py` 模块顶部添加 `sys.path.insert(0, r"G:\tools\audio\audio_pipeline")`，在 `_mixdown()` 方法内延迟 import `mixdown` / `MixResult`<br>2. `track.py` 实现 `_mixdown()`：将 stems WAV 路径列表传给 `mixdown(sources, out_dir, MixConfig, bpm=..., musical_key=...)`，返回 `MixResult`<br>3. `track.py` 完善 `process()`：串联生成 → 渲染 → 混音三个阶段<br>4. `album.py` 定义 `AlbumResult` dataclass<br>5. `album.py` 定义 `AlbumMaker.__init__()` 和 `_build_base_pool()` <br>6. `album.py` 定义 `AlbumMaker.make()` 第一版：串行遍历 tracks，创建 TrackHandler，调用 process()，汇总结果（不含 album_manifest 写入） |
 | **验收标准** | 完整单曲目流程可产出 `song_final.wav` + `manifest.json` + `_sources/`；曲目混音失败不中断其他曲目 |
 
 ---

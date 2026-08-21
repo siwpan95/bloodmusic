@@ -3,14 +3,14 @@
 cli.py —— 纯音乐制作流水线 CLI 入口（T6）
 
 子命令：
-  doctor   环境诊断（依赖隔离 / remix-bloodmusic 可用性 / audio_separator venv）
-  run      运行完整四阶段流水线 A→B→C→D
-  stage-a  仅阶段A：拆歌 → 乐器池
+  doctor   环境诊断（依赖隔离 / remix-bloodmusic 可用性 / ffmpeg）
+  run      运行完整流水线 B→C（合成 → 混音 + 分轨保留）
   stage-b  仅阶段B：单音源导出
   stage-c  仅阶段C：混音 + 分轨保留
-  stage-d  仅阶段D：后期重分离（模式A manifest / 模式B algo）
 
-全局开关：--separate-mode {manifest|algo}（决策⑦ 显式开关，默认 manifest）。
+全局开关：--separate-mode manifest（分轨保留模式标识，默认 manifest）。
+纯合成定位：无外部歌曲拆分（stage-a）与算法重分离（stage-d）。
+
 设计依据：docs/design.md §2.6（PipelineConfig / run_pipeline）、§5（CLI 交互要点）。
 """
 
@@ -29,7 +29,6 @@ if str(_PROJ_ROOT) not in sys.path:
 from config import (
     bootstrap_env,
     HONESTY_DISCLAIMER,
-    AUDIO_SEPARATOR_VENV_PY,
     REMIX_BIN,
 )
 from orchestrator import PipelineConfig, run_pipeline
@@ -62,11 +61,11 @@ def _parse_track_specs(specs_file: str | None, demo: bool) -> list[TrackSpec]:
 
 
 def _parse_stages(raw: str) -> list[str]:
-    """解析 --stages 参数（如 'A,B,C' → ['A','B','C']）。"""
+    """解析 --stages 参数（如 'B,C' → ['B','C']）。"""
     parts = [s.strip().upper() for s in raw.split(",") if s.strip()]
-    valid = {"A", "B", "C", "D"}
+    valid = {"B", "C"}
     result = [p for p in parts if p in valid]
-    return result if result else ["A", "B", "C", "D"]
+    return result if result else ["B", "C"]
 
 
 # ──────────────────────────── 命令实现 ────────────────────────────
@@ -94,8 +93,7 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
         print(f"[✗] remix 导入失败: {exc}")
     try:
         import bloodmusic.bridge  # noqa: F401
-        from bloodmusic.music.sampler import load_sample  # noqa: F401
-        print("[✓] bloodmusic.bridge / music.sampler 可导入")
+        print("[✓] bloodmusic.bridge 可导入")
     except Exception as exc:
         print(f"[✗] bloodmusic 导入失败: {exc}")
     print()
@@ -113,14 +111,6 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
         print(f"[✗] pydub 初始化失败: {exc}")
     print()
 
-    # audio_separator venv
-    sep_py = Path(AUDIO_SEPARATOR_VENV_PY)
-    if sep_py.is_file():
-        print(f"[✓] audio_separator venv: {AUDIO_SEPARATOR_VENV_PY}")
-    else:
-        print(f"[✗] audio_separator venv 缺失: {AUDIO_SEPARATOR_VENV_PY}")
-    print()
-
     # 诚实性声明
     print("─── 诚实性声明 ───")
     print(HONESTY_DISCLAIMER)
@@ -128,20 +118,16 @@ def cmd_doctor(_args: argparse.Namespace) -> None:
 
 
 def cmd_run(args: argparse.Namespace) -> None:
-    """运行完整四阶段流水线。"""
+    """运行完整流水线 B→C。"""
     stages = _parse_stages(args.stages)
     cfg = PipelineConfig(
         workspace=Path(args.workspace),
-        songs=[Path(s) for s in (args.songs or [])],
-        midi_root=Path(args.midi_root),
-        sep_model=args.model,
-        sep_shifts=args.shifts,
         separate_mode=args.separate_mode,
         stages=stages,
         track_specs=_parse_track_specs(args.track_specs, args.demo),
         mix_fmt=args.mix_fmt,
     )
-    print(f"启动流水线（{', '.join(stages)}），分离模式: {cfg.separate_mode}")
+    print(f"启动流水线（{', '.join(stages)}），分轨保留模式: {cfg.separate_mode}")
     print(f"工作区: {cfg.workspace}")
     report = run_pipeline(cfg)
     print()
@@ -157,33 +143,18 @@ def cmd_run(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
-def cmd_stage_a(args: argparse.Namespace) -> None:
-    """仅阶段A。"""
-    from instrument_pool import build_instrument_pool
-    fixtures = Path(args.workspace) / "instruments"
-    fixtures.mkdir(parents=True, exist_ok=True)
-    pool = build_instrument_pool(
-        [Path(s) for s in args.songs], fixtures,
-        model=args.model, shifts=args.shifts,
-    )
-    n = sum(len(v) for v in pool.samples_by_key.values())
-    print(f"阶段A 完成：{n} 个样本（{len(pool.samples_by_key)} 个乐器族）")
-
-
 def cmd_stage_b(args: argparse.Namespace) -> None:
     """仅阶段B。"""
-    from instrument_pool import InstrumentPool
+    from source_maker import make_source
     ws = Path(args.workspace)
-    fixtures = ws / "instruments"
     stems_dir = ws / "stems"
     stems_dir.mkdir(parents=True, exist_ok=True)
-    pool = InstrumentPool.load(fixtures) if fixtures.is_dir() else InstrumentPool(fixtures)
     specs = _parse_track_specs(args.track_specs, args.demo)
     if not specs:
         print("[阶段B] 无 TrackSpec（请使用 --demo 或 --track-specs）。", file=sys.stderr)
         sys.exit(1)
     for spec in specs:
-        out = make_source(spec, pool, stems_dir)
+        out = make_source(spec, stems_dir)
         print(f"  → {out}")
     print(f"阶段B 完成：{len(specs)} 条音源。")
 
@@ -211,32 +182,6 @@ def cmd_stage_c(args: argparse.Namespace) -> None:
     print(f"  manifest: {result.manifest_path}")
 
 
-def cmd_stage_d(args: argparse.Namespace) -> None:
-    """仅阶段D。"""
-    ws = Path(args.workspace)
-    mixdown_dir = ws / "mixdown"
-    separated_dir = ws / "separated"
-    manifest_path = mixdown_dir / "manifest.json"
-    if not manifest_path.is_file():
-        print("[阶段D] manifest.json 不存在（请先运行阶段C）。", file=sys.stderr)
-        sys.exit(1)
-    from manifest import read_manifest
-    mani = read_manifest(manifest_path)
-    song = mixdown_dir / mani.song
-    if not song.is_file():
-        print(f"[阶段D] 成品歌缺失: {song}", file=sys.stderr)
-        sys.exit(1)
-    from separate_back import separate_back
-    res = separate_back(
-        song, separated_dir,
-        mode=args.separate_mode,
-        manifest=manifest_path,
-        model=args.model,
-        shifts=args.shifts,
-    )
-    print(f"阶段D 完成（{res['fidelity']}）→ {len(res['files'])} 条分轨。")
-
-
 # ──────────────────────────── 主入口 ────────────────────────────
 
 
@@ -244,7 +189,7 @@ def main(argv: list[str] | None = None) -> None:
     """CLI 主入口（可传 argv 用于测试注入）。"""
     parser = argparse.ArgumentParser(
         prog="audio_pipeline",
-        description="纯音乐制作流水线编排工具 —— 串联拆歌·合成·混音·重分离四阶段",
+        description="纯音乐制作流水线编排工具 —— 串联合成·混音两阶段（零外部采样）",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -252,19 +197,15 @@ def main(argv: list[str] | None = None) -> None:
     sub.add_parser("doctor", help="环境诊断（依赖隔离 / 外部工具可用性）")
 
     # run
-    p_run = sub.add_parser("run", help="运行完整流水线 A→B→C→D")
+    p_run = sub.add_parser("run", help="运行完整流水线 B→C")
     p_run.add_argument("--workspace", required=True, help="工作区根目录")
-    p_run.add_argument("--songs", nargs="+", default=[], help="阶段A 输入歌曲")
-    p_run.add_argument("--midi-root", default="G:/midi", help="MIDI 素材根（默认 G:/midi）")
-    p_run.add_argument("--model", default="htdemucs", help="分离模型（默认 htdemucs）")
-    p_run.add_argument("--shifts", type=int, default=2, help="demucs shifts（默认 2）")
     p_run.add_argument(
-        "--separate-mode", choices=("manifest", "algo"), default="manifest",
-        help="阶段D 分离模式：manifest（真无损，默认）/ algo（有损算法）",
+        "--separate-mode", choices=("manifest",), default="manifest",
+        help="分轨保留模式（manifest=复用原始分轨，100% 保真）",
     )
     p_run.add_argument(
-        "--stages", default="A,B,C,D",
-        help="要运行的阶段（逗号分隔，如 A,B,C,D；默认全部）",
+        "--stages", default="B,C",
+        help="要运行的阶段（逗号分隔，如 B,C；默认全部）",
     )
     p_run.add_argument("--track-specs", default=None, help="阶段B TrackSpec JSON 文件")
     p_run.add_argument("--mix-fmt", default="wav", choices=("wav", "ogg", "flac"), help="混音格式")
@@ -272,13 +213,6 @@ def main(argv: list[str] | None = None) -> None:
         "--demo", action="store_true",
         help="使用内置演示 TrackSpec（3 条 synth 分轨，4 秒）",
     )
-
-    # stage-a
-    p_a = sub.add_parser("stage-a", help="仅阶段A：拆真实歌 → 乐器池")
-    p_a.add_argument("--workspace", required=True)
-    p_a.add_argument("--songs", nargs="+", required=True)
-    p_a.add_argument("--model", default="htdemucs")
-    p_a.add_argument("--shifts", type=int, default=2)
 
     # stage-b
     p_b = sub.add_parser("stage-b", help="仅阶段B：单音源导出")
@@ -291,19 +225,9 @@ def main(argv: list[str] | None = None) -> None:
     p_c.add_argument("--workspace", required=True)
     p_c.add_argument("--mix-fmt", default="wav", choices=("wav", "ogg", "flac"))
     p_c.add_argument(
-        "--separate-mode", choices=("manifest", "algo"), default="manifest",
-        help="写入 manifest 的分离模式标识（默认 manifest）",
+        "--separate-mode", choices=("manifest",), default="manifest",
+        help="写入 manifest 的分轨保留模式标识（默认 manifest）",
     )
-
-    # stage-d
-    p_d = sub.add_parser("stage-d", help="仅阶段D：后期重分离")
-    p_d.add_argument("--workspace", required=True)
-    p_d.add_argument(
-        "--separate-mode", choices=("manifest", "algo"), default="manifest",
-        help="manifest（真无损）/ algo（算法分离，有损）",
-    )
-    p_d.add_argument("--model", default="htdemucs")
-    p_d.add_argument("--shifts", type=int, default=2)
 
     args = parser.parse_args(argv)
 
@@ -311,14 +235,10 @@ def main(argv: list[str] | None = None) -> None:
         cmd_doctor(args)
     elif args.command == "run":
         cmd_run(args)
-    elif args.command == "stage-a":
-        cmd_stage_a(args)
     elif args.command == "stage-b":
         cmd_stage_b(args)
     elif args.command == "stage-c":
         cmd_stage_c(args)
-    elif args.command == "stage-d":
-        cmd_stage_d(args)
 
 
 if __name__ == "__main__":

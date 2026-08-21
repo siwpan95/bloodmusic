@@ -111,8 +111,6 @@ from .music import (
     # 和声
     HarmonyVoice, generate_parallel_harmony, generate_diatonic_harmony,
     generate_chordal_harmony, voice_leading, render_harmony_tracks,
-    # 采样器
-    Sample, SamplePad, load_sample, play_sample,
     # 人性化引擎 (NEW)
     HumanizeParams, apply_humanize_to_sequence,
     HUMANIZE_NONE, HUMANIZE_SUBTLE, HUMANIZE_NATURAL,

@@ -57,10 +57,6 @@ from .harmony import (
     HarmonyVoice, generate_parallel_harmony, generate_diatonic_harmony,
     generate_chordal_harmony, voice_leading, render_harmony_tracks,
 )
-from .sampler import (
-    Sample, SamplePad, PadSlot,
-    load_sample, play_sample, render_pad_sequence, render_sampler_pattern,
-)
 from .humanize import (
     HumanizeParams, apply_humanize_to_note, apply_humanize_to_sequence,
     HUMANIZE_NONE, HUMANIZE_SUBTLE, HUMANIZE_NATURAL, HUMANIZE_GROOVY, HUMANIZE_HUMAN,

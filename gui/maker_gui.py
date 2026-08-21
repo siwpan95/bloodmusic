@@ -10,7 +10,7 @@
 三页签:
     单曲 — QuickMaker 12 风格（或随机），BPM/小节/种子可调，生成后可试听
     专辑 — Demo 专辑或自定义 YAML，后台生成 + 进度，完成后可查看报告
-    Beats — 8 种 beat 风格（trap/boom bap/lofi/battle/drum only/edm/ambient/sampled）
+    Beats — 7 种 beat 风格（trap/boom bap/lofi/battle/drum only/edm/ambient）
 
 生成任务在后台线程执行（避免 GUI 冻结），经 queue 回传主线程更新界面。
 """
@@ -55,7 +55,6 @@ try:
         "Drum Only": _beats_mod.make_drum_only_beat,
         "EDM": _beats_mod.make_edm_beat,
         "Ambient": _beats_mod.make_ambient_beat,
-        "Sampled": _beats_mod.make_sampled_beat,
     }
     _BEATS_OUTPUT_DIR = str(_beats_mod.OUTPUT_DIR)
     _HAS_BEATS = True
@@ -192,10 +191,6 @@ class MakerGUI:
         ttk.Radiobutton(frame, text="自定义 YAML 专辑配置",
                         variable=self.album_mode_var, value="yaml",
                         command=self._on_album_mode_change
-                        ).pack(anchor=tk.W)
-        ttk.Radiobutton(frame, text="采样专辑（仅 radio_music_stems 挑 bass/drums/other）",
-                        variable=self.album_mode_var, value="sample",
-                        command=self._on_album_mode_change
                         ).pack(anchor=tk.W, pady=(2, 4))
 
         yaml_row = ttk.Frame(frame)
@@ -207,34 +202,11 @@ class MakerGUI:
         ttk.Button(yaml_row, text="浏览…",
                    command=self._browse_yaml).pack(side=tk.LEFT)
 
-        # ── 采样专辑专属参数 ──
-        self.sample_row = ttk.Frame(frame)
-        self.sample_row.pack(fill=tk.X, pady=4)
-        ttk.Label(self.sample_row, text="stems:").pack(side=tk.LEFT)
-        self.sample_stems_var = tk.StringVar(value=str(
-            _PROJECT_ROOT.parent / "radio_music_stems"))
-        self.sample_stems_entry = ttk.Entry(self.sample_row,
-                                            textvariable=self.sample_stems_var)
-        self.sample_stems_entry.pack(side=tk.LEFT, fill=tk.X, expand=True, padx=6)
-        ttk.Button(self.sample_row, text="浏览…",
-                   command=self._browse_sample_stems).pack(side=tk.LEFT)
-
-        self.sample_row2 = ttk.Frame(frame)
-        self.sample_row2.pack(fill=tk.X, pady=4)
-        ttk.Label(self.sample_row2, text="曲数:").pack(side=tk.LEFT)
-        self.sample_tracks_var = tk.StringVar(value="8")
-        ttk.Entry(self.sample_row2, textvariable=self.sample_tracks_var,
-                  width=6).pack(side=tk.LEFT, padx=(0, 12))
-        ttk.Label(self.sample_row2, text="种子:").pack(side=tk.LEFT)
-        self.sample_seed_var = tk.StringVar(value="")
-        ttk.Entry(self.sample_row2, textvariable=self.sample_seed_var,
-                  width=10).pack(side=tk.LEFT)
-
         out_row = ttk.Frame(frame)
         out_row.pack(fill=tk.X, pady=4)
         ttk.Label(out_row, text="输出:").pack(side=tk.LEFT)
         self.album_out_var = tk.StringVar(value=str(
-            _PROJECT_ROOT / "album_output_samples"))
+            _PROJECT_ROOT / "album_output"))
         ttk.Entry(out_row, textvariable=self.album_out_var).pack(
             side=tk.LEFT, fill=tk.X, expand=True, padx=6)
         ttk.Button(out_row, text="浏览…",
@@ -259,25 +231,12 @@ class MakerGUI:
         self.album_result.pack(fill=tk.X, pady=6)
         self._on_album_mode_change()
 
-    def _browse_sample_stems(self):
-        path = filedialog.askdirectory(title="选择 stems 根目录")
-        if path:
-            self.sample_stems_var.set(path)
-
     def _on_album_mode_change(self):
         mode = self.album_mode_var.get()
         if mode == "yaml":
             self.yaml_entry.config(state=tk.NORMAL)
         else:
             self.yaml_entry.config(state=tk.DISABLED)
-        # 采样参数区仅在 sample 模式可用
-        sample_state = tk.NORMAL if mode == "sample" else tk.DISABLED
-        self.sample_stems_entry.config(state=sample_state)
-        for child in self.sample_row2.winfo_children():
-            try:
-                child.config(state=sample_state)
-            except tk.TclError:
-                pass
 
     def _browse_yaml(self):
         path = filedialog.askopenfilename(
@@ -430,25 +389,6 @@ class MakerGUI:
         if mode == "demo":
             def task():
                 return AlbumMaker(make_demo_config()).make(str(out_dir))
-        elif mode == "sample":
-            from bloodmusic.album_maker.sample_album import make_sample_album
-            stems_dir = self.sample_stems_var.get().strip() or None
-            try:
-                n_tracks = int(self.sample_tracks_var.get().strip() or "8")
-            except ValueError:
-                messagebox.showwarning("输入无效", "曲数必须是整数")
-                return
-            seed_text = self.sample_seed_var.get().strip()
-            try:
-                seed = int(seed_text) if seed_text else None
-            except ValueError:
-                messagebox.showwarning("输入无效", "种子必须是整数或留空")
-                return
-
-            def task():
-                return make_sample_album(
-                    stems_dir=stems_dir, n_tracks=n_tracks, seed=seed,
-                    out_dir=out_dir)
         else:
             yaml_path = self.album_yaml_var.get().strip()
             if not yaml_path:

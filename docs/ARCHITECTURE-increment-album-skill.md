@@ -45,7 +45,7 @@ album_generator.py (改造后)
 ### 2. 文件列表
 
 ```
-G:\tools\bloodmusic\
+G:\tools\audio\bloodmusic\
 │
 ├── album_generator.py                       # [修改] 新增 pool 模式 + CLI
 │
@@ -544,7 +544,7 @@ wavfile.write("output.wav", 44100, (final_audio * 32767).astype(np.int16))
 **生成整张专辑（10 首多风格纯音乐）**：
 
 ```bash
-cd G:\tools\bloodmusic
+cd G:\tools\audio\bloodmusic
 
 # Pool 模式：使用 10 个 album YAML + InstrumentPool 自动生成
 python album_generator.py --pool

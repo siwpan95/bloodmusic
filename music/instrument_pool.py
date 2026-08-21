@@ -80,7 +80,6 @@ class SynthEngine(Enum):
     WAVETABLE = "wavetable"           # 波表合成
     WAVEGUIDE = "waveguide"           # 波导物理建模
     NOISE = "noise"                   # 噪声合成 (鼓专用)
-    SAMPLER = "sampler"               # 采样器引擎 (真实 .wav 采样回放)
 
     @classmethod
     def from_string(cls, value: str) -> "SynthEngine":
@@ -140,7 +139,6 @@ class PoolInstrument:
         note_sequence: 可选的用户指定音符序列（覆盖自动生成）
                        格式: ["C4","D4",null,"E4"]（null=休止符）
         octave: 八度偏移，None=默认
-        sample_path: 采样文件路径（仅 SAMPLER 引擎使用），默认空字符串
     """
     name: str
     role: InstrumentRole = InstrumentRole.MELODY
@@ -154,7 +152,6 @@ class PoolInstrument:
     volume: float = 1.0
     note_sequence: Optional[List[Optional[str]]] = None
     octave: Optional[int] = None
-    sample_path: str = ""
 
     def __post_init__(self) -> None:
         """类型转换与校验。"""
@@ -198,8 +195,6 @@ class PoolInstrument:
             d["note_sequence"] = self.note_sequence
         if self.octave is not None:
             d["octave"] = self.octave
-        if self.sample_path:
-            d["sample_path"] = self.sample_path
         # EffectChain 序列化：仅序列化非 None/非默认字段
         if self.effect_chain is not None:
             d["effect_chain"] = _effect_chain_to_dict(self.effect_chain)

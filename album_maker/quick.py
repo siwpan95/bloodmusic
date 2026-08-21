@@ -39,21 +39,26 @@ MIX_CONFIG_DEFAULTS = {
     "compress_threshold": -18.0, "compress_ratio": 3.0,
 }
 
-# 采样池逻辑已提取到公共模块 sample_pool.py（quick/make/beat 共享）
-from .sample_pool import (
-    SAMPLE_SCAN_DIRS,
-    DEFAULT_SYNTH_POOL,
-    wav_to_instrument_name,
-    assign_sample_role,
-    auto_build_pool,
-)
+# 纯合成乐器池（quick/style/jam 共享，零外部采样）
+DEFAULT_SYNTH_POOL = {
+    "name": "Quick Synth Pool",
+    "bpm": 120, "key": "C", "scale": "major",
+    "global_volume": 0.85,
+    "generation": {"diversity": 0.5, "humanize": True, "seed": 42, "chord_progression": "dreamy"},
+    "instruments": [
+        {"name": "主旋律", "role": "melody", "engine": "wavetable", "preset": "synth_lead", "volume": 0.85, "pan": 0.1},
+        {"name": "和弦铺底", "role": "chord", "engine": "fm_advanced", "preset": "warm_pad", "volume": 0.65, "pan": -0.2},
+        {"name": "低音贝斯", "role": "bass", "engine": "subtractive", "preset": "deep_bass", "volume": 0.9, "pan": 0.0},
+        {"name": "电子鼓", "role": "drum", "engine": "noise", "volume": 0.85, "pan": 0.0},
+        {"name": "氛围铺底", "role": "pad", "engine": "granular", "preset": "bright_pad", "volume": 0.45, "pan": 0.3},
+    ],
+}
 
-# 向后兼容别名
-_SAMPLE_SCAN_DIRS = SAMPLE_SCAN_DIRS
-_DEFAULT_SYNTH_POOL = DEFAULT_SYNTH_POOL
-_wav_to_instrument_name = wav_to_instrument_name
-_assign_sample_role = assign_sample_role
-_auto_build_pool = auto_build_pool
+
+def _build_synth_pool() -> dict:
+    """构建纯合成乐器池（副本，避免调用方修改全局默认值）。"""
+    import copy
+    return copy.deepcopy(DEFAULT_SYNTH_POOL)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -137,7 +142,7 @@ class QuickMaker:
         )
 
         # 构造 pool（注入随机 progression）
-        pool = _auto_build_pool()
+        pool = _build_synth_pool()
         pool["key"] = key
         pool["scale"] = scale
         pool.setdefault("generation", {})["chord_progression"] = progression

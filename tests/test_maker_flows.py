@@ -17,8 +17,8 @@ from bloodmusic.album_maker.quick import QuickMaker
 def test_beat_styles_registry():
     if not _HAS_BEATS:
         pytest.skip("make_beats 模块不可用")
-    assert len(_BEAT_STYLES) == 8
-    assert "Trap" in _BEAT_STYLES and "Sampled" in _BEAT_STYLES
+    assert len(_BEAT_STYLES) == 7
+    assert "Trap" in _BEAT_STYLES and "Ambient" in _BEAT_STYLES
 
 
 def test_style_db_has_12_styles():
@@ -61,24 +61,10 @@ def test_beat_styles_generate_audio(name):
         pytest.skip("make_beats 模块不可用")
     result = _BEAT_STYLES[name]()
     if result is None:
-        pytest.skip(f"{name}: 依赖采样素材，无素材时跳过")
+        pytest.skip(f"{name}: 无输出，跳过")
     audio = np.asarray(result)
     assert audio.size > 0, f"{name}: empty output"
     assert float(np.max(np.abs(audio))) > 1e-4, f"{name}: silent output"
-
-
-@pytest.mark.slow
-def test_sampled_beat_generates_or_skips():
-    """Sampled beat 在有素材时生成，无素材时优雅跳过（返回 None）。"""
-    if not _HAS_BEATS:
-        pytest.skip("make_beats 模块不可用")
-    result = _BEAT_STYLES["Sampled"]()
-    if result is None:
-        pytest.skip("无采样素材，sampled beat 按设计跳过")
-    if isinstance(result, str):
-        assert result.endswith(".wav")
-    else:
-        assert np.asarray(result).size > 0
 
 
 # ═══════════════════════════════════════════════════════════════

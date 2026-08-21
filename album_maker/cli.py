@@ -1,7 +1,7 @@
 """
 album_maker/cli.py — CLI 入口
 
-子命令: make / restore / doctor / list-styles / list-pools
+子命令: make / doctor / list-styles / list-pools / quick / style / jam
 用法:
   python -m bloodmusic.album_maker.cli make --demo --out ./album_output
 """
@@ -74,14 +74,6 @@ def _cmd_make(args: argparse.Namespace) -> int:
         logger.error("请指定 --config <album.yaml> 或 --demo")
         return 1
 
-    # --auto-pool：用真实采样池覆盖 instrument_pool
-    if args.auto_pool:
-        from .sample_pool import auto_build_pool
-        pool = auto_build_pool()
-        config.pool_raw = pool
-        n_sampled = sum(1 for i in pool["instruments"] if i.get("engine") == "sampler")
-        logger.info(f"--auto-pool: 使用 {n_sampled} 件真实采样 + 合成器补位")
-
     # 执行
     out_dir = Path(args.out) if args.out else Path(_MAKE_DEFAULT_OUT)
     maker = AlbumMaker(config)
@@ -98,71 +90,7 @@ def _cmd_make(args: argparse.Namespace) -> int:
     return 0 if result.all_success else 1
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# 子命令: restore
-# ═══════════════════════════════════════════════════════════════════════
 
-def _cmd_restore(args: argparse.Namespace) -> int:
-    """执行 restore 子命令。"""
-    try:
-        from separate_back import separate_back
-    except ImportError as exc:
-        logger.error(f"无法加载 audio_pipeline: {exc}")
-        return 1
-
-    album_dir = Path(args.album)
-    if not album_dir.is_dir():
-        logger.error(f"专辑目录不存在: {album_dir}")
-        return 1
-
-    # 定位曲目
-    if args.track is not None:
-        track_idx = int(args.track)
-        # 查找 track_XX_* 目录
-        track_dirs = sorted(album_dir.glob(f"track_{track_idx:02d}_*"))
-        if not track_dirs:
-            logger.error(f"未找到曲目 #{track_idx} 的目录")
-            return 1
-        track_dir = track_dirs[0]
-    else:
-        logger.error("请指定 --track <编号>")
-        return 1
-
-    # 定位 manifest
-    manifest_path = track_dir / "manifest.json"
-    if not manifest_path.is_file():
-        logger.error(f"未找到 manifest: {manifest_path}")
-        return 1
-
-    song_path = track_dir / "song_final.wav"
-    if not song_path.is_file():
-        logger.error(f"未找到成品: {song_path}")
-        return 1
-
-    out_dir = track_dir / "separated"
-    mode = args.mode or "manifest"
-
-    logger.info(f"还原分轨: {track_dir.name} (mode={mode})")
-    result = separate_back(
-        song=song_path,
-        out_dir=out_dir,
-        mode=mode,
-        manifest=manifest_path if mode == "manifest" else None,
-    )
-
-    print(f"✓ 分轨已还原到: {out_dir}")
-    print(f"  模式: {result.get('mode', mode)}")
-    print(f"  保真度: {result.get('fidelity', 'N/A')}")
-    files = result.get("files", [])
-    if files:
-        print(f"  文件数: {len(files)}")
-        for f in files[:5]:
-            print(f"    - {f}")
-
-    return 0
-
-
-# ═══════════════════════════════════════════════════════════════════════
 # 子命令: doctor
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -217,8 +145,8 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
     except ImportError as exc:
         issues.append(f"numpy 不可用: {exc}")
 
-    # 系统路径检查
-    ap_root = Path(r"G:\tools\audio_pipeline")
+    # 流水线路径检查（内置 pipeline/）
+    ap_root = _BLOODMUSIC_ROOT / "pipeline"
     if ap_root.exists():
         print(f"  audio_pipeline 路径: OK ({ap_root})")
     else:
@@ -320,38 +248,6 @@ def _cmd_jam(args: argparse.Namespace) -> int:
     print(f"\n🎸 {ok}/{args.count} 成功 → {args.out}")
     return 0 if ok == args.count else 1
 
-
-def _cmd_sample_album(args: argparse.Namespace) -> int:
-    """采样专辑 — 仅从 radio_music_stems 挑 bass/drums/other 生成专辑"""
-    from .sample_album import make_sample_album
-
-    styles = None
-    if args.styles:
-        styles = [s.strip() for s in args.styles.split(",") if s.strip()]
-
-    print(f"🎧 采样专辑生成中: {args.tracks} 曲")
-    print(f"   stems 目录: {args.stems or 'G:\\radio_music_stems'}")
-    if styles:
-        print(f"   风格白名单: {', '.join(styles)}")
-
-    result = make_sample_album(
-        stems_dir=args.stems,
-        n_tracks=args.tracks,
-        styles=styles,
-        seed=args.seed,
-        out_dir=args.out,
-        allow_same_song=args.allow_same_song,
-        album_title=args.title,
-    )
-
-    print(f"\n✅ 采样专辑完成: {result.success_count}/{len(result.tracks)} 曲")
-    print(f"   输出: {result.out_dir}")
-    for t in result.tracks:
-        mark = "✓" if t.success else "✗"
-        print(f"   {mark} {t.title} ({t.duration_sec:.1f}s)")
-    return 0 if result.success_count == len(result.tracks) else 1
-
-
 # ═══════════════════════════════════════════════════════════════════════
 # 命令行解析器
 # main
@@ -368,7 +264,6 @@ def build_parser() -> argparse.ArgumentParser:
   bloodmusic-album make --demo --out ./album_output
   bloodmusic-album make --config album.yaml --out ./album_output --parallel
   bloodmusic-album make --demo --out ./album_output --video ./input.mp4
-  bloodmusic-album restore --album ./album_output --track 1
   bloodmusic-album doctor
   bloodmusic-album list-styles
   bloodmusic-album list-pools
@@ -386,10 +281,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--demo", action="store_true", help="使用内置 demo 配置（零配置体验）"
     )
     p_make.add_argument(
-        "--auto-pool", action="store_true",
-        help="自动扫描真实采样池构建乐器池（覆盖 YAML 中的 instrument_pool）"
-    )
-    p_make.add_argument(
         "--out", type=str, default=_MAKE_DEFAULT_OUT, help="输出目录（默认 bloodmusic/album_output）"
     )
     p_make.add_argument(
@@ -402,21 +293,6 @@ def build_parser() -> argparse.ArgumentParser:
         "--video", type=str, default=None, help="视频文件路径（可选），将专辑首支曲目作为 BGM 嵌入视频"
     )
 
-    # restore
-    p_restore = sub.add_parser("restore", help="按需还原分轨")
-    p_restore.add_argument(
-        "--album", type=str, required=True, help="专辑输出目录"
-    )
-    p_restore.add_argument(
-        "--track", type=int, required=True, help="曲目编号（从 1 开始）"
-    )
-    p_restore.add_argument(
-        "--mode", type=str, choices=["manifest", "algo"],
-        default="manifest", help="还原模式（默认 manifest）"
-    )
-    p_restore.add_argument(
-        "-v", "--verbose", action="store_true", help="详细日志输出"
-    )
 
     # doctor
     p_doctor = sub.add_parser("doctor", help="环境诊断")
@@ -447,20 +323,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_jam.add_argument("--out", default=_JAM_DEFAULT_OUT)
     p_jam.add_argument("--seed", type=int, default=None)
 
-    # ── 采样专辑 (仅从 radio_music_stems 挑 bass/drums/other) ──
-    p_sample = sub.add_parser(
-        "sample-album", help="🎧 采样专辑 — 仅从 radio_music_stems 随机挑 bass/drums/other 按风格生成专辑"
-    )
-    p_sample.add_argument("--stems", type=str, default=None,
-                          help="stems 目录（默认 G:\\radio_music_stems）")
-    p_sample.add_argument("--tracks", type=int, default=8, help="曲目数（默认 8）")
-    p_sample.add_argument("--styles", type=str, default=None,
-                          help="逗号分隔的风格白名单（默认全部 12 种）")
-    p_sample.add_argument("--seed", type=int, default=None, help="随机种子")
-    p_sample.add_argument("--out", type=str, default=None, help="输出目录")
-    p_sample.add_argument("--title", type=str, default="Sample Collage", help="专辑名")
-    p_sample.add_argument("--allow-same-song", action="store_true",
-                          help="允许同一首歌的多个 stem 同时出现")
 
     return parser
 
@@ -485,14 +347,12 @@ def main(argv: list[str] | None = None) -> int:
 
     commands = {
         "make": _cmd_make,
-        "restore": _cmd_restore,
         "doctor": _cmd_doctor,
         "list-styles": _cmd_list_styles,
         "list-pools": _cmd_list_pools,
         "quick": _cmd_quick,
         "style": _cmd_style,
         "jam": _cmd_jam,
-        "sample-album": _cmd_sample_album,
     }
 
     handler = commands.get(args.command)

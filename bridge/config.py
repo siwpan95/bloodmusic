@@ -58,7 +58,7 @@ __all__ = [
 BRIDGE_VERSION: str = "1.0.0"
 
 # ── 路径基准 ──
-#: bloodmusic 包根目录（bridge/ 的上一级），即 G:\tools\bloodmusic
+#: bloodmusic 包根目录（bridge/ 的上一级），即 G:\tools\audio\bloodmusic
 PACKAGE_ROOT: Path = Path(__file__).resolve().parent.parent
 
 #: R2：默认输出根 = <包根>/bridge_output/

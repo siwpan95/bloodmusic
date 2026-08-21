@@ -26,7 +26,10 @@ gui = ["tkinter"]
 bloodmusic = "bloodmusic.cli:main"
 
 [tool.setuptools]
-packages = ["bloodmusic", "core", "effects", "music", "sfx", "export", "playback", "gui", "bridge"]
+packages = [
+    "bloodmusic", "core", "effects", "music", "sfx", "export", "playback", "gui",
+    "bridge", "album_maker", "pipeline", "interactive", "autowav", "mirror",
+]
 
 [tool.setuptools.package-dir]
 bloodmusic = "."
@@ -38,6 +41,11 @@ export = "export"
 playback = "playback"
 gui = "gui"
 bridge = "bridge"
+album_maker = "album_maker"
+pipeline = "pipeline"
+interactive = "interactive"
+autowav = "autowav"
+mirror = "mirror"
 
 [tool.pytest.ini_options]
 markers = [

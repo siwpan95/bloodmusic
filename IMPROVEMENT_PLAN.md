@@ -21,11 +21,11 @@
 - **验收**：根目录无废弃大文件；`album_maker_quick/` 不再混入仓库
 
 ### T3. 硬编码路径可配置化
-- **现状**：`album_maker/track.py:29-36` 硬编码 `_AUDIO_PIPELINE_ROOT = Path(r"G:\tools\audio_pipeline")` 和 `_REMIX_ROOT = Path(r"G:\tools\remix")`
+- **现状**：`album_maker/track.py:29-36` 硬编码 `_AUDIO_PIPELINE_ROOT = Path(r"G:\tools\audio\audio_pipeline")` 和 `_REMIX_ROOT = Path(r"G:\tools\audio\remix")`
 - **方案**：改为环境变量优先 + 相对回退：
   ```
-  _AUDIO_PIPELINE_ROOT = Path(os.environ.get("BLOODMUSIC_AUDIO_PIPELINE", r"G:\tools\audio_pipeline"))
-  _REMIX_ROOT = Path(os.environ.get("BLOODMUSIC_REMIX", r"G:\tools\remix"))
+  _AUDIO_PIPELINE_ROOT = Path(os.environ.get("BLOODMUSIC_AUDIO_PIPELINE", r"G:\tools\audio\audio_pipeline"))
+  _REMIX_ROOT = Path(os.environ.get("BLOODMUSIC_REMIX", r"G:\tools\audio\remix"))
   ```
   并在路径不存在时 `logger.warning` 而非静默失败
 - **验收**：跨机器可通过环境变量配置；路径缺失时有明确告警

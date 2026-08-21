@@ -8,7 +8,7 @@ description: >
   "compose a song", "make a complete track", "add bass line", "add harmony", "automate filter",
   or any request to programmatically generate WAV audio files with drum rhythms and melodies.
   Supports 7 beat styles: Trap, Boom Bap, Lo-Fi, Battle, Drum-Only, EDM, and Ambient.
-  Also supports full song arrangement, effect chains, automation, bass synthesis, harmony, and sampling.
+  Also supports full song arrangement, effect chains, automation, bass synthesis, harmony, and automation lanes.
   Supports InstrumentPool (乐器池) for YAML-driven multi-instrument composition,
   album generation with --pool mode, and 10 preset album-style YAML configurations.
   Triggers include: "build an instrument pool", "generate music from instrument pool",
@@ -20,7 +20,7 @@ description: >
 
 ## Overview
 
-Use the BloodMusic engine (at `G:\tools\bloodmusic`) to programmatically synthesize beats, drum patterns, full music arrangements, and complete songs. Generate WAV audio files by combining 808 drum synthesis, Euclidean rhythms, music presets, custom patterns, bass synthesis, harmony generation, effects chains, and automation lanes.
+Use the BloodMusic engine (at `G:\tools\audio\bloodmusic`) to programmatically synthesize beats, drum patterns, full music arrangements, and complete songs. Generate WAV audio files by combining 808 drum synthesis, Euclidean rhythms, music presets, custom patterns, bass synthesis, harmony generation, effects chains, and automation lanes.
 
 The engine also includes the **InstrumentPool** system — define a multi-instrument ensemble via YAML, pick a StylePreset, and render a complete arrangement with one call. Use the `album_maker` subpackage (`python -m bloodmusic.album_maker.cli make`) to generate a multi-style album from pool presets. The legacy `album_generator.py` script is archived at `archive/album_generator.py`.
 
@@ -46,11 +46,11 @@ Output files appear in `./output_beats/` (with timestamps to avoid overwrites):
 Before using BloodMusic, ensure it is installed:
 
 ```bash
-cd G:\tools\bloodmusic
+cd G:\tools\audio\bloodmusic
 pip install -e .
 ```
 
-If `from bloodmusic import ...` fails, check `pyproject.toml` at `G:\tools\bloodmusic\pyproject.toml`:
+If `from bloodmusic import ...` fails, check `pyproject.toml` at `G:\tools\audio\bloodmusic\pyproject.toml`:
 - `[tool.setuptools].packages` must include `"bloodmusic"`
 - `[tool.setuptools.package-dir]` must include `bloodmusic = "."`
 
@@ -314,37 +314,7 @@ voices = voice_leading(melody_notes, harmony_voices=[harmony])
 tracks = render_harmony_tracks(voices, melody_durs, bpm=120)
 ```
 
-### Workflow 10: SamplePad (WAV Sample Playback)
-
-Load and trigger external WAV samples like an MPC:
-
-```python
-from bloodmusic.music.sampler import (
-    Sample, load_sample, play_sample,
-    SamplePad, PadSlot, render_pad_sequence, render_sampler_pattern,
-)
-
-# Load a sample (supports 8/16/24/32-bit WAV, mono/stereo → mono)
-sample = load_sample("kick.wav")
-
-# Pitch-shifted playback (0.5 = octave down, 2.0 = octave up)
-audio = play_sample(sample, pitch=1.5, volume=0.8)
-
-# MPC-style pad setup
-pad = SamplePad()
-pad.assign("pad1", PadSlot(sample=load_sample("kick.wav"), volume=0.9))
-pad.assign("pad2", PadSlot(sample=load_sample("snare.wav"), volume=0.75, pitch=1.2))
-pad.assign("pad3", PadSlot(sample=load_sample("hihat.wav"), volume=0.5))
-
-# Trigger sequence: (time_seconds, pad_name)
-pattern = [
-    (0.0, "pad1"), (0.25, "pad3"), (0.5, "pad2"), (0.75, "pad3"),
-    (1.0, "pad1"), (1.25, "pad3"), (1.5, "pad1"), (1.75, "pad3"),
-]
-audio = render_pad_sequence(pad, pattern, bpm=120, duration=4.0)
-```
-
-### Workflow 11: InstrumentPool (端到端乐器池系统)
+### Workflow 10: InstrumentPool (端到端乐器池系统)
 
 一键从乐器池配置生成完整纯音乐 — 声明乐器、选风格、出成品。
 
@@ -412,7 +382,7 @@ wavfile.write("output.wav", 44100, (final_audio * 32767).astype(np.int16))
 **生成整张专辑（10 首多风格纯音乐）**：
 
 ```bash
-cd G:\tools\bloodmusic
+cd G:\tools\audio\bloodmusic
 
 # 专辑模式（album_maker 子包，替代已归档的 album_generator.py）
 python -m bloodmusic.album_maker.cli make --demo
@@ -577,7 +547,6 @@ Comprehensive API reference covering all classes, parameters, and code examples 
 - AutomationLane and AutomationTrack
 - BassSynth (sub, FM, acid, pluck presets)
 - Harmony (parallel, diatonic, chordal, voice leading)
-- SamplePad and WAV sample playback
 - Export and normalization utilities
 
 ### music/pool_presets/album_*.yaml

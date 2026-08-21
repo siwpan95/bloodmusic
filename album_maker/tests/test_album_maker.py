@@ -22,7 +22,7 @@ from pathlib import Path
 import pytest
 
 # 确保 bloodmusic 在 path 中
-_BLOODMUSIC_ROOT = Path(r"G:\tools\bloodmusic")
+_BLOODMUSIC_ROOT = Path(r"G:\tools\audio\bloodmusic")
 if str(_BLOODMUSIC_ROOT) not in sys.path:
     sys.path.insert(0, str(_BLOODMUSIC_ROOT))
 

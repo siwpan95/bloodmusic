@@ -7,7 +7,7 @@ BloodMusic 是一个纯 Python 的程序化音频合成引擎，支持零依赖�
 ## 安装
 
 ```bash
-cd G:\tools\bloodmusic
+cd G:\tools\audio\bloodmusic
 pip install -e .
 ```
 
@@ -501,41 +501,6 @@ tracks = render_harmony_tracks(voices, melody_durs, bpm=120)
 
 ---
 
-## 采样器 (bloodmusic.music.sampler)
-
-MPC 风格采样触发系统，支持 WAV 加载和音高变换。
-
-### SamplePad - 采样打击垫
-
-```python
-from bloodmusic.music.sampler import (
-    Sample, load_sample, play_sample,
-    SamplePad, PadSlot, render_pad_sequence, render_sampler_pattern,
-)
-
-# 加载采样 (支持 8/16/24/32-bit WAV, 自动立体声→单声道)
-kick = load_sample("kick.wav")
-snare = load_sample("snare.wav")
-hihat = load_sample("hihat.wav")
-
-# 单次播放 (带音高变换)
-audio = play_sample(kick, pitch=1.0, volume=0.9)   # pitch: 0.5=低八度, 2.0=高八度
-
-# 设置 Pad
-pad = SamplePad()
-pad.assign("pad1", PadSlot(sample=kick,  volume=0.9, pitch=1.0))
-pad.assign("pad2", PadSlot(sample=snare, volume=0.75, pitch=1.2))
-pad.assign("pad3", PadSlot(sample=hihat, volume=0.5, pitch=1.0))
-
-# 触发序列: [(时间_秒, pad_名称), ...]
-pattern = [
-    (0.0, "pad1"), (0.25, "pad3"), (0.5, "pad2"), (0.75, "pad3"),
-    (1.0, "pad1"), (1.25, "pad3"), (1.5, "pad1"), (1.75, "pad3"),
-]
-audio = render_pad_sequence(pad, pattern, bpm=120, duration=4.0)
-```
-
----
 
 ## 导出
 
