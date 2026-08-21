@@ -19,7 +19,9 @@
 - **Beat 制作** — 7 种风格（trap / boom bap / lofi / battle / drum only / edm / ambient）
 - **批量导出** — WAV / OGG / FLAC，含归一化 + 限幅
 - **GUI 工作站** — Tkinter 预览/导出/波形可视化/实时参数滑块
-- **制作工作室 GUI** — 单曲/专辑/Beats 三页签统一界面
+- **制作工作室 GUI** — 单曲/专辑/Beats/镜像四页签统一界面
+- **钢琴卷帘 / 编曲音序器**（gui/piano_roll.py）— MusicPattern 音符网格（点击增删/导出 MIDI）+ SongArrangement 段落块视图，工作站一键打开
+- **真实引擎接入验证**（games/zhuangtaiji/）— 多范式决策引擎 FSM 驱动 RealtimeMusicEngine 的端到端 demo（探索→战斗→BOSS→胜利自适应音乐，离线渲染 WAV）
 - **AutoWav 作曲核心**（autowav/，自 wav_music_gen 并入）— 14 调式、13 和弦进行、加权马尔可夫旋律、对位、曲式、鼓机，零依赖；Klatt 共振峰人声（8 元音吟唱/哼鸣 + 拼音韵母映射）；**人声档 B：SAPI 念白**（vocal_tts，中文语音自动选择，Piper 可选降级）；MIDI 导入导出桥；symbolic 默认 / acestep 可选懒加载
 - **镜像层**（mirror/）— 与 musickit（纯采样混音项目）互为镜像的纯机生成混音：13 机生成声池（同名 13 池）、65 风格提示词（Phase 2 全量精调）、5 曲式模板、24 混音师签名链、固定 stems×24 混音师专辑镜像（mirror/album.py）、制作工作室镜像页签，license_tier 恒 selfgen（详见 docs/PLAN_mirror_2026.md）
 
@@ -53,6 +55,11 @@ python -m bloodmusic.autowav --random --duration 60
 python -m bloodmusic.autowav.vocal_tts "你好，血音" --out n.wav
 python -m bloodmusic.autowav.vocal_tts --list-voices
 
+# 真实引擎接入验证：FSM 驱动自适应音乐（32s 探索→战斗→BOSS→胜利）
+python games/zhuangtaiji/demo_adaptive_music.py
+python games/zhuangtaiji/demo_adaptive_music.py --play   # 实时播放
+
+
 # 提交+推送到 Gitee（无需 git 命令，基于 dulwich；令牌用环境变量）
 set GITEE_TOKEN=xxxxxxxx
 python tools/git_push_gitee.py --message "feat: ..."
@@ -73,7 +80,8 @@ bloodmusic/
 ├── album_maker/   # 专辑制作（单曲/专辑）
 ├── export/        # 批量导出 WAV/OGG/FLAC
 ├── playback/      # sounddevice 实时预览
-├── gui/           # Tkinter 工作站 + 制作工作室
+├── gui/           # Tkinter 工作站（波形/滑块/卷帘/音序）+ 制作工作室
+├── games/         # 真实引擎接入验证（zhuangtaiji FSM → 自适应音乐 demo）
 ├── bridge/        # DAW 桥接（MIDI 渲染）
 ├── autowav/       # [并入] 算法作曲 + 共振峰人声（纯 stdlib）
 ├── mirror/        # 镜像层：13 机生成声池/63 风格/曲式/24 混音师（musickit 镜像）

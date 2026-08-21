@@ -220,6 +220,11 @@ class RealtimeMusicEngine:
         """启动引擎"""
         self.state_machine.start(initial_state)
 
+        # 未显式配置层时自动装载默认 5 层模板
+        # （修复：此前忘记调用 setup_default_layers 会导致全程静音）
+        if not self.mixer._layers:
+            self.setup_default_layers()
+
         # 加载默认映射集
         self.mapper.load_mapping_set(COMBAT_MAPPINGS)
         self.mapper.load_mapping_set(EXPLORE_MAPPINGS)
@@ -262,17 +267,25 @@ class RealtimeMusicEngine:
         target_state = self._determine_state(game_state)
 
         # 2. 如果状态发生了变化，请求转换
+        #    修复：过渡进行中且目标相同时不重复发起（否则 elapsed 每帧
+        #    被重置、过渡永不完成、on_state_change 每帧误触发）；
+        #    目标中途变化（重新瞄准）仍会立即发起新过渡。
         current_state = self.state_machine.current_state
         if target_state != current_state:
-            self.state_machine.transition_to(
-                target_state,
-                TransitionParams(duration=self.config.transition_duration),
+            in_flight = (
+                self.state_machine._transition_target
+                if self.state_machine.is_transitioning else None
             )
-            for cb in self._on_state_change:
-                try:
-                    cb(current_state, target_state)
-                except Exception:
-                    pass
+            if in_flight != target_state:
+                if self.state_machine.transition_to(
+                    target_state,
+                    TransitionParams(duration=self.config.transition_duration),
+                ):
+                    for cb in self._on_state_change:
+                        try:
+                            cb(current_state, target_state)
+                        except Exception:
+                            pass
 
         # 3. 更新状态机（平滑过渡参数）
         state_params = self.state_machine.tick(dt)

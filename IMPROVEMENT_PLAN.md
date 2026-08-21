@@ -127,3 +127,29 @@
 - T2 删除 album_generator.py 前先 `git mv` 到 `archive/` 保留历史，确认无引用再删
 - T4 序列化需保证浮点往返精度（用 repr 而非 str）
 - T8/T10 GUI 改动较大，先在分支验证，matplotlib 缺失须优雅降级
+
+
+---
+
+## 2026-08-21 核对状态
+
+> 本计划（2026-08-13）全部 11 项任务核对结果。
+
+| 任务 | 状态 | 说明 |
+|---|---|---|
+| T1 修复 lazy 测试 | ✅ 完成 | 改用 ast.parse 分析；pytest -k lazy 实测 1 passed |
+| T2 收敛范围 | ✅ 完成 | album_generator.py → archive/；album_maker_quick 已清理；album_maker/__init__.py 已注明替代 |
+| T3 硬编码路径配置化 | ✅ 完成 | 环境变量 BLOODMUSIC_AUDIO_PIPELINE / BLOODMUSIC_REMIX + 缺省回退 + 缺失告警 |
+| T4 SFX 序列化 | ✅ 完成 | sfx/serialize.py（dict/JSON/compact 往返一致） |
+| T5 变异引擎 + 锁定 | ✅ 完成 | sfx/mutate.py（mutate/randomize/mutate_preset，含 locked_fields） |
+| T6 经典 8 类游戏预设 | ✅ 完成 | sfx/presets.py GAME_FX_PRESETS（test_game_fx 6 passed） |
+| T7 LayeredSFX Mixer | ✅ 完成 | mix_voices N 路加权叠加 |
+| T8 GUI 波形可视化 | ✅ 完成 | workstation 内嵌 matplotlib 波形 |
+| T9 实时性能基准 | ✅ 完成 | benchmarks/report.md：2-6 层 1.13~1.49ms/帧，60fps 可行（预算 16.6ms） |
+| T10 GUI 实时参数滑块 | ✅ 完成 | 滑块 + 200ms 节流重合成 |
+| T11 统一署名 | ✅ 完成 | pyproject authors=siwpan，README/LICENSE 对齐 |
+
+**2026-08-21 追加收尾（本计划外新立项）**：
+- [x] 真实游戏引擎接入验证：games/zhuangtaiji（pygame）+ bloodmusic.interactive.RealtimeMusicEngine 端到端
+- [x] 钢琴卷帘/音序器 UI：gui/piano_roll.py + 工作站集成
+- [x] 镜像架构 Phase 1/2（docs/PLAN_mirror_2026.md）与人声档 B（autowav/vocal_tts.py）

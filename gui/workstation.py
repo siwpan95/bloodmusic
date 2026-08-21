@@ -58,6 +58,7 @@ class GameAudioWorkstationGUI:
         self._live_voice = None            # 当前可实时调节的 voice 副本
         self._live_name = ""               # 当前 voice 名称
         self._last_live_play = 0.0         # 上次实时播放时间（节流）
+        self._piano_roll_win = None        # 卷帘/音序窗口（懒创建）
         self._build_ui()
 
     # ═══════ UI 构建 ═══════
@@ -336,6 +337,35 @@ class GameAudioWorkstationGUI:
             self._info_label.config(text=f"Music: {name}\n"
                                          f"BPM: {pattern.bpm} | "
                                          f"循环: {'是' if pattern.loop else '否'}")
+            # 卷帘窗口打开时同步显示
+            if self._piano_roll_win is not None and self._piano_roll_win.winfo_exists():
+                try:
+                    self._piano_roll_win.show_pattern(pattern)
+                except Exception:
+                    pass
+
+    def _open_piano_roll(self):
+        """打开钢琴卷帘 / 编曲音序器窗口（懒创建，选中音乐预设时同步）。"""
+        try:
+            if self._piano_roll_win is None or not self._piano_roll_win.winfo_exists():
+                from .piano_roll import PianoRollWindow
+                self._piano_roll_win = PianoRollWindow(self.root)
+            win = self._piano_roll_win
+            # 当前选中的音乐预设（或默认 MENU_MUSIC）
+            pattern = None
+            if self.selected_preset and self.selected_preset[0] == "music":
+                pattern = self.selected_preset[2]
+            else:
+                pattern = ALL_MUSIC_PATTERNS.get("MENU_MUSIC") or next(iter(ALL_MUSIC_PATTERNS.values()))
+            if pattern is not None:
+                win.show_pattern(pattern)
+            # 演示曲式模板（pop：intro→verse→chorus→bridge→outro）
+            from ..music.arrangement import create_song_template
+            win.show_arrangement(create_song_template("pop"))
+            win.lift()
+            self._status.config(text="🎼 卷帘/音序已打开（点击网格可增删音符）")
+        except Exception as e:  # noqa: BLE001
+            messagebox.showerror("打开失败", f"卷帘/音序器启动失败:\n{e}")
 
     def _open_maker(self):
         """打开制作工作室（单曲/专辑/Beats 统一界面）。"""

@@ -364,29 +364,29 @@ class TestPoolModeSmoke:
 # 5. SKILL.md Verification
 # ═════════════════════════════════════════════════════════════
 
-def test_skill_md_workflow_11_exists():
-    """SKILL.md must contain Workflow 11 for InstrumentPool."""
+def test_skill_md_workflow_10_exists():
+    """SKILL.md must contain Workflow 10 for InstrumentPool."""
     content = SKILL_MD.read_text(encoding="utf-8")
-    assert "Workflow 11" in content, "Workflow 11 heading not found in SKILL.md"
+    assert "Workflow 10: InstrumentPool" in content, "Workflow 10 heading not found in SKILL.md"
     assert "InstrumentPool" in content, "InstrumentPool not mentioned in SKILL.md"
 
 
-def test_skill_md_workflow_11_has_required_sections():
-    """Workflow 11 must cover: core concepts, quick start, styles, templates, album gen."""
+def test_skill_md_workflow_10_has_required_sections():
+    """Workflow 10 must cover: core concepts, quick start, styles, templates, album gen."""
     content = SKILL_MD.read_text(encoding="utf-8")
 
-    # Find Workflow 11 section
-    wf11_start = content.find("### Workflow 11")
-    assert wf11_start >= 0, "Workflow 11 heading not found"
+    # Find Workflow 10 section
+    wf_start = content.find("### Workflow 10: InstrumentPool")
+    assert wf_start >= 0, "Workflow 10 heading not found"
 
     # Get the section content until next ### Workflow or ## heading
-    rest = content[wf11_start:]
+    rest = content[wf_start:]
     next_section = len(rest)
     for marker in ["\n### Workflow ", "\n## "]:
-        idx = rest.find(marker, len("### Workflow 11"))
+        idx = rest.find(marker, len("### Workflow 10: InstrumentPool"))
         if idx >= 0 and idx < next_section:
             next_section = idx
-    wf11_content = rest[:next_section]
+    wf_content = rest[:next_section]
 
     # Required sub-sections
     required = [
@@ -399,8 +399,8 @@ def test_skill_md_workflow_11_has_required_sections():
     ]
 
     for keyword, desc in required:
-        assert keyword in wf11_content, (
-            f"Workflow 11 missing required section: '{keyword}' ({desc})"
+        assert keyword in wf_content, (
+            f"Workflow 10 missing required section: '{keyword}' ({desc})"
         )
 
 

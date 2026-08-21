@@ -183,3 +183,25 @@ LICENSE 写 MIT + copyright siwpan，README 写"内部项目，全哥创建"，p
 ---
 
 *报告基于本地代码审查（48,771 行 Python + 6,903 行文档）与联网调研（Pyo/PySynth/AudioLazy/PyTheory/sfxr 家族/music21/Playwright 爬虫合规性）综合形成。*
+
+
+---
+
+## 七、2026-08-21 核对状态（整改跟进）
+
+> 距本评估报告（2026-08-13）8 天后的逐项回填。原报告"问题与风险"的处置状态如下。
+
+| 原问题 | 状态 | 处置 |
+|---|---|---|
+| 5.1 sfx 爬虫合规风险 | ✅ 已解决 | 爬虫全家桶（crawl/crawler_core/dl_sounds/stealth.min.js/sources/sounds/sfx_utils/player/gui）已整体剥离；README 声明「纯自生成定位：零外部采样」；采样需求由镜像项目 musickit 独立承担 |
+| 5.2 范围蔓延 | ✅ 已解决 | album_generator.py 移入 archive/；album_maker_quick 已清理；专辑入口统一 album_maker/；pipeline 收敛为纯合成 B→C；新增 autowav/（并入 wav_music_gen）与 mirror/（musickit 镜像层）均属有规划扩展 |
+| 5.3 实时性能存疑 | ✅ 已消解 + 已补验证 | benchmarks/report.md：2-6 层 1.13~1.49ms/帧，60fps 可行；2026-08-21 起以真实 pygame 游戏（games/zhuangtaiji）接入 RealtimeMusicEngine 做端到端验证 |
+| 5.4 GUI 滞后 | ✅ 已大幅补强 | workstation 由 213 行扩至 383+ 行（波形可视化 + 实时参数滑块 200ms 节流）；maker_gui 新增镜像页签；2026-08-21 再落地钢琴卷帘/音序器 UI |
+| 5.5 测试质量瑕疵 | ✅ 已解决 | lazy 测试改为 AST 分析（实测通过）；输出目录已删除或 gitignore 排除 |
+| 5.6 署名与许可不一致 | ✅ 已解决 | pyproject authors=siwpan；README 与 LICENSE 署名一致 |
+| 5.7 硬编码外部路径 | ✅ 已解决 | BLOODMUSIC_AUDIO_PIPELINE / BLOODMUSIC_REMIX 环境变量优先 + 缺省回退 + 缺失告警 |
+
+**过期描述更新**：
+- 规模：评估时 48,771 行 / 13 子包 → 现含 19 个包级目录（core/effects/music/sfx/bridge/album_maker/pipeline/remix/export/playback/gui/interactive/autowav/mirror 等），另含 mirror 层 65 风格/24 混音师/13 机生成声池与人声档 A（共振峰）/B（SAPI 念白）
+- 提交：评估时 8 次提交 → 现为完整 git 仓库（Gitee siwpan/audio-generation，master 持续演进）
+- README「内部项目，全哥创建」字样已移除，统一为 MIT + siwpan
