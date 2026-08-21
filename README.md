@@ -48,6 +48,10 @@ python -m bloodmusic.mirror --list-styles --list-mixers
 # AutoWav 算法作曲（自 wav_music_gen 并入）
 python -m bloodmusic.autowav --random --duration 60
 
+# 提交+推送到 Gitee（无需 git 命令，基于 dulwich；令牌用环境变量）
+set GITEE_TOKEN=xxxxxxxx
+python tools/git_push_gitee.py --message "feat: ..."
+
 # 运行测试（渲染类 slow 测试需 --runslow）
 python -m pytest tests/
 ```
