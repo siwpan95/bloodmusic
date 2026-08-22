@@ -140,3 +140,31 @@ def test_dict_is_json_serializable():
     import json
     data = voice_to_dict(_sample_voice())
     json.dumps(data)  # 不抛异常即可
+
+
+def test_compact_tampered_index_raises_friendly_error():
+    """篡改字段索引（越界）应抛出友好 ValueError 而非 IndexError。"""
+    import json
+    import zlib
+    import base64
+    from bloodmusic.core.voice import SynthVoice
+    from bloodmusic.sfx.serialize import _COMPACT_PREFIX, voice_to_compact, voice_from_compact
+
+    # 解码合法 compact（兼容"压缩更短才压缩"的编码策略）
+    body = base64.urlsafe_b64decode(
+        voice_to_compact(SynthVoice(freq=880.0, volume=0.5))[len(_COMPACT_PREFIX):].encode("ascii")
+    )
+    try:
+        raw = zlib.decompress(body)
+    except zlib.error:
+        raw = body
+    decoded = json.loads(raw.decode())
+    assert decoded, "非默认 voice 的 compact 载荷不应为空"
+    # 篡改：把某个字段索引替换为越界索引 999
+    decoded["999"] = decoded.pop(next(iter(decoded)))
+    payload = json.dumps(decoded, separators=(",", ":")).encode()
+    compressed = zlib.compress(payload)
+    tampered_body = compressed if len(compressed) < len(payload) else payload
+    tampered = _COMPACT_PREFIX + base64.urlsafe_b64encode(tampered_body).decode("ascii")
+    with pytest.raises(ValueError, match="越界|非法"):
+        voice_from_compact(tampered)

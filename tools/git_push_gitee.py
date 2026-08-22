@@ -28,6 +28,10 @@ tools/git_push_gitee.py —— 无需 git 客户端的 Gitee 推送工具（基�
        → 重建索引 → 提交（父提交 = 远端 tip；空仓库则为首个提交）
        → 推送分支 → 校验远端 refs 与本地一致 → 清理临时目录
 
+安全说明:
+    令牌只经 HTTP 头传递（API 校验用 `Authorization: Bearer`；git 传输由
+    dulwich 以 Basic 认证头发送），绝不写入 URL（避免 query/日志泄漏）。
+
 环境变量:
     GITEE_TOKEN   令牌（Gitee 私人令牌）
     GITEE_REMOTE  远端地址（默认 https://gitee.com/siwpan/audio-generation.git）
@@ -143,9 +147,13 @@ def check_dulwich() -> None:
         sys.exit(f"缺少依赖 dulwich：pip install dulwich（{exc}）")
 
 
-def get_remote_refs(url: str) -> dict:
+def get_remote_refs(url: str, username: str | None = None,
+                    password: str | None = None) -> dict:
+    """ls-remote；给出 username/password 时经 Basic 认证头访问私有仓库。"""
     from dulwich.client import get_transport_and_path
-    client, path = get_transport_and_path(url)
+    client, path = get_transport_and_path(
+        url, username=username, password=password
+    )
     try:
         result = client.get_refs(path)
         # dulwich >= 0.22 返回 LsRemoteResult（.refs 为字典）
@@ -155,14 +163,20 @@ def get_remote_refs(url: str) -> dict:
 
 
 def validate_token(token: str) -> str:
-    """Gitee API /user 校验令牌，返回登录名；失败给出明确指引。"""
+    """Gitee API /user 校验令牌，返回登录名；失败给出明确指引。
+
+    令牌经 `Authorization: Bearer` 头传递，不出现在 URL query（避免
+    服务端访问日志记录令牌）。
+    """
     import urllib.request
     import urllib.error
     import json
+    req = urllib.request.Request(
+        "https://gitee.com/api/v5/user",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     try:
-        with urllib.request.urlopen(
-            f"https://gitee.com/api/v5/user?access_token={token}", timeout=30
-        ) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:
             data = json.loads(resp.read().decode("utf-8"))
         return str(data.get("login", ""))
     except urllib.error.HTTPError as exc:
@@ -171,16 +185,13 @@ def validate_token(token: str) -> str:
         sys.exit(f"无法访问 Gitee API：{exc}")
 
 
-def auth_url(remote: str, token: str, login: str) -> str:
-    """把「用户名:令牌」内联进 URL（仅用于本次进程的 HTTP 认证，不写任何配置）。
+def auth_kwargs(login: str, token: str) -> dict:
+    """返回传给 dulwich 传输层的凭证 kwargs。
 
-    Gitee 的私人令牌按「用户名 + 令牌作密码」使用 Basic 认证（与 GitHub PAT 不同）。
+    dulwich 会将其转成 HTTP Basic 认证头（Gitee 私人令牌按
+    「用户名 + 令牌作密码」使用 Basic 认证），令牌不进入任何 URL 字符串。
     """
-    if "@" in remote:
-        return remote  # 已带认证信息
-    scheme, rest = remote.split("://", 1)
-    host, path = rest.split("/", 1)
-    return f"{scheme}://{login}:{token}@{host}/{path}"
+    return {"username": login, "password": token}
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -235,6 +246,7 @@ def run(args: argparse.Namespace) -> int:
     print(f"== 目标: {remote} 分支: {branch} 根目录: {root}")
     login = validate_token(token)
     print(f"== 令牌校验: {login}")
+    creds = auth_kwargs(login, token)
 
     # 2) 远端 refs（匿名读取）
     refs = get_remote_refs(remote)
@@ -248,7 +260,7 @@ def run(args: argparse.Namespace) -> int:
     work = Path(tempfile.mkdtemp(prefix="bm_push_"))
     try:
         if remote_tip:
-            repo = porcelain.clone(remote, str(work), depth=1)
+            repo = porcelain.clone(remote, str(work), depth=1, **creds)
         else:
             repo = Repo.init(str(work))
 
@@ -293,10 +305,9 @@ def run(args: argparse.Namespace) -> int:
         sha = porcelain.commit(repo, message=message, author=author_bytes, committer=author_bytes)
         print(f"== 已提交: {sha.decode()}（父提交: {remote_tip or '无（根提交）'}）")
 
-        # 7) 推送（令牌仅内联于本次 URL）
-        url = auth_url(remote, token, login)
+        # 7) 推送（令牌经 Basic 认证头，不进 URL）
         try:
-            porcelain.push(repo, url, ref_name.encode("utf-8"))
+            porcelain.push(repo, remote, ref_name.encode("utf-8"), **creds)
         except Exception as exc:
             if "Unauthorized" in type(exc).__name__ or "401" in str(exc):
                 sys.exit(f"推送认证失败（{exc}）：请确认令牌归属账号 {login} 且对本仓库有写权限")
@@ -304,7 +315,7 @@ def run(args: argparse.Namespace) -> int:
         print("== 推送成功")
 
         # 8) 校验
-        new_refs = get_remote_refs(url)
+        new_refs = get_remote_refs(remote, **creds)
         pushed = new_refs.get(ref_name.encode())
         if isinstance(pushed, bytes):
             pushed = pushed.decode()

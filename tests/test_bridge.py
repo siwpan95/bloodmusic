@@ -642,15 +642,20 @@ class TestArchitectureRules(unittest.TestCase):
         （`>>> from bloodmusic.bridge import ...`）误判成反向依赖。
         """
         offenders: list[str] = []
+        # 只扫描本体（白名单，与 R7 的语义一致）：根目录入口 .py + 核心包
+        # core/effects/music/sfx/export/playback/gui/interactive。扩展层
+        # （album_maker、pipeline、remix、skill、autowav、mirror、games）
+        # 是 bridge 的合法消费者；.venv/.git/tests 等非产品代码一律不扫
+        # （也避免把第三方包里的 SyntaxWarning 误报进测试日志）。
+        core_dirs = {"core", "effects", "music", "sfx", "export",
+                     "playback", "gui", "interactive"}
         for path in self.PACKAGE_ROOT.rglob("*.py"):
-            parts = set(path.relative_to(self.PACKAGE_ROOT).parts)
-            # Only scan the core engine packages (core/effects/music/sfx/
-            # export/playback/gui/interactive). Extension layers (album_maker,
-            # pipeline, remix, skill) are legitimate consumers of bridge and
-            # may import it; .pass/ holds QA scripts, not product code.
-            if parts & {"bridge", "tests", "build", "dist", "__pycache__", ".git",
-                         ".pass", "album_maker", "album_maker_quick", "pipeline",
-                         "remix", "skill", "bloodmusic.egg-info"}:
+            parts = path.relative_to(self.PACKAGE_ROOT).parts
+            is_root_entry = len(parts) == 1  # cli.py / util.py / __init__.py 等
+            is_core = parts[0] in core_dirs
+            if not (is_root_entry or is_core):
+                continue
+            if "__pycache__" in parts:
                 continue
             try:
                 tree = ast.parse(path.read_text(encoding="utf-8", errors="ignore"))

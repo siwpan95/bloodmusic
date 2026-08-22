@@ -198,7 +198,17 @@ def _from_compact_data(value: Any, target_type: Any, owner: type = None) -> Any:
         flds = list(fields(target_type))
         kwargs = {}
         for idx_str, v in value.items():
-            i = int(idx_str)
+            try:
+                i = int(idx_str)
+            except (TypeError, ValueError):
+                raise ValueError(
+                    f"compact 数据字段索引非法: {idx_str!r}（{target_type.__name__}）"
+                ) from None
+            if not 0 <= i < len(flds):
+                raise ValueError(
+                    f"compact 数据字段索引越界: {i}（{target_type.__name__} 仅 "
+                    f"{len(flds)} 个字段；数据可能被篡改或与当前版本不兼容）"
+                )
             f = flds[i]
             kwargs[f.name] = _from_compact_data(
                 v, hints.get(f.name, f.type), owner=target_type,

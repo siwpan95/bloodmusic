@@ -170,9 +170,14 @@ class KarplusStrongSynth:
         decay = voice.decay
 
         # 低通系数 (一阶 IIR 模拟频率相关衰减)
-        rc = 1.0 / (2 * np.pi * voice.damping_hz)
-        dt = 1.0 / self.sr
-        alpha = dt / (rc + dt)
+        # damping_hz<=0 视为「无频率阻尼」→ alpha=0 直通（修复除零产生 inf）
+        damping_hz = float(voice.damping_hz)
+        if damping_hz > 0.0:
+            rc = 1.0 / (2 * np.pi * damping_hz)
+            dt = 1.0 / self.sr
+            alpha = dt / (rc + dt)
+        else:
+            alpha = 0.0
 
         prev_sample = 0.0
 

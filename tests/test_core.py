@@ -233,3 +233,12 @@ class TestNoteUtils(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_karplus_damping_zero_produces_finite_audio():
+    """damping_hz=0 不应产生 inf/NaN（除零防护）。"""
+    from bloodmusic.core.karplus_strong import KSVoice, synthesize_ks_voice
+    voice = KSVoice(freq=220.0, duration=0.5, damping_hz=0.0)
+    audio = np.asarray(synthesize_ks_voice(voice, sr=44100), dtype=np.float64)
+    assert np.all(np.isfinite(audio)), "damping_hz=0 产生 inf/NaN"
+    assert float(np.max(np.abs(audio))) > 1e-4, "输出静音"

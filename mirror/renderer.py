@@ -24,6 +24,7 @@ from pathlib import Path
 import numpy as np
 
 from bloodmusic.core.constants import SR
+from bloodmusic.util import safe_filename
 from bloodmusic.export.batch import export_audio
 
 from .styles import generate_prompt, list_styles
@@ -59,9 +60,6 @@ def _section_gain(section_intensity: float, role: str, skeleton_only: bool) -> f
         return 0.0
     return section_intensity
 
-
-def _safe_stem(name: str) -> str:
-    return "".join(c if (c.isalnum() or c in "_-") else "_" for c in name).strip("_") or "stem"
 
 
 def render_full_tracks(
@@ -191,7 +189,7 @@ def run_remix(
         mixed = apply_master_chain(mixed, mstyle)
 
         # ── 6. 导出成品 + 分轨 + manifest + report ──
-        track_dir = out_root / f"track_{i + 1:02d}_{prompt.style}_{_safe_stem(structure_name)}"
+        track_dir = out_root / f"track_{i + 1:02d}_{prompt.style}_{safe_filename(structure_name, fallback="stem")}"
         stems_dir = track_dir / "stems"
         stems_dir.mkdir(parents=True, exist_ok=True)
         song_name = f"song_final.{fmt}"
@@ -201,7 +199,7 @@ def run_remix(
         stem_files: list[str] = []
         manifest_entries: list[SourceManifestEntry] = []
         for spec, tr in zip(specs, tracks):
-            name = _safe_stem(f"{spec.pool}__{spec.name}")
+            name = safe_filename(f"{spec.pool}__{spec.name}", fallback="stem")
             stem_path = stems_dir / f"{name}.wav"
             export_audio(tr, str(stem_path), format="wav")
             stem_files.append(stem_path.name)

@@ -1,0 +1,9 @@
+# 本地提交前质量门禁（pip install pre-commit && pre-commit install）
+# ruff lint + format（black 的现代替代，规则见 pyproject [tool.ruff]）
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.10
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format

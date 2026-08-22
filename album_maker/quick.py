@@ -1,6 +1,6 @@
 """album_maker/quick.py — 随机风格单曲快速生成器
 ================================================
-整合 album_generator.py 的风格知识 + album_maker YAML 引擎，
+（原 album_generator.py 的风格知识已内化于 style_db，旧文件已移除）+ album_maker YAML 引擎，
 一条命令出单曲，零配置。
 
 用法:
@@ -62,7 +62,7 @@ def _build_synth_pool() -> dict:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# 曲目标题生成器（来自 album_generator.py TRACKLIST 灵感）
+# 曲目标题生成器（灵感源自历史 album_generator.py TRACKLIST）
 # ═══════════════════════════════════════════════════════════════════════
 
 TITLE_TEMPLATES = [

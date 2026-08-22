@@ -223,9 +223,8 @@ def cmd_pool_render(args):
             print(f"✅ 导出: {output_path}")
             print(f"   📊 分轨数: {len(stems)}, 时长: {len(final_audio)/44100:.1f}s")
     except Exception as e:
+        # 精简错误输出（避免向用户倾倒调试堆栈）
         print(f"❌ 渲染失败: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
         sys.exit(1)
 
 

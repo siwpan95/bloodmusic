@@ -2,7 +2,7 @@
 BloodMusic Album Maker — 程序化专辑制作器 + 快速单曲生成器
 ============================================================
 
-整合 album_generator.py (旧版硬编码专辑) + skill/make_beats.py (节拍工具)，
+（旧版根目录 album_generator.py 已移除，历史保留在 git 中）+ skill/make_beats.py (节拍工具)，
 提供统一的专辑/单曲生成接口。
 
 架构分层：

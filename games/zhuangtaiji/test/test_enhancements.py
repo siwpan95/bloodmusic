@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 """P0~P3 增强功能离线验证（不启动 GUI）。"""
+import os
 import sys
 import io
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+# 确保本游戏项目目录优先于 editable 安装的 bloodmusic 根（避免 `core` 被遮蔽）
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if "pytest" not in sys.modules:
+    # 仅脚本直跑时重包装 stdout 为 UTF-8；pytest 收集时会替换捕获流，勿动
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 from core import (load_config, build_adapter, renderers, plugin, analysis,
                   adapters_io)

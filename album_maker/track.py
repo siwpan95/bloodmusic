@@ -24,6 +24,8 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+from bloodmusic.util import safe_filename
+
 logger = logging.getLogger(__name__)
 
 # ── sys.path 注入 audio_pipeline + remix（环境变量可配置） ──
@@ -369,7 +371,7 @@ class TrackHandler:
 
         # 渲染所有 pattern（旋律 + 和弦 + 鼓）
         for pattern in import_result.all_patterns:
-            safe_name = self._safe_stem(
+            safe_name = safe_filename(
                 getattr(pattern, "name", "midi_pattern")
             )
             out_path = stems_dir / f"{safe_name}.wav"
@@ -390,12 +392,6 @@ class TrackHandler:
         return midi_stems
 
     # ── 阶段 R：渲染分轨 ──
-
-    @staticmethod
-    def _safe_stem(name: str) -> str:
-        """把 pattern 名规范成安全文件名。"""
-        safe = [c if (c.isalnum() or c in ("_", "-")) else "_" for c in str(name)]
-        return "".join(safe).strip("_") or "pattern"
 
     def _render_stems(
         self,
@@ -422,7 +418,7 @@ class TrackHandler:
 
         # 渲染 music tracks
         for i, pattern in enumerate(multi.music_tracks):
-            safe_name = self._safe_stem(getattr(pattern, "name", f"track_{i:02d}"))
+            safe_name = safe_filename(getattr(pattern, "name", f"track_{i:02d}"))
             out_path = stems_dir / f"{safe_name}.wav"
             try:
                 written = render_pattern_file(pattern, out_path, duration_sec)
@@ -436,7 +432,7 @@ class TrackHandler:
 
         # 渲染 drum track
         if multi.drum_track is not None:
-            safe_name = self._safe_stem(
+            safe_name = safe_filename(
                 getattr(multi.drum_track, "name", "drum_track")
             )
             out_path = stems_dir / f"{safe_name}.wav"

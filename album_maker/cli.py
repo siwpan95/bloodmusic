@@ -306,7 +306,7 @@ def build_parser() -> argparse.ArgumentParser:
     # list-pools
     sub.add_parser("list-pools", help="列出内置乐器池模板")
 
-    # ── 快速单曲 (整合 album_generator.py + skill/make_beats.py) ──
+    # ── 快速单曲 (style_db 风格知识 + skill/make_beats.py) ──
     p_quick = sub.add_parser("quick", help="🎲 随机风格快速单曲（零配置）")
     p_quick.add_argument("--out", default=_QUICK_DEFAULT_OUT, help="输出目录")
     p_quick.add_argument("--seed", type=int, default=None, help="随机种子")

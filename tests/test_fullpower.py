@@ -1159,36 +1159,6 @@ class TestFullpowerCLIEndToEnd(unittest.TestCase):
         self.assertGreater(len(stems), 2,
                            "Battle forge should have multiple stems")
 
-    def test_fullpower_cli_import(self):
-        """验证 album_generator 中 --fullpower 相关函数可导入"""
-        # 不要实际运行 CLI——只验证函数存在并可调用
-        import importlib
-        import sys
-
-        # 确保可以导入 _generate_fullpower_album（album_generator.py 已归档到 archive/）
-        album_gen_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            "archive", "album_generator.py",
-        )
-
-        spec = importlib.util.spec_from_file_location(
-            "album_generator", album_gen_path,
-        )
-        module = importlib.util.module_from_spec(spec)
-
-        # 先设置 sys.argv 避免 argparse 解析失败
-        old_argv = sys.argv
-        sys.argv = ["album_generator.py"]
-
-        try:
-            spec.loader.exec_module(module)
-            self.assertTrue(hasattr(module, "_generate_fullpower_album"))
-            self.assertTrue(hasattr(module, "cli_main"))
-            self.assertTrue(hasattr(module, "FULLPOWER_ALBUM"))
-            self.assertEqual(len(module.FULLPOWER_ALBUM), 12)
-        finally:
-            sys.argv = old_argv
-
     def test_fullpower_quick_render(self):
         """快速渲染 3 个不同 fullpower YAML (5s each) 验证引擎不崩溃"""
         from bloodmusic.music.instrument_pool import InstrumentPool

@@ -61,11 +61,20 @@ python games/zhuangtaiji/demo_adaptive_music.py --play   # 实时播放
 
 
 # 提交+推送到 Gitee（无需 git 命令，基于 dulwich；令牌用环境变量）
+# 令牌只经 HTTP 请求头传输（API 校验 Bearer / git 传输 Basic），绝不写入 URL
 set GITEE_TOKEN=xxxxxxxx
 python tools/git_push_gitee.py --message "feat: ..."
 
-# 运行测试（渲染类 slow 测试需 --runslow）
-python -m pytest tests/
+# 运行测试：根目录直接 pytest（testpaths 已配置 tests + album_maker/tests；
+# slow 渲染/端到端用例默认跳过，需 --runslow 显式运行）
+python -m pytest
+
+# pipeline/tests 与主套件合并收集会冲突，需单独运行
+python -m pytest pipeline/tests
+
+# games/zhuangtaiji 的验证脚本（非 pytest 用例，直接运行）
+python games/zhuangtaiji/test/test_verify.py
+python games/zhuangtaiji/test/test_enhancements.py
 ```
 
 ## 项目结构
@@ -85,8 +94,11 @@ bloodmusic/
 ├── bridge/        # DAW 桥接（MIDI 渲染）
 ├── autowav/       # [并入] 算法作曲 + 共振峰人声（纯 stdlib）
 ├── mirror/        # 镜像层：13 机生成声池/63 风格/曲式/24 混音师（musickit 镜像）
-├── benchmarks/    # 实时性能基准（bench_engine.py）
+├── benchmarks/    # 实时性能基准（bench_engine.py / bench_realtime_e2e.py）
 ├── docs/          # 产品需求文档 (PRD) + 架构设计文档 + PLAN_mirror_2026.md
+├── pipeline/      # 生成流水线（tests 需单独运行）
+├── tools/         # git_push_gitee.py 等仓库工具
+├── .workflow/     # Gitee Go 流水线（CI，push/PR 到 master 触发）
 └── tests/         # 单元 + 集成测试
 ```
 
@@ -96,6 +108,12 @@ bloodmusic/
 - numpy, scipy, sounddevice, soundfile
 - matplotlib（可选，GUI 波形可视化）
 - tkinter (标准库)
+
+## 测试与 CI
+
+- **一键回归**：仓库根目录 `python -m pytest`（testpaths = tests + album_maker/tests；slow 用例默认跳过，`--runslow` 显式运行）
+- **Gitee Go 流水线**：`.workflow/bloodmusic-ci.yml`（push/PR 到 master 自动跑 `pip install -e .` + 全量 pytest）——在 Gitee 仓库「DevOps → Gitee Go → 新建流水线 → 从 Yml 导入」启用
+- **本地门禁**：`.pre-commit-config.yaml`（ruff lint + format，只检查本次提交改动的文件）
 
 ## 许可
 

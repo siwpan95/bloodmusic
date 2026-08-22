@@ -30,6 +30,7 @@ from pathlib import Path
 import numpy as np
 
 from ..export.batch import export_audio
+from ..util import safe_filename
 from ..music.pattern import (
     DrumPattern,
     MusicPattern,
@@ -108,11 +109,6 @@ def resolve_duration(result: ImportResult, override: float | None = None) -> flo
     candidates += [drum_duration_sec(p) for p in result.drum_patterns]
     return max(candidates) if candidates else MIN_RENDER_SEC
 
-
-def _safe_stem(name: str) -> str:
-    """把 pattern 名规范成安全文件名。"""
-    safe = [c if (c.isalnum() or c in ("_", "-")) else "_" for c in str(name)]
-    return "".join(safe).strip("_") or "pattern"
 
 
 def render_pattern_file(
@@ -200,7 +196,7 @@ def render_import_result(
 
     # ── 混音 ──
     if want_mix and result.multi_track is not None:
-        mix_path = base_dir / f"{_safe_stem(result.stem)}_mix.{fmt}"
+        mix_path = base_dir / f"{safe_filename(result.stem)}_mix.{fmt}"
         try:
             target = assert_write_allowed(mix_path, config)
             signal = render_multi_track(result.multi_track, duration)
@@ -221,7 +217,7 @@ def render_import_result(
     if want_stems:
         stem_dir = base_dir / "stems"
         for pattern in result.all_patterns:
-            stem_path = stem_dir / f"{_safe_stem(pattern.name)}.{fmt}"
+            stem_path = stem_dir / f"{safe_filename(pattern.name)}.{fmt}"
             try:
                 written = render_pattern_file(pattern, stem_path, duration, cfg=config)
                 render.audio_files.append(written)

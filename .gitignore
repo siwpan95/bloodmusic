@@ -58,3 +58,7 @@ remix/output/
 *.flac
 *.ogg
 *.mp4
+
+# Python venv（含第三方库，一律不入库）
+.venv/
+venv/

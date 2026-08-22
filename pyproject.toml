@@ -48,6 +48,19 @@ autowav = "autowav"
 mirror = "mirror"
 
 [tool.pytest.ini_options]
+testpaths = ["tests", "album_maker/tests"]
+# 注意: games/zhuangtaiji/test 下是独立验证脚本（python test_verify.py 直接运行，非 pytest 用例），
+# 放入 testpaths 会在收集时执行模块级代码并替换 sys.stdout，破坏 pytest 捕获，故排除。
+# 注意: pipeline/tests 使用扁平模块 sys.path 注入，与主套件合并收集会冲突，需单独运行:
+#   python -m pytest pipeline/tests/
 markers = [
     "slow: marks tests as slow (deselect with '-k \"not slow\"')",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]

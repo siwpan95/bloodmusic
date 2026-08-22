@@ -80,10 +80,9 @@ class TestSynthEngineEnum(unittest.TestCase):
     """SynthEngine 枚举完整测试"""
 
     def test_all_engines_exist(self):
-        """应包含 8 种合成引擎（SAMPLER 已随采样净化移除）"""
+        """应包含 12 种合成引擎（含 SPECTRUM 新并入的 ADDITIVE/MODAL/HYBRID/MATERIAL）"""
         from bloodmusic.music.instrument_pool import SynthEngine
-        self.assertEqual(len(SynthEngine), 8)
-
+        self.assertEqual(len(SynthEngine), 12)
     def test_from_string_case_insensitive(self):
         """from_string 大小写不敏感"""
         from bloodmusic.music.instrument_pool import SynthEngine

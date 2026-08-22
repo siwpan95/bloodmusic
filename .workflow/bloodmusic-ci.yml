@@ -1,0 +1,36 @@
+# Gitee Go 流水线（官方文档: https://help.gitee.com/gitee-go）
+#
+# 启用方式：Gitee 仓库 → DevOps → Gitee Go → 新建流水线 → 从 Yml 导入本文件。
+# 导入后 Gitee Go 会在 push / PR 到 master 分支时自动执行。
+#
+# 注意：本仓库的 slow 用例（渲染/端到端）由根 conftest.py 默认跳过，
+# 需要时另建流水线加 --runslow。
+version: '1.0'
+name: bloodmusic-ci
+displayName: bloodmusic CI
+triggers:
+  push:
+    branches:
+      precise:
+        - master
+  pr:
+    branches:
+      precise:
+        - master
+stages:
+  - name: stage-test
+    displayName: 单元测试
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@python
+        name: build_test
+        displayName: Python 单元测试
+        pythonVersion: '3.10'
+        commands:
+          - pip3 config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+          - pip3 install --upgrade pip
+          - pip3 install -e .
+          - pip3 install pytest pyyaml pydub matplotlib
+          - python3 -m pytest

@@ -15,10 +15,10 @@ MIDI 导入导出 —— MusicPattern ↔ MIDI 双向转换
     >>> patterns = midi_to_patterns("my_song.mid")
 
 .. deprecated::
-    本模块的 **导入方向**（``midi_to_patterns``）已被
-    ``bloodmusic.bridge.midi_import.midi_to_patterns_v2`` 取代：
-    旧实现会把和弦拆成连续单音、整体丢弃 GM 鼓轨、且把 PPQ 硬编码成 480。
-    导出方向的三个函数暂无替代，可继续使用。
+    本模块的 **导入方向**（midi_to_patterns）已改为**纯转发**到
+    bloodmusic.bridge.midi_import.midi_to_patterns_v2（旧实现已移除）。
+    导出方向（music_pattern_to_midi / drum_pattern_to_midi /
+    song_to_midi）暂无替代，继续保留在本模块。
 """
 
 import os
@@ -218,124 +218,20 @@ def midi_to_patterns(
     filepath: str,
     bpm: Optional[int] = None,
     ticks_per_beat: int = 480,
-) -> List["MusicPattern"]:
-    """从 MIDI 文件导入所有轨道为 MusicPattern 列表。
+):
+    """从 MIDI 文件导入轨道（@deprecated，现为纯转发）。
 
-    @deprecated，请用 bridge.midi_import.midi_to_patterns_v2。
-
-    弃用原因（本函数保留仅为向后兼容，行为不再变更）:
-        1. **和弦被拆成连续单音** —— 同时发音的音符被逐个串成旋律，
-           4 个三和弦会变成 12 个先后弹奏的单音；
-        2. **鼓轨被整体丢弃** —— GM 通道 10 未做识别，鼓素材导入后为空；
-        3. **PPQ 硬编码 480** —— 实测素材 PPQ = 220，时值会被整体算错 ~2.18 倍；
-        4. 超出 C0–C7 的音高会被 note_to_freq() 静默降级为 440Hz。
-
-    替代方案:
-        >>> from bloodmusic.bridge import midi_to_patterns_v2   # doctest: +SKIP
-        >>> result = midi_to_patterns_v2("song.mid")            # doctest: +SKIP
-        >>> result.melody_patterns, result.chord_patterns, result.drum_patterns  # doctest: +SKIP
-
-    Args:
-        filepath: 输入 MIDI 文件路径
-        bpm: 覆盖 BPM (None = 从 MIDI 读取)
-        ticks_per_beat: 分辨率
+    .. deprecated::
+        使用 bloodmusic.bridge.midi_import.midi_to_patterns_v2。
+        本函数不再执行旧实现（旧实现会拆和弦/丢 GM 鼓轨/硬编码 PPQ=480），
+        仅保留签名向后兼容并直接转发到 v2；
+        ticks_per_beat 参数已无意义（v2 从文件 meta 读取 PPQ）。
 
     Returns:
-        MusicPattern 列表 (每个 MIDI 轨道一个)
+        v2 的 ImportResult（其 all_patterns 为全部旋律/和弦轨）。
     """
-    try:
-        import mido
-    except ImportError:
-        raise ImportError("需要 mido 库: pip install mido")
-
-    from .pattern import MusicPattern
-    from ..core.oscillator import OscType
-    from ..core.envelope import EnvShape
-
-    mid = mido.MidiFile(filepath)
-    detected_bpm = bpm or 120
-
-    # 尝试从 MIDI 读取 BPM
-    if bpm is None:
-        for track in mid.tracks:
-            for msg in track:
-                if msg.type == 'set_tempo':
-                    detected_bpm = int(mido.tempo2bpm(msg.tempo))
-                    break
-
-    patterns = []
-    track_idx = 0
-
-    for midi_track in mid.tracks:
-        notes_events = []  # [(start_tick, end_tick, midi_note, velocity)]
-        current_time = 0
-        active_notes = {}  # {midi_note: (start_tick, velocity)}
-
-        for msg in midi_track:
-            current_time += msg.time
-
-            if msg.type == 'note_on' and msg.velocity > 0:
-                active_notes[msg.note] = (current_time, msg.velocity)
-            elif (msg.type == 'note_off' or
-                  (msg.type == 'note_on' and msg.velocity == 0)):
-                if msg.note in active_notes:
-                    start_tick, vel = active_notes.pop(msg.note)
-                    notes_events.append((start_tick, current_time, msg.note, vel))
-
-        # 关闭剩余音符
-        for note, (start_tick, vel) in active_notes.items():
-            notes_events.append((start_tick, current_time, note, vel))
-
-        if not notes_events:
-            track_idx += 1
-            continue
-
-        # 按时间排序
-        notes_events.sort(key=lambda x: x[0])
-
-        # 转换为 MusicPattern
-        pattern_notes = []
-        pattern_durs = []
-        prev_end_tick = 0
-
-        for start_tick, end_tick, midi_note, velocity in notes_events:
-            # 处理休止 (gap between notes)
-            gap_ticks = start_tick - prev_end_tick
-            if gap_ticks > 0:
-                gap_beats = gap_ticks / mid.ticks_per_beat
-                # 将长休止拆分为最大 1 拍的块
-                while gap_beats > 0:
-                    chunk = min(gap_beats, 1.0)
-                    pattern_notes.append(None)
-                    pattern_durs.append(round(chunk, 2))
-                    gap_beats -= chunk
-
-            note_name = _midi_to_note(midi_note)
-            dur_ticks = end_tick - start_tick
-            dur_beats = max(0.1, dur_ticks / mid.ticks_per_beat)
-
-            pattern_notes.append(note_name)
-            pattern_durs.append(round(dur_beats, 2))
-            prev_end_tick = end_tick
-
-        if pattern_notes:
-            pat = MusicPattern(
-                name=f"midi_track_{track_idx}",
-                notes=pattern_notes,
-                durations=pattern_durs,
-                bpm=detected_bpm,
-                loop=False,
-                osc_type=OscType.TRIANGLE,
-                volume=0.16,
-                env_shape=EnvShape.PAD,
-            )
-            patterns.append(pat)
-
-        track_idx += 1
-
-    return patterns
-
-
+    from ..bridge.midi_import import midi_to_patterns_v2
+    return midi_to_patterns_v2(str(filepath), bpm=bpm)
 def song_to_midi(
     arrangement,
     filepath: str,
