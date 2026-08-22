@@ -1,0 +1,166 @@
+{
+  "title": "synthwave · 7",
+  "prompt": {
+    "style": "synthwave",
+    "mood": "复古未来/霓虹",
+    "bpm": 95,
+    "key": "Dm",
+    "scale": "自然小调",
+    "drum_intensity": 0.75,
+    "vocal": false,
+    "instruments": [
+      {
+        "word": "kick",
+        "pool": "drum",
+        "role": "drum"
+      },
+      {
+        "word": "electric guitar",
+        "pool": "guita",
+        "role": "guita"
+      },
+      {
+        "word": "synth pad",
+        "pool": "synth",
+        "role": "pad"
+      },
+      {
+        "word": "bells",
+        "pool": "keys",
+        "role": "melody"
+      }
+    ],
+    "seed": 7
+  },
+  "seed": 7,
+  "bpm": 95,
+  "bars": 16,
+  "structure": "verse_chorus",
+  "mixer_style": "mikedean",
+  "release_safe": false,
+  "license_tier": "selfgen",
+  "sources": [
+    {
+      "pool": "drum",
+      "name": "kick",
+      "subcategory": "hihat",
+      "engine": "drum808",
+      "preset": "kick",
+      "role": "drum",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 34881,
+      "volume": 0.8
+    },
+    {
+      "pool": "bass",
+      "name": "808_bass",
+      "subcategory": "808",
+      "engine": "autowav",
+      "preset": "贝斯",
+      "role": "bass",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 93202,
+      "volume": 0.8
+    },
+    {
+      "pool": "guita",
+      "name": "electric_guitar",
+      "subcategory": "electric",
+      "engine": "autowav",
+      "preset": "吉他",
+      "role": "guita",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 96291,
+      "volume": 0.8
+    },
+    {
+      "pool": "ethnic",
+      "name": "ethnic_pad",
+      "subcategory": "pad",
+      "engine": "autowav",
+      "preset": "管风琴",
+      "role": "pad",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 16113,
+      "volume": 0.8
+    },
+    {
+      "pool": "synth",
+      "name": "synth_pad",
+      "subcategory": "pad",
+      "engine": "autowav",
+      "preset": "管风琴",
+      "role": "pad",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 78598,
+      "volume": 0.8
+    },
+    {
+      "pool": "brass",
+      "name": "brass",
+      "subcategory": "brass",
+      "engine": "autowav",
+      "preset": "铜管",
+      "role": "melody",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 86175,
+      "volume": 0.8
+    },
+    {
+      "pool": "keys",
+      "name": "piano",
+      "subcategory": "piano",
+      "engine": "autowav",
+      "preset": "钢琴",
+      "role": "melody",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 53156,
+      "volume": 0.8
+    },
+    {
+      "pool": "acapella",
+      "name": "vocal_vowels",
+      "subcategory": "vowels",
+      "engine": "formant",
+      "preset": "vowels",
+      "role": "vocal",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 50830,
+      "volume": 0.8
+    },
+    {
+      "pool": "sfx",
+      "name": "riser",
+      "subcategory": "riser",
+      "engine": "riser",
+      "preset": "edm_build",
+      "role": "fx",
+      "kind": "one_shot",
+      "bars_loop": 1,
+      "seed": 25007,
+      "volume": 0.8
+    }
+  ],
+  "stems": [
+    "drum__kick.wav",
+    "bass__808_bass.wav",
+    "guita__electric_guitar.wav",
+    "ethnic__ethnic_pad.wav",
+    "synth__synth_pad.wav",
+    "brass__brass.wav",
+    "keys__piano.wav",
+    "acapella__vocal_vowels.wav",
+    "sfx__riser.wav"
+  ],
+  "song": "song_final.wav",
+  "duration_sec": 40.421,
+  "out_dir": "D:\\bloodmusic\\mirror_remix_demo\\track_01_synthwave_verse_chorus"
+}

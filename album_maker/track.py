@@ -248,9 +248,13 @@ class TrackHandler:
                     role=role,
                     engine=engine,
                     preset=inst_data.get("preset"),
+                    params=inst_data.get("params") or {},
+                    engine_params=inst_data.get("engine_params") or {},
+                    automation=inst_data.get("automation"),
                     volume=float(inst_data.get("volume", 0.8)),
                     pan=float(inst_data.get("pan", 0.0)),
                     note_sequence=inst_data.get("note_sequence"),
+                    octave=inst_data.get("octave"),
                 )
                 pool.instruments.append(inst)
 

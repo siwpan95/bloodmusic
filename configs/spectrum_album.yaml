@@ -1,0 +1,263 @@
+# SPECTRUM 《频谱万象》— 自生成多风格漫游
+# 概念（基于 2026 联网调研）：在流派融合、流派碎片化、情绪即流派的时代，
+# 用一张专辑完成一次"统一中的多样"旅程——所有曲目共享同一套 6 引擎核心乐池
+# （统一性），再各自被风格预设与逐曲混音重塑（多样性），形成连贯的情绪弧线。
+#
+# 功能覆盖：
+#  - 12 个风格预设全覆盖（meditation/ambient/classical/folk/town/jazz/lofi/
+#    exploration/electronic/cinematic/battle/dungeon）
+#  - 基础乐池 6 种合成引擎（wavetable / fm_advanced / subtractive /
+#    karplus_strong / granular / noise）+ 逐曲 extra_instruments
+#  - 【v2.3 新引擎并入】P1 的 8 件加法/模态合成乐器（glass_bell / metal_bell /
+#    metal_plate / glass_pad / marimba_bar / tubular_bell_modal / singing_bowl /
+#    gong_modal，engine=additive/modal）作为逐曲音色色彩织入专辑，
+#    全部 8 件均被渲染（见各曲 extra_instruments）
+#  - 逐曲 mix_config_override 塑造情绪（低通/高通/压缩/RMS 目标）
+#  - separate_mode=manifest 导出分轨（多轨可见）
+album:
+  title: SPECTRUM 频谱万象
+  artist: BloodMusic Engine
+  genre: multi-style / genre-fluid
+  year: 2026
+  cover: null
+
+# ── 统一核心乐池（6 引擎，每曲共享 → 统一音色基底）──
+instrument_pool:
+  name: SPECTRUM 核心乐池
+  bpm: 120
+  key: C
+  scale: major
+  global_volume: 0.85
+  generation:
+    diversity: 0.4
+    humanize: true
+    seed: 2026
+  instruments:
+  # 旋律 — 波表合成
+  - name: 主旋律
+    role: melody
+    engine: wavetable
+    preset: synth_lead
+    volume: 0.85
+    pan: 0.1
+  # 和弦 — FM 多算子合成
+  - name: 和弦铺底
+    role: chord
+    engine: fm_advanced
+    preset: warm_pad
+    volume: 0.65
+    pan: -0.2
+  # 低音 — 减法合成
+  - name: 低音贝斯
+    role: bass
+    engine: subtractive
+    preset: deep_bass
+    volume: 0.9
+    pan: 0.0
+  # 打击 — 噪声合成（鼓专用）
+  - name: 鼓组
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+  # 铺底 — 粒子合成
+  - name: 氛围铺底
+    role: pad
+    engine: granular
+    preset: bright_pad
+    volume: 0.45
+    pan: 0.3
+  # 特效 — Karplus-Strong 物理建模
+  - name: 拨弦特效
+    role: fx
+    engine: karplus_strong
+    preset: harpsichord
+    volume: 0.4
+    pan: -0.4
+
+# ── 专辑级混音默认 ──
+mix_config:
+  clip_mode: soft
+  normalize_mode: rms
+  rms_target_db: -16.0
+  fade_in_ms: 60
+  fade_out_ms: 250
+  compress: true
+  compress_threshold: -18.0
+  compress_ratio: 3.0
+
+separate_mode: manifest
+
+tracks:
+# ── 序章：苏醒（极静 → 极空灵）──
+- title: 01 晨雾 · 苏醒
+  bpm: 56
+  bars: 16
+  key: C
+  style: meditation
+  seed: 101
+  mix_config:
+    rms_target_db: -22.0
+    compress: false
+    low_pass_cutoff: 8000
+  extra_instruments:
+  - {name: 空灵铺, role: pad, engine: granular, preset: bright_pad, volume: 0.5, pan: 0.3}
+  - {name: 鲁特, role: fx, engine: karplus_strong, preset: acoustic_guitar_nylon, volume: 0.4, pan: -0.3}
+  - {name: 玻璃铃, role: fx, engine: additive, engine_params: {preset: glass}, volume: 0.3, pan: 0.3}
+  - {name: 诵钵, role: pad, engine: modal, engine_params: {preset: bowl}, volume: 0.3, pan: -0.2}
+
+- title: 02 极光 · 漂浮
+  bpm: 64
+  bars: 16
+  key: D
+  style: ambient
+  seed: 102
+  mix_config:
+    rms_target_db: -20.0
+    low_pass_cutoff: 9000
+  extra_instruments:
+  - {name: 筝, role: fx, engine: karplus_strong, preset: koto_japanese, volume: 0.4, pan: 0.2}
+  - {name: 拨弦铺, role: pad, engine: karplus_strong, preset: pizzicato_strings, volume: 0.4, pan: -0.2}
+  - {name: 玻璃铺, role: pad, engine: additive, engine_params: {preset: glass_pad}, volume: 0.35, pan: 0.25}
+  - {name: 金属铃, role: fx, engine: additive, engine_params: {preset: bell}, volume: 0.25, pan: -0.3}
+
+# ── 日间：明亮、温暖、叙事 ──
+- title: 03 宫廷 · 晨礼
+  bpm: 88
+  bars: 20
+  key: C
+  style: classical
+  seed: 103
+  mix_config:
+    rms_target_db: -18.0
+    low_pass_cutoff: 12000
+  extra_instruments:
+  - {name: 钢琴, role: melody, engine: wavetable, preset: acoustic_grand_piano, volume: 0.7, pan: 0.0}
+  - {name: 钟琴, role: fx, engine: wavetable, preset: celesta, volume: 0.3, pan: 0.4}
+  - {name: 管钟, role: fx, engine: modal, engine_params: {preset: tubular}, volume: 0.3, pan: 0.3}
+
+- title: 04 山野 · 风车
+  bpm: 100
+  bars: 16
+  key: G
+  style: folk
+  seed: 104
+  mix_config:
+    rms_target_db: -16.0
+  extra_instruments:
+  - {name: 尼龙吉他, role: chord, engine: karplus_strong, preset: acoustic_guitar_nylon, volume: 0.6, pan: -0.1}
+  - {name: 音乐盒, role: fx, engine: wavetable, preset: music_box, volume: 0.3, pan: 0.3}
+  - {name: 马林巴, role: fx, engine: modal, engine_params: {preset: bar}, volume: 0.4, pan: 0.2}
+
+- title: 05 集市 · 暖阳
+  bpm: 96
+  bars: 16
+  key: F
+  style: town
+  seed: 105
+  mix_config:
+    rms_target_db: -16.0
+  extra_instruments:
+  - {name: 铜管, role: chord, engine: subtractive, preset: brass_section, volume: 0.5, pan: 0.3}
+  - {name: 拨弦, role: fx, engine: karplus_strong, preset: pizzicato_strings, volume: 0.25, pan: -0.3}
+  - {name: 金属板, role: fx, engine: additive, engine_params: {preset: metal}, volume: 0.3, pan: -0.2}
+
+- title: 06 蓝调 · 午后
+  bpm: 118
+  bars: 20
+  key: F
+  style: jazz
+  seed: 106
+  mix_config:
+    rms_target_db: -16.0
+    high_pass_cutoff: 30
+  extra_instruments:
+  - {name: 低音提琴, role: bass, engine: karplus_strong, preset: upright_bass, volume: 0.7, pan: 0.0}
+  - {name: 颤音琴, role: fx, engine: wavetable, preset: vibraphone, volume: 0.25, pan: 0.4}
+
+- title: 07 夜读 · 台灯
+  bpm: 78
+  bars: 24
+  key: Am
+  style: lofi
+  seed: 107
+  mix_config:
+    rms_target_db: -18.0
+    low_pass_cutoff: 7000
+    compress_ratio: 2.5
+  extra_instruments:
+  - {name: 暖贝斯, role: bass, engine: subtractive, preset: warm_bass, volume: 0.6, pan: 0.0}
+  - {name: 钟琴, role: fx, engine: wavetable, preset: celesta, volume: 0.3, pan: -0.3}
+
+- title: 08 远行 · 地平线
+  bpm: 100
+  bars: 16
+  key: G
+  style: exploration
+  seed: 108
+  mix_config:
+    rms_target_db: -16.0
+  extra_instruments:
+  - {name: 筝, role: chord, engine: karplus_strong, preset: koto_japanese, volume: 0.5, pan: 0.2}
+  - {name: 电钢, role: pad, engine: fm_advanced, preset: electric_piano_rhodes, volume: 0.4, pan: -0.2}
+  - {name: 玻璃铺, role: pad, engine: additive, engine_params: {preset: glass_pad}, volume: 0.3, pan: 0.25}
+
+# ── 能量攀升 → 高潮 ──
+- title: 09 脉冲 · 霓虹
+  bpm: 128
+  bars: 16
+  key: Am
+  style: electronic
+  seed: 109
+  mix_config:
+    rms_target_db: -12.0
+    compress_ratio: 4.0
+    low_pass_cutoff: 16000
+  extra_instruments:
+  - {name: 酸性贝斯, role: bass, engine: subtractive, preset: synth_bass, volume: 0.7, pan: 0.0}
+  - {name: 亮钢琴, role: pad, engine: wavetable, preset: bright_acoustic_piano, volume: 0.4, pan: 0.3}
+  - {name: 金属板, role: fx, engine: additive, engine_params: {preset: metal}, volume: 0.3, pan: -0.2}
+
+- title: 10 史诗 · 黎明
+  bpm: 84
+  bars: 24
+  key: Gm
+  style: cinematic
+  seed: 110
+  mix_config:
+    rms_target_db: -14.0
+    compress_ratio: 3.0
+  extra_instruments:
+  - {name: 钢片, role: chord, engine: karplus_strong, preset: harpsichord, volume: 0.5, pan: 0.2}
+  - {name: 钢琴, role: melody, engine: wavetable, preset: acoustic_grand_piano, volume: 0.6, pan: -0.1}
+  - {name: 管钟, role: fx, engine: modal, engine_params: {preset: tubular}, volume: 0.3, pan: 0.3}
+
+- title: 11 战鼓 · 裂空
+  bpm: 150
+  bars: 16
+  key: Em
+  style: battle
+  seed: 111
+  mix_config:
+    rms_target_db: -12.0
+    compress_ratio: 4.0
+  extra_instruments:
+  - {name: 铜管, role: chord, engine: subtractive, preset: brass_section, volume: 0.6, pan: 0.2}
+  - {name: 钟琴, role: fx, engine: wavetable, preset: tubular_bells, volume: 0.4, pan: -0.2}
+  - {name: 锣, role: fx, engine: modal, engine_params: {preset: gong}, volume: 0.45, pan: 0.0}
+
+# ── 尾声：下沉、反思（暗色解决）──
+- title: 12 深渊 · 回响
+  bpm: 92
+  bars: 20
+  key: Dm
+  style: dungeon
+  seed: 112
+  mix_config:
+    rms_target_db: -16.0
+    low_pass_cutoff: 1200
+  extra_instruments:
+  - {name: 低音提琴, role: bass, engine: karplus_strong, preset: upright_bass, volume: 0.7, pan: 0.0}
+  - {name: 电钢, role: pad, engine: fm_advanced, preset: electric_piano_rhodes, volume: 0.4, pan: -0.3}
+  - {name: 锣, role: fx, engine: modal, engine_params: {preset: gong}, volume: 0.45, pan: 0.0}
+  - {name: 诵钵, role: pad, engine: modal, engine_params: {preset: bowl}, volume: 0.3, pan: -0.2}

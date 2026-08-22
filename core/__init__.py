@@ -29,3 +29,6 @@ from .waveguide import (
     render_clarinet, render_flute, render_brass, render_saxophone,
     render_waveguide_preset,
 )
+from .additive import additive_synth, ADDITIVE_PRESETS
+from .modal import modal_synth, MODAL_PRESETS
+from .hybrid import hybrid_synth, HYBRID_PRESETS

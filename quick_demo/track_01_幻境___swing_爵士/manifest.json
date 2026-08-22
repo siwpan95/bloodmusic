@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T08:49:01",
+  "song": "song_final.wav",
+  "bpm": 144,
+  "musical_key": "C",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\quick_demo\\track_01_幻境___swing_爵士\\stems\\主旋律.wav",
+      "sha256": "e4b9500bbfe649600b7d374a0c6e6a846582868707e3eb1540c7659f06553b09"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\quick_demo\\track_01_幻境___swing_爵士\\stems\\和弦铺底.wav",
+      "sha256": "aa818aa91a6574e7971f982f342fdd14aa7845137542b7cabdaa640db07039bc"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\quick_demo\\track_01_幻境___swing_爵士\\stems\\低音贝斯.wav",
+      "sha256": "34fe1f6797e51729f9689455e52aaecb0d9cdda1e1d54336f3c7a4ffea1dd6c5"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\quick_demo\\track_01_幻境___swing_爵士\\stems\\氛围铺底.wav",
+      "sha256": "2bbfd22a7e3037eaaad11cbb36a26c56bdd74749a92a26059d0bbcdbce3909bb"
+    },
+    {
+      "output_name": "电子鼓.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\quick_demo\\track_01_幻境___swing_爵士\\stems\\电子鼓.wav",
+      "sha256": "ac499ed7889a2838bf32bf575c1a4e80beec1e8062a6e8a9bbd4dbf2cd02c667"
+    }
+  ]
+}

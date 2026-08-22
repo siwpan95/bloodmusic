@@ -36,3 +36,7 @@ from .riser import (
     RiserVoice, ImpactVoice, BraamVoice, RiserSynth,
     render_riser, riser_transition, impact_hit, build_and_drop,
 )
+from .material import (
+    MaterialImpactParams, MATERIAL_PRESETS,
+    synthesize_material_impact, render_all_materials,
+)

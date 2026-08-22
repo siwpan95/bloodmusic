@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T08:55:59",
+  "song": "song_final.wav",
+  "bpm": 103,
+  "musical_key": "C",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\jam_demo\\track_01_脉冲___温暖_城镇\\stems\\主旋律.wav",
+      "sha256": "8fd240fc66cefc82aa2bc7870c249ca6960d9640635b611f79fa11908f213ffe"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\jam_demo\\track_01_脉冲___温暖_城镇\\stems\\和弦铺底.wav",
+      "sha256": "11dbfb3f1f612f3da988cd2a5f78589a8650224bcd6faab8981f0e6f78149237"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\jam_demo\\track_01_脉冲___温暖_城镇\\stems\\低音贝斯.wav",
+      "sha256": "19ca41a45d5a8b80ae889a126223a36b6b1f3767e9e6283e9b211f734d0036e8"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\jam_demo\\track_01_脉冲___温暖_城镇\\stems\\氛围铺底.wav",
+      "sha256": "b8a36a67367ebc80af2a7061ffc7c7ba7515ea1d7eb7a9fbddeb9c08748afbb2"
+    },
+    {
+      "output_name": "电子鼓.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\jam_demo\\track_01_脉冲___温暖_城镇\\stems\\电子鼓.wav",
+      "sha256": "ea611dc3ac911d51deca761a2135b05d5348475c518b2fd436dcd3b86f71b6c9"
+    }
+  ]
+}

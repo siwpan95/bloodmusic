@@ -95,6 +95,12 @@ class DrumSoundParams:
     hp_hz: float = 0.0        # 高通截止
     lp_hz: float = 0.0        # 低通截止
 
+    # ── 真实合成引擎 (v2.3 Material-aware) ──
+    # None=基础鼓声振荡器链路；SynthEngine.MATERIAL=材质感知撞击
+    # (sfx.material.synthesize_material_impact)，由 engine_params["material"] 选择材质
+    engine: Optional["SynthEngine"] = None
+    engine_params: Dict[str, Any] = field(default_factory=dict)
+
 
 @dataclass
 class DrumPattern:
@@ -145,6 +151,23 @@ def _render_single_drum_hit(params: DrumSoundParams, duration: float) -> np.ndar
     n_samp = int(duration * SR)
     if n_samp < 1:
         return np.zeros(1, dtype=np.float64)
+
+    # ── Material-aware 撞击分支 (v2.3) ──
+    # 若本鼓声配置了 MATERIAL 引擎，走参数化材质合成而非基础振荡器
+    if params.engine is not None:
+        from .instrument_pool import SynthEngine
+        if isinstance(params.engine, SynthEngine) and params.engine == SynthEngine.MATERIAL:
+            from ..sfx.material import synthesize_material_impact
+            _ep = params.engine_params or {}
+            material = _ep.get("material", "wood")
+            velocity = max(0.3, min(1.0, float(params.volume)))
+            # 材质撞击时长略短于基础鼓声，避免长尾拖沓
+            mat_dur = max(0.12, min(duration, duration * 0.95))
+            sig = synthesize_material_impact(
+                material, velocity=velocity, duration=mat_dur
+            )
+            return sig * min(1.0, float(params.volume))
+
     t = np.linspace(0, duration, n_samp, dtype=np.float64)
 
     if params.osc_type in (OscType.NOISE_WHITE, OscType.NOISE_PINK, OscType.NOISE_BROWN):
@@ -165,6 +188,51 @@ def _render_single_drum_hit(params: DrumSoundParams, duration: float) -> np.ndar
         sig = apply_lowpass(sig, params.lp_hz)
 
     return sig
+
+
+def _render_note_signal(pattern: "MusicPattern", freq: float, t: np.ndarray, n_samp: int) -> np.ndarray:
+    """渲染单个音符信号（含真实合成引擎调度）。
+
+    返回已含包络与音量的完整音符信号。
+    - engine == ADDITIVE → 加法合成 (core.additive)
+    - engine == MODAL   → 模态合成 (core.modal)
+    - 其它 / None       → 基础振荡器 + 谐波 (原有链路，向后兼容)
+    """
+    from .instrument_pool import SynthEngine
+    from ..core.additive import additive_synth
+    from ..core.modal import modal_synth
+    from ..core.hybrid import hybrid_synth
+
+    engine = pattern.engine
+    if engine is not None:
+        if engine == SynthEngine.ADDITIVE:
+            return additive_synth(
+                freq, t, pattern.env_shape, pattern.volume,
+                pattern.engine_params or {}, pattern.vibrato_rate, pattern.vibrato_depth,
+            )
+        if engine == SynthEngine.MODAL:
+            return modal_synth(
+                freq, t, pattern.env_shape, pattern.volume,
+                pattern.engine_params or {}, pattern.vibrato_rate, pattern.vibrato_depth,
+            )
+        if engine == SynthEngine.HYBRID:
+            return hybrid_synth(
+                freq, t, pattern.env_shape, pattern.volume,
+                pattern.engine_params or {}, pattern.vibrato_rate, pattern.vibrato_depth,
+            )
+
+    # ── 原基础振荡器链路 (默认) ──
+    sig = oscillator(t, freq, pattern.osc_type)
+    for h_mult, h_amp in pattern.harmonics:
+        sig += oscillator(t, freq * h_mult, pattern.osc_type) * h_amp
+    if pattern.vibrato_depth > 0:
+        vib_env = make_envelope(n_samp, EnvShape.PAD)
+        vib = 1.0 + (pattern.vibrato_depth / 12) * np.sin(2 * np.pi * pattern.vibrato_rate * t) * vib_env
+        sig = oscillator(t, freq * vib, pattern.osc_type)
+        for h_mult, h_amp in pattern.harmonics:
+            sig += oscillator(t, freq * vib * h_mult, pattern.osc_type) * h_amp
+    env = make_envelope(n_samp, pattern.env_shape)
+    return sig * env * pattern.volume
 
 
 def render_drum_pattern(pattern: DrumPattern, duration_sec: float) -> np.ndarray:
@@ -230,17 +298,7 @@ def render_pattern_to_array(pattern: MusicPattern, duration_sec: float) -> np.nd
             sig = np.zeros(n_samp)
         else:
             f = note_to_freq(note) * (2 ** oct_v)
-            sig = oscillator(t, f, pattern.osc_type)
-            for h_mult, h_amp in pattern.harmonics:
-                sig += oscillator(t, f * h_mult, pattern.osc_type) * h_amp
-            if pattern.vibrato_depth > 0:
-                vib_env = make_envelope(n_samp, EnvShape.PAD)
-                vib = 1.0 + (pattern.vibrato_depth / 12) * np.sin(2 * np.pi * pattern.vibrato_rate * t) * vib_env
-                sig = oscillator(t, f * vib, pattern.osc_type)
-                for h_mult, h_amp in pattern.harmonics:
-                    sig += oscillator(t, f * vib * h_mult, pattern.osc_type) * h_amp
-            env = make_envelope(n_samp, pattern.env_shape)
-            sig = sig * env * pattern.volume
+            sig = _render_note_signal(pattern, f, t, n_samp)
 
         # 和弦叠加
         if pattern.chords is not None:
@@ -249,11 +307,7 @@ def render_pattern_to_array(pattern: MusicPattern, duration_sec: float) -> np.nd
                 chord_notes = pattern.chords[chord_idx]
                 for cn in chord_notes:
                     cf = note_to_freq(cn)
-                    chord_sig = oscillator(t, cf, pattern.osc_type)
-                    for h_mult, h_amp in pattern.harmonics:
-                        chord_sig += oscillator(t, cf * h_mult, pattern.osc_type) * h_amp
-                    env = make_envelope(n_samp, pattern.env_shape)
-                    sig += chord_sig * env * pattern.volume * 0.5
+                    sig += _render_note_signal(pattern, cf, t, n_samp) * 0.5
 
         samples_list.append(sig)
 
@@ -369,21 +423,7 @@ def generate_music_wav(
             sig = np.zeros(n_samp)
         else:
             f = note_to_freq(note) * (2 ** oct_v)
-            sig = oscillator(t, f, pattern.osc_type)
-
-            for h_mult, h_amp in pattern.harmonics:
-                sig += oscillator(t, f * h_mult, pattern.osc_type) * h_amp
-
-            if pattern.vibrato_depth > 0:
-                vib_env = make_envelope(n_samp, EnvShape.PAD)
-                vib = 1.0 + (pattern.vibrato_depth / 12) * np.sin(
-                    2 * np.pi * pattern.vibrato_rate * t) * vib_env
-                sig = oscillator(t, f * vib, pattern.osc_type)
-                for h_mult, h_amp in pattern.harmonics:
-                    sig += oscillator(t, f * vib * h_mult, pattern.osc_type) * h_amp
-
-            env = make_envelope(n_samp, pattern.env_shape)
-            sig = sig * env * pattern.volume
+            sig = _render_note_signal(pattern, f, t, n_samp)
 
         # 和弦叠加
         if pattern.chords is not None:
@@ -392,11 +432,7 @@ def generate_music_wav(
                 chord_notes = pattern.chords[chord_idx]
                 for cn in chord_notes:
                     cf = note_to_freq(cn)
-                    chord_sig = oscillator(t, cf, pattern.osc_type)
-                    for h_mult, h_amp in pattern.harmonics:
-                        chord_sig += oscillator(t, cf * h_mult, pattern.osc_type) * h_amp
-                    env = make_envelope(n_samp, pattern.env_shape)
-                    sig += chord_sig * env * pattern.volume * 0.5
+                    sig += _render_note_signal(pattern, cf, t, n_samp) * 0.5
 
         samples_list.append(sig)
 

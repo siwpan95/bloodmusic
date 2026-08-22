@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T20:15:19",
+  "song": "song_final.wav",
+  "bpm": 56,
+  "musical_key": "C",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\主旋律.wav",
+      "sha256": "bdaf67fb08f538bde17e9057c7bd8188c5c4086551533fe0400766b3c6f9d8b7"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\和弦铺底.wav",
+      "sha256": "5f2b71462d8be24e9f7231278315375ea97a39791a74bc4e537f5323c083edc8"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\低音贝斯.wav",
+      "sha256": "864cc88649326b73acbc6aa45e63d98f354f1dd743f5c62132b135983f585497"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\氛围铺底.wav",
+      "sha256": "e234c3942198a6c04ff28e612878fb3a71f2969822252ab834227bc7d9993e7e"
+    },
+    {
+      "output_name": "拨弦特效.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\拨弦特效.wav",
+      "sha256": "2cd165ce7d54ae6117fe3cb3aef47e81d75adf58dfcdc78808ceff3bdb4dc578"
+    },
+    {
+      "output_name": "空灵铺.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\空灵铺.wav",
+      "sha256": "421f17e145910d7799820d859c383ed5053d9fb003cfeb1311b0f84ed7f5ca94"
+    },
+    {
+      "output_name": "鲁特.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\鲁特.wav",
+      "sha256": "2cd165ce7d54ae6117fe3cb3aef47e81d75adf58dfcdc78808ceff3bdb4dc578"
+    },
+    {
+      "output_name": "玻璃铃.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\玻璃铃.wav",
+      "sha256": "1e0e2d7093d2ef6f4e29dfa32a971ae61e251ed2ac080c7b9164c6603479e50c"
+    },
+    {
+      "output_name": "诵钵.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\诵钵.wav",
+      "sha256": "77f17dceca06344b99d960f8683479344e598a230bbd5b3c4217cbb38df446fc"
+    },
+    {
+      "output_name": "鼓组.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_01_01_晨雾___苏醒\\stems\\鼓组.wav",
+      "sha256": "5f4103d56012827e613b98fcbe13b137ccbc56abba1597730ed1c839f58e2913"
+    }
+  ]
+}

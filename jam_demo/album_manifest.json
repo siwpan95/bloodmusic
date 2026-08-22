@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "album": {
+    "title": "脉冲 · 温暖/城镇",
+    "artist": "BloodMusic Quick",
+    "genre": "town",
+    "year": 2026,
+    "cover": null,
+    "separate_mode": "manifest"
+  },
+  "summary": {
+    "total_tracks": 1,
+    "success_count": 1,
+    "failure_count": 0,
+    "total_duration_sec": 13.980582524271844
+  },
+  "tracks": [
+    {
+      "index": 1,
+      "title": "脉冲 · 温暖/城镇",
+      "success": true,
+      "bpm": 103,
+      "key": "C",
+      "duration_sec": 13.980582524271844,
+      "song_path": "track_01_脉冲___温暖_城镇\\song_final.wav",
+      "manifest_path": "track_01_脉冲___温暖_城镇\\manifest.json"
+    }
+  ],
+  "honesty_note": "混音不可逆，算法分离是有损近似。模式A(manifest) 提供 sha256 保真的分轨还原；模式B(algo) 通过 AI 模型重分离，结果仅为有损近似，不可视为原始分轨。"
+}

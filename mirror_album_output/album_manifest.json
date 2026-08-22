@@ -1,0 +1,303 @@
+{
+  "title": "lofi × 24 混音师",
+  "prompt": {
+    "style": "lofi",
+    "mood": "慵懒低保真/怀旧",
+    "bpm": 90,
+    "key": "C",
+    "scale": "大调",
+    "drum_intensity": 0.5,
+    "vocal": false,
+    "instruments": [
+      {
+        "word": "kick",
+        "pool": "drum",
+        "role": "drum"
+      },
+      {
+        "word": "upright bass",
+        "pool": "bass",
+        "role": "bass"
+      },
+      {
+        "word": "acoustic guitar",
+        "pool": "guita",
+        "role": "guita"
+      },
+      {
+        "word": "piano",
+        "pool": "keys",
+        "role": "melody"
+      },
+      {
+        "word": "strings",
+        "pool": "strings",
+        "role": "pad"
+      }
+    ],
+    "seed": 42
+  },
+  "bpm": 90,
+  "bars": 16,
+  "seed": 42,
+  "generated": "2026-08-22T08:31:38",
+  "license_tier": "selfgen",
+  "stems": [
+    {
+      "pool": "drum",
+      "name": "kick",
+      "subcategory": "kick",
+      "engine": "drum808",
+      "preset": "kick",
+      "role": "drum",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 55854,
+      "volume": 0.8
+    },
+    {
+      "pool": "bass",
+      "name": "808_bass",
+      "subcategory": "808",
+      "engine": "autowav",
+      "preset": "贝斯",
+      "role": "bass",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 91289,
+      "volume": 0.8
+    },
+    {
+      "pool": "guita",
+      "name": "acoustic_guitar",
+      "subcategory": "acoustic",
+      "engine": "autowav",
+      "preset": "竖琴",
+      "role": "guita",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 6147,
+      "volume": 0.8
+    },
+    {
+      "pool": "strings",
+      "name": "strings",
+      "subcategory": "bowed",
+      "engine": "autowav",
+      "preset": "管风琴",
+      "role": "pad",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 81949,
+      "volume": 0.8
+    },
+    {
+      "pool": "brass",
+      "name": "brass",
+      "subcategory": "brass",
+      "engine": "autowav",
+      "preset": "铜管",
+      "role": "melody",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 14938,
+      "volume": 0.8
+    },
+    {
+      "pool": "keys",
+      "name": "piano",
+      "subcategory": "piano",
+      "engine": "autowav",
+      "preset": "钢琴",
+      "role": "melody",
+      "kind": "loop",
+      "bars_loop": 1,
+      "seed": 37627,
+      "volume": 0.8
+    },
+    {
+      "pool": "animal",
+      "name": "animal_calls",
+      "subcategory": "calls",
+      "engine": "noise_chirp",
+      "preset": "animal",
+      "role": "fx",
+      "kind": "one_shot",
+      "bars_loop": 1,
+      "seed": 89591,
+      "volume": 0.8
+    },
+    {
+      "pool": "cowbell",
+      "name": "cowbell",
+      "subcategory": "cowbell",
+      "engine": "noise_ring",
+      "preset": "cowbell",
+      "role": "fx",
+      "kind": "one_shot",
+      "bars_loop": 1,
+      "seed": 62315,
+      "volume": 0.8
+    },
+    {
+      "pool": "sfx",
+      "name": "riser",
+      "subcategory": "riser",
+      "engine": "riser",
+      "preset": "edm_build",
+      "role": "fx",
+      "kind": "one_shot",
+      "bars_loop": 1,
+      "seed": 80324,
+      "volume": 0.8
+    }
+  ],
+  "mixer_styles": [
+    "burbidge",
+    "ghenea",
+    "clearmountain",
+    "marroquin",
+    "pensado",
+    "blake",
+    "lordalge",
+    "schmitt",
+    "mikedean",
+    "stent",
+    "wallace",
+    "maserati",
+    "joshua",
+    "ali",
+    "elmhirst",
+    "scheps",
+    "moulder",
+    "guzauski",
+    "albini",
+    "everett",
+    "elevado",
+    "shebib",
+    "power",
+    "zhoutianche"
+  ],
+  "tracks": [
+    {
+      "mixer": "burbidge",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\burbidge\\01_lofi.wav"
+    },
+    {
+      "mixer": "ghenea",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\ghenea\\01_lofi.wav"
+    },
+    {
+      "mixer": "clearmountain",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\clearmountain\\01_lofi.wav"
+    },
+    {
+      "mixer": "marroquin",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\marroquin\\01_lofi.wav"
+    },
+    {
+      "mixer": "pensado",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\pensado\\01_lofi.wav"
+    },
+    {
+      "mixer": "blake",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\blake\\01_lofi.wav"
+    },
+    {
+      "mixer": "lordalge",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\lordalge\\01_lofi.wav"
+    },
+    {
+      "mixer": "schmitt",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\schmitt\\01_lofi.wav"
+    },
+    {
+      "mixer": "mikedean",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\mikedean\\01_lofi.wav"
+    },
+    {
+      "mixer": "stent",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\stent\\01_lofi.wav"
+    },
+    {
+      "mixer": "wallace",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\wallace\\01_lofi.wav"
+    },
+    {
+      "mixer": "maserati",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\maserati\\01_lofi.wav"
+    },
+    {
+      "mixer": "joshua",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\joshua\\01_lofi.wav"
+    },
+    {
+      "mixer": "ali",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\ali\\01_lofi.wav"
+    },
+    {
+      "mixer": "elmhirst",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\elmhirst\\01_lofi.wav"
+    },
+    {
+      "mixer": "scheps",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\scheps\\01_lofi.wav"
+    },
+    {
+      "mixer": "moulder",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\moulder\\01_lofi.wav"
+    },
+    {
+      "mixer": "guzauski",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\guzauski\\01_lofi.wav"
+    },
+    {
+      "mixer": "albini",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\albini\\01_lofi.wav"
+    },
+    {
+      "mixer": "everett",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\everett\\01_lofi.wav"
+    },
+    {
+      "mixer": "elevado",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\elevado\\01_lofi.wav"
+    },
+    {
+      "mixer": "shebib",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\shebib\\01_lofi.wav"
+    },
+    {
+      "mixer": "power",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\power\\01_lofi.wav"
+    },
+    {
+      "mixer": "zhoutianche",
+      "song": "01_lofi.wav",
+      "path": "bloodmusic\\mirror_album_output\\zhoutianche\\01_lofi.wav"
+    }
+  ]
+}

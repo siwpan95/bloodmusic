@@ -1,0 +1,75 @@
+album:
+  title: SMOKE 冒烟测试
+  artist: BloodMusic Engine
+  genre: test
+  year: 2026
+  cover: null
+instrument_pool:
+  name: SPECTRUM 核心乐池
+  bpm: 120
+  key: C
+  scale: major
+  global_volume: 0.85
+  generation:
+    diversity: 0.4
+    humanize: true
+    seed: 2026
+  instruments:
+  - name: 主旋律
+    role: melody
+    engine: wavetable
+    preset: synth_lead
+    volume: 0.85
+    pan: 0.1
+  - name: 和弦铺底
+    role: chord
+    engine: fm_advanced
+    preset: warm_pad
+    volume: 0.65
+    pan: -0.2
+  - name: 低音贝斯
+    role: bass
+    engine: subtractive
+    preset: deep_bass
+    volume: 0.9
+    pan: 0.0
+  - name: 鼓组
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+  - name: 氛围铺底
+    role: pad
+    engine: granular
+    preset: bright_pad
+    volume: 0.45
+    pan: 0.3
+  - name: 拨弦特效
+    role: fx
+    engine: karplus_strong
+    preset: harpsichord
+    volume: 0.4
+    pan: -0.4
+mix_config:
+  clip_mode: soft
+  normalize_mode: rms
+  rms_target_db: -16.0
+  fade_in_ms: 60
+  fade_out_ms: 250
+  compress: true
+  compress_threshold: -18.0
+  compress_ratio: 3.0
+separate_mode: manifest
+tracks:
+- title: 01 晨雾 · 苏醒
+  bpm: 56
+  bars: 16
+  key: C
+  style: meditation
+  seed: 101
+- title: 09 脉冲 · 霓虹
+  bpm: 128
+  bars: 16
+  key: Am
+  style: electronic
+  seed: 109

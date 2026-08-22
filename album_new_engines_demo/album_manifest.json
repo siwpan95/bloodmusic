@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "album": {
+    "title": "新引擎试产 Demo — 钟·璃·金属",
+    "artist": "BloodMusic Engine (P2)",
+    "genre": "game",
+    "year": 2026,
+    "cover": null,
+    "separate_mode": "manifest"
+  },
+  "summary": {
+    "total_tracks": 2,
+    "success_count": 2,
+    "failure_count": 0,
+    "total_duration_sec": 18.0
+  },
+  "tracks": [
+    {
+      "index": 1,
+      "title": "新引擎·钟璃幻境",
+      "success": true,
+      "bpm": 96,
+      "key": "C",
+      "duration_sec": 10.0,
+      "song_path": "track_01_新引擎_钟璃幻境\\song_final.wav",
+      "manifest_path": "track_01_新引擎_钟璃幻境\\manifest.json"
+    },
+    {
+      "index": 2,
+      "title": "新引擎·金属仪式",
+      "success": true,
+      "bpm": 120,
+      "key": "Em",
+      "duration_sec": 8.0,
+      "song_path": "track_02_新引擎_金属仪式\\song_final.wav",
+      "manifest_path": "track_02_新引擎_金属仪式\\manifest.json"
+    }
+  ],
+  "honesty_note": "混音不可逆，算法分离是有损近似。模式A(manifest) 提供 sha256 保真的分轨还原；模式B(algo) 通过 AI 模型重分离，结果仅为有损近似，不可视为原始分轨。"
+}

@@ -80,6 +80,10 @@ class SynthEngine(Enum):
     WAVETABLE = "wavetable"           # 波表合成
     WAVEGUIDE = "waveguide"           # 波导物理建模
     NOISE = "noise"                   # 噪声合成 (鼓专用)
+    ADDITIVE = "additive"             # 加法合成 (分音叠加 / 玻璃·钟·金属质感)
+    MODAL = "modal"                   # 模态合成 (谐振体建模 / 棒·膜·钵·管钟)
+    HYBRID = "hybrid"                 # 混合声部 (additive+modal+tone+noise+fm 多层融合)
+    MATERIAL = "material"             # 材质感知撞击 (Material-aware SFX, 鼓专用；参数驱动 wood/metal/glass...)
 
     @classmethod
     def from_string(cls, value: str) -> "SynthEngine":

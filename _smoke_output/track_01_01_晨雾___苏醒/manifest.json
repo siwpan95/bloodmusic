@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T08:22:57",
+  "song": "song_final.wav",
+  "bpm": 56,
+  "musical_key": "C",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\主旋律.wav",
+      "sha256": "66562ce359cb0f4dd309176f4055aa65b130928491cb2e3b284c4895e87928ba"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\和弦铺底.wav",
+      "sha256": "ce464bb940fe1e6c8810ca2ff68c9ac71f45c0a43301775a91e1e19243c88635"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\低音贝斯.wav",
+      "sha256": "3e76e7c272afdea62940468aedcd45a7dfc36bcc5a50da53969cfd51d062e914"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\氛围铺底.wav",
+      "sha256": "43bd75e344a77f7cb887dc4100f909609e47dab7eeb1b24391e2d001c985dffb"
+    },
+    {
+      "output_name": "拨弦特效.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\拨弦特效.wav",
+      "sha256": "2cd165ce7d54ae6117fe3cb3aef47e81d75adf58dfcdc78808ceff3bdb4dc578"
+    },
+    {
+      "output_name": "空灵铺.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\空灵铺.wav",
+      "sha256": "265c7f8db332e7b8e994fcb7088e295eeb4ea7c63ebdb8a923dcbcc0fc3a45d0"
+    },
+    {
+      "output_name": "鲁特.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\鲁特.wav",
+      "sha256": "2cd165ce7d54ae6117fe3cb3aef47e81d75adf58dfcdc78808ceff3bdb4dc578"
+    },
+    {
+      "output_name": "鼓组.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\stems\\鼓组.wav",
+      "sha256": "36f424e3650fefbec8e7185b414237e41bf2cc54a5763efa959f7c9fc27aea82"
+    }
+  ]
+}

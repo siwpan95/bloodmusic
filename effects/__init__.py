@@ -6,6 +6,7 @@ from .filters import apply_resonant_lpf, apply_resonant_hpf
 from .distortion import apply_distortion, apply_bit_crush
 from .spatial import apply_simple_reverb, apply_stereo, apply_schroeder_reverb
 from .spatial import apply_convolution_reverb, _synthesize_ir, load_ir_wav  # P2
+from .spatial import apply_hrtf, synthesize_hrir, apply_hrtf_convolution    # P3 HRTF
 from .dynamics import CompressorParams, apply_compressor, apply_limiter
 from .dynamics import MultibandCompressorParams, apply_multiband_compressor  # P2
 from .eq import ParametricEQParams, apply_parametric_eq

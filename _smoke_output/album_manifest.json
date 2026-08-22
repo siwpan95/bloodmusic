@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "album": {
+    "title": "SMOKE 冒烟测试",
+    "artist": "BloodMusic Engine",
+    "genre": "test",
+    "year": 2026,
+    "cover": null,
+    "separate_mode": "manifest"
+  },
+  "summary": {
+    "total_tracks": 2,
+    "success_count": 2,
+    "failure_count": 0,
+    "total_duration_sec": 24.642857142857142
+  },
+  "tracks": [
+    {
+      "index": 1,
+      "title": "01 晨雾 · 苏醒",
+      "success": true,
+      "bpm": 56,
+      "key": "C",
+      "duration_sec": 17.142857142857142,
+      "song_path": "track_01_01_晨雾___苏醒\\song_final.wav",
+      "manifest_path": "track_01_01_晨雾___苏醒\\manifest.json"
+    },
+    {
+      "index": 2,
+      "title": "09 脉冲 · 霓虹",
+      "success": true,
+      "bpm": 128,
+      "key": "Am",
+      "duration_sec": 7.5,
+      "song_path": "track_02_09_脉冲___霓虹\\song_final.wav",
+      "manifest_path": "track_02_09_脉冲___霓虹\\manifest.json"
+    }
+  ],
+  "honesty_note": "混音不可逆，算法分离是有损近似。模式A(manifest) 提供 sha256 保真的分轨还原；模式B(algo) 通过 AI 模型重分离，结果仅为有损近似，不可视为原始分轨。"
+}

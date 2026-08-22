@@ -1,0 +1,61 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T08:23:10",
+  "song": "song_final.wav",
+  "bpm": 128,
+  "musical_key": "Am",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\主旋律.wav",
+      "sha256": "715e0b148dae609bae736305f6919fe64cc70eabbb531d6dba2cac006979b8bb"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\和弦铺底.wav",
+      "sha256": "07829ada769e3c931f52667d72ccf86922fe0cc0c559c2814e10278549525f73"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\低音贝斯.wav",
+      "sha256": "dd3de18181af6655891f0946f9c8fbd8b87a6eea8845bb9f8c6ec9d1531ff102"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\氛围铺底.wav",
+      "sha256": "f5731f8b0c6026fbf90dae82a46ed6cfadeef6fd60b9ca93ad9f1a2d73b78bfc"
+    },
+    {
+      "output_name": "拨弦特效.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\拨弦特效.wav",
+      "sha256": "97c0072f392d8307e49a328ad9401d555cdc0916a74bfdfa28ae7cd673b5a8eb"
+    },
+    {
+      "output_name": "酸性贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\酸性贝斯.wav",
+      "sha256": "a1bba4594c8ffd854fbe8bd560de52fe413cd1f7ed212e211508b782e0ab5cce"
+    },
+    {
+      "output_name": "亮铺.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\亮铺.wav",
+      "sha256": "f5731f8b0c6026fbf90dae82a46ed6cfadeef6fd60b9ca93ad9f1a2d73b78bfc"
+    },
+    {
+      "output_name": "鼓组.wav",
+      "instrument_class": "synth",
+      "original_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\stems\\鼓组.wav",
+      "sha256": "9dc054e48053d8027a88563d9e7234ed61ccc509518123ca68372ecb87e4d5da"
+    }
+  ]
+}

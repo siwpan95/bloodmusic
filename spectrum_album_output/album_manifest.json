@@ -1,0 +1,140 @@
+{
+  "version": "1.0",
+  "album": {
+    "title": "SPECTRUM 频谱万象",
+    "artist": "BloodMusic Engine",
+    "genre": "multi-style / genre-fluid",
+    "year": 2026,
+    "cover": null,
+    "separate_mode": "manifest"
+  },
+  "summary": {
+    "total_tracks": 12,
+    "success_count": 12,
+    "failure_count": 0,
+    "total_duration_sec": 147.69658616990966
+  },
+  "tracks": [
+    {
+      "index": 1,
+      "title": "01 晨雾 · 苏醒",
+      "success": true,
+      "bpm": 56,
+      "key": "C",
+      "duration_sec": 17.142857142857142,
+      "song_path": "track_01_01_晨雾___苏醒\\song_final.wav",
+      "manifest_path": "track_01_01_晨雾___苏醒\\manifest.json"
+    },
+    {
+      "index": 2,
+      "title": "02 极光 · 漂浮",
+      "success": true,
+      "bpm": 64,
+      "key": "D",
+      "duration_sec": 15.0,
+      "song_path": "track_02_02_极光___漂浮\\song_final.wav",
+      "manifest_path": "track_02_02_极光___漂浮\\manifest.json"
+    },
+    {
+      "index": 3,
+      "title": "03 宫廷 · 晨礼",
+      "success": true,
+      "bpm": 88,
+      "key": "C",
+      "duration_sec": 13.636363636363637,
+      "song_path": "track_03_03_宫廷___晨礼\\song_final.wav",
+      "manifest_path": "track_03_03_宫廷___晨礼\\manifest.json"
+    },
+    {
+      "index": 4,
+      "title": "04 山野 · 风车",
+      "success": true,
+      "bpm": 100,
+      "key": "G",
+      "duration_sec": 9.6,
+      "song_path": "track_04_04_山野___风车\\song_final.wav",
+      "manifest_path": "track_04_04_山野___风车\\manifest.json"
+    },
+    {
+      "index": 5,
+      "title": "05 集市 · 暖阳",
+      "success": true,
+      "bpm": 96,
+      "key": "F",
+      "duration_sec": 10.0,
+      "song_path": "track_05_05_集市___暖阳\\song_final.wav",
+      "manifest_path": "track_05_05_集市___暖阳\\manifest.json"
+    },
+    {
+      "index": 6,
+      "title": "06 蓝调 · 午后",
+      "success": true,
+      "bpm": 118,
+      "key": "F",
+      "duration_sec": 10.169491525423728,
+      "song_path": "track_06_06_蓝调___午后\\song_final.wav",
+      "manifest_path": "track_06_06_蓝调___午后\\manifest.json"
+    },
+    {
+      "index": 7,
+      "title": "07 夜读 · 台灯",
+      "success": true,
+      "bpm": 78,
+      "key": "Am",
+      "duration_sec": 18.46153846153846,
+      "song_path": "track_07_07_夜读___台灯\\song_final.wav",
+      "manifest_path": "track_07_07_夜读___台灯\\manifest.json"
+    },
+    {
+      "index": 8,
+      "title": "08 远行 · 地平线",
+      "success": true,
+      "bpm": 100,
+      "key": "G",
+      "duration_sec": 9.6,
+      "song_path": "track_08_08_远行___地平线\\song_final.wav",
+      "manifest_path": "track_08_08_远行___地平线\\manifest.json"
+    },
+    {
+      "index": 9,
+      "title": "09 脉冲 · 霓虹",
+      "success": true,
+      "bpm": 128,
+      "key": "Am",
+      "duration_sec": 7.5,
+      "song_path": "track_09_09_脉冲___霓虹\\song_final.wav",
+      "manifest_path": "track_09_09_脉冲___霓虹\\manifest.json"
+    },
+    {
+      "index": 10,
+      "title": "10 史诗 · 黎明",
+      "success": true,
+      "bpm": 84,
+      "key": "Gm",
+      "duration_sec": 17.142857142857142,
+      "song_path": "track_10_10_史诗___黎明\\song_final.wav",
+      "manifest_path": "track_10_10_史诗___黎明\\manifest.json"
+    },
+    {
+      "index": 11,
+      "title": "11 战鼓 · 裂空",
+      "success": true,
+      "bpm": 150,
+      "key": "Em",
+      "duration_sec": 6.4,
+      "song_path": "track_11_11_战鼓___裂空\\song_final.wav",
+      "manifest_path": "track_11_11_战鼓___裂空\\manifest.json"
+    },
+    {
+      "index": 12,
+      "title": "12 深渊 · 回响",
+      "success": true,
+      "bpm": 92,
+      "key": "Dm",
+      "duration_sec": 13.043478260869565,
+      "song_path": "track_12_12_深渊___回响\\song_final.wav",
+      "manifest_path": "track_12_12_深渊___回响\\manifest.json"
+    }
+  ],
+  "honesty_note": "混音不可逆，算法分离是有损近似。模式A(manifest) 提供 sha256 保真的分轨还原；模式B(algo) 通过 AI 模型重分离，结果仅为有损近似，不可视为原始分轨。"
+}

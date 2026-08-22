@@ -1,0 +1,67 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T20:19:38",
+  "song": "song_final.wav",
+  "bpm": 150,
+  "musical_key": "Em",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\主旋律.wav",
+      "sha256": "a9cd945ee69c1259927818f425f17463c6738a8bae861b945e36b0562601a06b"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\和弦铺底.wav",
+      "sha256": "90a60cce7772367f5f9dc9a391aa883ba434183e6bf44ce2cfbf9a4e556f7582"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\低音贝斯.wav",
+      "sha256": "23b1f16170e5ddc97cba89da844628b1af964096b0e8644242e237bfa1621a19"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\氛围铺底.wav",
+      "sha256": "4e08b0e232dc54e1e8d67b3697b2447ed71ae7f417a4a26914f8b78bacf93235"
+    },
+    {
+      "output_name": "拨弦特效.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\拨弦特效.wav",
+      "sha256": "292de5f0b6365c84d315b83761087434babdc023eb58013028de5bc1ed81d0ba"
+    },
+    {
+      "output_name": "铜管.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\铜管.wav",
+      "sha256": "f9edc43a6804ffac25907ae17edc8e070ced1db264d960fd01d09b033a6bbea9"
+    },
+    {
+      "output_name": "钟琴.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\钟琴.wav",
+      "sha256": "2ffe3b27a77dcf1f89954123510efef2b3601b5bb0498a0fff9bc7f860c950b4"
+    },
+    {
+      "output_name": "锣.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\锣.wav",
+      "sha256": "fc6e1546c9186a6a6b8f72ffc15a22baac210e4098bd032d613017176958fa57"
+    },
+    {
+      "output_name": "鼓组.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_11_11_战鼓___裂空\\stems\\鼓组.wav",
+      "sha256": "078bc8c32c450c1fac5b7c2d977636761592a94c1b653c27903786ec993f8310"
+    }
+  ]
+}

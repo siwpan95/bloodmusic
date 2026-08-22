@@ -259,6 +259,12 @@ class PoolRenderer:
                 return self._render_waveguide(pattern, duration_sec)
             elif engine == SynthEngine.GRANULAR:
                 return self._render_granular(pattern, duration_sec)
+            elif engine == SynthEngine.ADDITIVE:
+                return render_pattern_to_array(pattern, duration_sec)
+            elif engine == SynthEngine.MODAL:
+                return render_pattern_to_array(pattern, duration_sec)
+            elif engine == SynthEngine.HYBRID:
+                return render_pattern_to_array(pattern, duration_sec)
             else:
                 logger.warning(
                     f"  未知引擎类型 {engine}，fallback 到基础振荡器"

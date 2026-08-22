@@ -1,0 +1,100 @@
+album:
+  title: 新引擎试产 Demo — 钟·璃·金属
+  artist: BloodMusic Engine (P2)
+  genre: game
+  year: 2026
+  cover: null
+instrument_pool:
+  name: 新引擎试产乐池
+  bpm: 100
+  key: C
+  scale: minor
+  global_volume: 0.9
+  generation:
+    diversity: 0.4
+    humanize: true
+    seed: 42
+    chord_progression: dreamy
+  instruments:
+  - name: 玻璃钟
+    role: melody
+    engine: additive
+    preset: glass_bell
+    volume: 0.9
+    pan: -0.2
+  - name: 金属钟
+    role: melody
+    engine: additive
+    preset: metal_bell
+    volume: 0.85
+    pan: 0.25
+  - name: 金属板
+    role: fx
+    engine: additive
+    preset: metal_plate
+    volume: 0.7
+    pan: 0.0
+  - name: 玻璃铺底
+    role: pad
+    engine: additive
+    preset: glass_pad
+    volume: 0.6
+    pan: 0.3
+  - name: 马林巴棒
+    role: chord
+    engine: modal
+    preset: marimba_bar
+    volume: 0.85
+    pan: -0.15
+  - name: 管钟
+    role: fx
+    engine: modal
+    preset: tubular_bell_modal
+    volume: 0.8
+    pan: 0.1
+  - name: 颂钵
+    role: pad
+    engine: modal
+    preset: singing_bowl
+    volume: 0.8
+    pan: -0.3
+  - name: 锣
+    role: fx
+    engine: modal
+    preset: gong_modal
+    volume: 0.75
+    pan: 0.0
+  - name: 贝斯
+    role: bass
+    engine: subtractive
+    preset: deep_bass
+    volume: 0.95
+    pan: 0.0
+  - name: 电子鼓
+    role: drum
+    engine: noise
+    volume: 0.85
+    pan: 0.0
+mix_config:
+  clip_mode: soft
+  normalize_mode: rms
+  rms_target_db: -3.0
+  fade_in_ms: 50
+  fade_out_ms: 400
+  compress: true
+  compress_threshold: -20.0
+  compress_ratio: 4.0
+separate_mode: manifest
+tracks:
+- title: 新引擎·钟璃幻境
+  bpm: 96
+  bars: 16
+  key: C
+  style: exploration
+  seed: 7
+- title: 新引擎·金属仪式
+  bpm: 120
+  bars: 16
+  key: Em
+  style: battle
+  seed: 99

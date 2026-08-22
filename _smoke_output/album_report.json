@@ -1,0 +1,32 @@
+{
+  "title": "SMOKE 冒烟测试",
+  "out_dir": "bloodmusic\\_smoke_output",
+  "summary": {
+    "total_tracks": 2,
+    "success_count": 2,
+    "failure_count": 0,
+    "total_duration_sec": 24.642857142857142
+  },
+  "tracks": [
+    {
+      "title": "01 晨雾 · 苏醒",
+      "success": true,
+      "bpm": 56,
+      "key": "C",
+      "duration_sec": 17.142857142857142,
+      "song_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\song_final.wav",
+      "manifest_path": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\manifest.json",
+      "sources_dir": "bloodmusic\\_smoke_output\\track_01_01_晨雾___苏醒\\_sources"
+    },
+    {
+      "title": "09 脉冲 · 霓虹",
+      "success": true,
+      "bpm": 128,
+      "key": "Am",
+      "duration_sec": 7.5,
+      "song_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\song_final.wav",
+      "manifest_path": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\manifest.json",
+      "sources_dir": "bloodmusic\\_smoke_output\\track_02_09_脉冲___霓虹\\_sources"
+    }
+  ]
+}

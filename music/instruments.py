@@ -15,10 +15,11 @@
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Dict
+from typing import List, Optional, Tuple, Dict, Any
 
 from ..core.oscillator import OscType
 from ..core.envelope import EnvShape
+from .instrument_pool import SynthEngine
 
 
 @dataclass
@@ -51,6 +52,11 @@ class InstrumentPreset:
     bass_osc_type: Optional[OscType] = None
     bass_harmonics: List[Tuple[float, float]] = field(default_factory=list)
 
+    # ── 真实合成引擎 (v2.1) ──
+    # None = 走基础振荡器链路；否则用指定引擎 (如 SynthEngine.ADDITIVE / MODAL) 渲染
+    engine: Optional[Any] = None
+    engine_params: Dict[str, Any] = field(default_factory=dict)
+
     def apply_to(self, pattern):
         """将本乐器预设应用到 MusicPattern (原地修改)"""
         from .pattern import MusicPattern
@@ -65,6 +71,9 @@ class InstrumentPreset:
         if self.lp_filter_hz is not None:
             pattern.lp_filter_hz = self.lp_filter_hz
         pattern.stereo_width = self.stereo_width
+        if self.engine is not None:
+            pattern.engine = self.engine
+            pattern.engine_params = dict(self.engine_params)
         return pattern
 
     def make_pattern(self, name: str, notes: List[str], durations: List[float],
@@ -78,6 +87,7 @@ class InstrumentPreset:
             vibrato_rate=self.vibrato_rate, vibrato_depth=self.vibrato_depth,
             reverb_mix=self.reverb_mix, reverb_decay=self.reverb_decay,
             lp_filter_hz=self.lp_filter_hz, stereo_width=self.stereo_width,
+            engine=self.engine, engine_params=dict(self.engine_params),
         )
 
 
@@ -347,6 +357,429 @@ BRASS_SECTION = InstrumentPreset(
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# P0 扩充：GM2 主要族补全
+#   organ(管风琴族) / brass(铜管扩充) / woodwind(木管·簧片扩充)
+#   strings(弦乐扩充) / ethnic(民族·世界) / percussion(钟琴扩充)
+#   synth(合成变体)  —— 纯参数映射，零引擎改动
+
+# ── 管风琴族 ──
+DRAWBAR_ORGAN = InstrumentPreset(
+    name="Drawbar Organ", gm_program=16, category="organ",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.6), (3.0, 0.45), (4.0, 0.3), (5.0, 0.2), (6.0, 0.15)],
+    vibrato_rate=6.0, vibrato_depth=1.0,
+    reverb_mix=0.2, reverb_decay=0.8, lp_filter_hz=4000, stereo_width=0.6,
+)
+
+CHURCH_ORGAN = InstrumentPreset(
+    name="Church Organ", gm_program=20, category="organ",
+    osc_type=OscType.SAW, volume=0.17, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.4), (4.0, 0.3), (5.0, 0.25), (6.0, 0.2), (8.0, 0.1)],
+    vibrato_rate=2.0, vibrato_depth=0.5,
+    reverb_mix=0.5, reverb_decay=2.0, lp_filter_hz=5000, stereo_width=0.7,
+)
+
+REED_ORGAN = InstrumentPreset(
+    name="Reed Organ", gm_program=21, category="organ",
+    osc_type=OscType.SQUARE, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.3), (4.0, 0.2)],
+    reverb_mix=0.2, reverb_decay=0.8, lp_filter_hz=3000, stereo_width=0.5,
+)
+
+ACCORDION = InstrumentPreset(
+    name="Accordion", gm_program=22, category="organ",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.35), (4.0, 0.2), (5.0, 0.1)],
+    vibrato_rate=6.0, vibrato_depth=1.5,
+    reverb_mix=0.2, reverb_decay=1.0, lp_filter_hz=4500, stereo_width=0.5,
+)
+
+HARMONICA = InstrumentPreset(
+    name="Harmonica", gm_program=23, category="organ",
+    osc_type=OscType.SQUARE, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.3), (4.0, 0.15)],
+    vibrato_rate=7.0, vibrato_depth=2.0,
+    reverb_mix=0.15, reverb_decay=1.0, lp_filter_hz=3500, stereo_width=0.4,
+)
+
+
+# ── 铜管族扩充 ──
+TROMBONE = InstrumentPreset(
+    name="Trombone", gm_program=57, category="brass",
+    osc_type=OscType.SAW, volume=0.17, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.3), (4.0, 0.15), (5.0, 0.08)],
+    vibrato_rate=4.0, vibrato_depth=1.5,
+    reverb_mix=0.15, reverb_decay=1.2, lp_filter_hz=4200, stereo_width=0.3,
+)
+
+TUBA = InstrumentPreset(
+    name="Tuba", gm_program=58, category="brass",
+    osc_type=OscType.SAW, volume=0.2, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.2)],
+    vibrato_rate=2.0, vibrato_depth=0.8,
+    reverb_mix=0.15, reverb_decay=1.2, lp_filter_hz=2500, stereo_width=0.25,
+)
+
+MUTED_TRUMPET = InstrumentPreset(
+    name="Muted Trumpet", gm_program=59, category="brass",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.3), (4.0, 0.15)],
+    vibrato_rate=5.0, vibrato_depth=1.0,
+    reverb_mix=0.1, reverb_decay=0.8, lp_filter_hz=3500, stereo_width=0.25,
+)
+
+FRENCH_HORN = InstrumentPreset(
+    name="French Horn", gm_program=60, category="brass",
+    osc_type=OscType.SAW, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.25), (4.0, 0.1)],
+    vibrato_rate=3.0, vibrato_depth=1.0,
+    reverb_mix=0.3, reverb_decay=1.5, lp_filter_hz=3500, stereo_width=0.4,
+)
+
+
+# ── 木管 / 簧片族扩充 ──
+OBOE = InstrumentPreset(
+    name="Oboe", gm_program=68, category="woodwind",
+    osc_type=OscType.SQUARE, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.3), (4.0, 0.15), (5.0, 0.08)],
+    vibrato_rate=5.0, vibrato_depth=1.5,
+    reverb_mix=0.2, reverb_decay=1.0, lp_filter_hz=3500, stereo_width=0.3,
+)
+
+ENGLISH_HORN = InstrumentPreset(
+    name="English Horn", gm_program=69, category="woodwind",
+    osc_type=OscType.SQUARE, volume=0.14, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.25)],
+    vibrato_rate=4.0, vibrato_depth=1.2,
+    reverb_mix=0.25, reverb_decay=1.0, lp_filter_hz=3000, stereo_width=0.3,
+)
+
+BASSOON = InstrumentPreset(
+    name="Bassoon", gm_program=70, category="woodwind",
+    osc_type=OscType.SQUARE, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.3), (4.0, 0.15)],
+    vibrato_rate=3.0, vibrato_depth=1.0,
+    reverb_mix=0.2, reverb_decay=1.0, lp_filter_hz=2500, stereo_width=0.3,
+)
+
+SOPRANO_SAX = InstrumentPreset(
+    name="Soprano Sax", gm_program=64, category="woodwind",
+    osc_type=OscType.SAW, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.2), (4.0, 0.1)],
+    vibrato_rate=5.0, vibrato_depth=1.6,
+    reverb_mix=0.18, reverb_decay=1.0, lp_filter_hz=5000, stereo_width=0.3,
+)
+
+TENOR_SAX = InstrumentPreset(
+    name="Tenor Sax", gm_program=66, category="woodwind",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.45), (3.0, 0.25), (4.0, 0.12)],
+    vibrato_rate=4.5, vibrato_depth=1.5,
+    reverb_mix=0.18, reverb_decay=1.0, lp_filter_hz=4000, stereo_width=0.35,
+)
+
+BARITONE_SAX = InstrumentPreset(
+    name="Baritone Sax", gm_program=67, category="woodwind",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.3), (4.0, 0.15)],
+    vibrato_rate=4.0, vibrato_depth=1.3,
+    reverb_mix=0.18, reverb_decay=1.0, lp_filter_hz=3000, stereo_width=0.35,
+)
+
+PICCOLO = InstrumentPreset(
+    name="Piccolo", gm_program=72, category="woodwind",
+    osc_type=OscType.SINE, volume=0.12, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.2), (3.0, 0.08)],
+    vibrato_rate=6.0, vibrato_depth=2.0,
+    reverb_mix=0.2, reverb_decay=0.8, lp_filter_hz=8000, stereo_width=0.35,
+)
+
+RECORDER = InstrumentPreset(
+    name="Recorder", gm_program=74, category="woodwind",
+    osc_type=OscType.SINE, volume=0.13, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.15), (3.0, 0.05)],
+    vibrato_rate=3.0, vibrato_depth=1.0,
+    reverb_mix=0.15, reverb_decay=0.8, lp_filter_hz=6000, stereo_width=0.35,
+)
+
+PAN_FLUTE = InstrumentPreset(
+    name="Pan Flute", gm_program=75, category="woodwind",
+    osc_type=OscType.SINE, volume=0.13, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.1)],
+    vibrato_rate=5.0, vibrato_depth=1.5,
+    reverb_mix=0.2, reverb_decay=1.0, lp_filter_hz=5000, stereo_width=0.4,
+)
+
+SHAKUHACHI = InstrumentPreset(
+    name="Shakuhachi", gm_program=77, category="woodwind",
+    osc_type=OscType.SINE, volume=0.13, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.12), (3.0, 0.05)],
+    vibrato_rate=4.0, vibrato_depth=1.2,
+    reverb_mix=0.25, reverb_decay=1.0, lp_filter_hz=4000, stereo_width=0.45,
+)
+
+WHISTLE = InstrumentPreset(
+    name="Whistle", gm_program=78, category="woodwind",
+    osc_type=OscType.SINE, volume=0.11, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.08)],
+    vibrato_rate=7.0, vibrato_depth=2.5,
+    reverb_mix=0.15, reverb_decay=0.6, lp_filter_hz=9000, stereo_width=0.3,
+)
+
+OCARINA = InstrumentPreset(
+    name="Ocarina", gm_program=79, category="woodwind",
+    osc_type=OscType.SINE, volume=0.13, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.2), (3.0, 0.08)],
+    vibrato_rate=4.0, vibrato_depth=1.0,
+    reverb_mix=0.15, reverb_decay=0.8, lp_filter_hz=5000, stereo_width=0.35,
+)
+
+
+# ── 弦乐族扩充 ──
+CONTRABASS = InstrumentPreset(
+    name="Contrabass", gm_program=43, category="strings",
+    osc_type=OscType.TRIANGLE, volume=0.2, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.2), (4.0, 0.1)],
+    vibrato_rate=2.0, vibrato_depth=0.5,
+    reverb_mix=0.2, reverb_decay=1.2, lp_filter_hz=2000, stereo_width=0.2,
+)
+
+TREMOLO_STRINGS = InstrumentPreset(
+    name="Tremolo Strings", gm_program=44, category="strings",
+    osc_type=OscType.SAW, volume=0.12, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.3), (3.0, 0.12), (4.0, 0.06)],
+    vibrato_rate=8.0, vibrato_depth=2.0,
+    reverb_mix=0.35, reverb_decay=1.5, lp_filter_hz=4000, stereo_width=0.6,
+)
+
+
+# ── 民族 / 世界乐器 ──
+SITAR = InstrumentPreset(
+    name="Sitar", gm_program=104, category="ethnic",
+    osc_type=OscType.SAW, volume=0.15, env_shape=EnvShape.PLUCK,
+    harmonics=[(1.0, 1.0), (2.0, 0.6), (3.0, 0.4), (4.0, 0.3), (5.0, 0.2)],
+    vibrato_rate=6.0, vibrato_depth=2.0,
+    reverb_mix=0.3, reverb_decay=1.5, lp_filter_hz=5000, stereo_width=0.5,
+)
+
+SHAMISEN = InstrumentPreset(
+    name="Shamisen", gm_program=108, category="ethnic",
+    osc_type=OscType.SQUARE, volume=0.15, env_shape=EnvShape.PLUCK,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.3), (4.0, 0.15)],
+    reverb_mix=0.2, reverb_decay=1.0, lp_filter_hz=5000, stereo_width=0.45,
+)
+
+KALIMBA = InstrumentPreset(
+    name="Kalimba", gm_program=109, category="ethnic",
+    osc_type=OscType.SINE, volume=0.12, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[(1.0, 1.0), (2.0, 0.3), (3.0, 0.1), (4.0, 0.05)],
+    reverb_mix=0.3, reverb_decay=1.5, lp_filter_hz=6000, stereo_width=0.5,
+)
+
+BAGPIPE = InstrumentPreset(
+    name="Bagpipe", gm_program=110, category="ethnic",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.3), (4.0, 0.2)],
+    vibrato_rate=5.0, vibrato_depth=1.0,
+    reverb_mix=0.2, reverb_decay=1.2, lp_filter_hz=4000, stereo_width=0.5,
+)
+
+FIDDLE = InstrumentPreset(
+    name="Fiddle", gm_program=111, category="ethnic",
+    osc_type=OscType.SAW, volume=0.15, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.2), (4.0, 0.1), (5.0, 0.05)],
+    vibrato_rate=6.0, vibrato_depth=2.0,
+    reverb_mix=0.2, reverb_decay=1.2, lp_filter_hz=4500, stereo_width=0.45,
+)
+
+SHANAI = InstrumentPreset(
+    name="Shanai", gm_program=112, category="ethnic",
+    osc_type=OscType.SQUARE, volume=0.15, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.35), (4.0, 0.2)],
+    vibrato_rate=6.0, vibrato_depth=1.5,
+    reverb_mix=0.2, reverb_decay=1.0, lp_filter_hz=4000, stereo_width=0.4,
+)
+
+
+# ── 键盘打击 / 钟琴族扩充 ──
+GLOCKENSPIEL = InstrumentPreset(
+    name="Glockenspiel", gm_program=9, category="percussion",
+    osc_type=OscType.SINE, volume=0.12, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[(1.0, 1.0), (3.0, 0.1), (5.0, 0.04)],
+    vibrato_rate=7.0, vibrato_depth=0.5,
+    reverb_mix=0.35, reverb_decay=2.0, lp_filter_hz=9000, stereo_width=0.5,
+)
+
+XYLOPHONE = InstrumentPreset(
+    name="Xylophone", gm_program=13, category="percussion",
+    osc_type=OscType.SINE, volume=0.14, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[(1.0, 1.0), (2.0, 0.3), (4.0, 0.1), (8.0, 0.03)],
+    reverb_mix=0.3, reverb_decay=1.5, lp_filter_hz=7000, stereo_width=0.45,
+)
+
+DULCIMER = InstrumentPreset(
+    name="Dulcimer", gm_program=15, category="percussion",
+    osc_type=OscType.TRIANGLE, volume=0.13, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.2), (4.0, 0.1)],
+    reverb_mix=0.3, reverb_decay=1.5, lp_filter_hz=6000, stereo_width=0.5,
+)
+
+
+# ── 合成器变体 ──
+SYNTH_POLYSYNTH = InstrumentPreset(
+    name="Polysynth Pad", gm_program=91, category="synth",
+    osc_type=OscType.SAW, volume=0.11, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.3), (3.0, 0.1)],
+    vibrato_rate=2.0, vibrato_depth=1.0,
+    reverb_mix=0.4, reverb_decay=2.5, lp_filter_hz=3500, stereo_width=0.7,
+)
+
+SYNTH_SPACE = InstrumentPreset(
+    name="Space Voice Pad", gm_program=92, category="synth",
+    osc_type=OscType.SAW, volume=0.1, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.25), (3.0, 0.1), (4.0, 0.05)],
+    vibrato_rate=1.5, vibrato_depth=1.5,
+    reverb_mix=0.6, reverb_decay=3.0, lp_filter_hz=3000, stereo_width=0.85,
+)
+
+SYNTH_METAL = InstrumentPreset(
+    name="Metal Pad", gm_program=94, category="synth",
+    osc_type=OscType.SQUARE, volume=0.11, env_shape=EnvShape.PAD,
+    harmonics=[(1.0, 1.0), (2.5, 0.5), (4.2, 0.3), (6.3, 0.15)],
+    vibrato_rate=3.0, vibrato_depth=1.0,
+    reverb_mix=0.3, reverb_decay=2.0, lp_filter_hz=6000, stereo_width=0.6,
+)
+
+SYNTH_HALO = InstrumentPreset(
+    name="Halo Pad", gm_program=95, category="synth",
+    osc_type=OscType.TRIANGLE, volume=0.1, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.3), (3.0, 0.15), (5.0, 0.08)],
+    vibrato_rate=2.0, vibrato_depth=1.0,
+    reverb_mix=0.5, reverb_decay=3.0, lp_filter_hz=4000, stereo_width=0.8,
+)
+
+SYNTH_SWEEP = InstrumentPreset(
+    name="Sweep Pad", gm_program=96, category="synth",
+    osc_type=OscType.SAW, volume=0.1, env_shape=EnvShape.SWELL,
+    harmonics=[(1.0, 1.0), (2.0, 0.4), (3.0, 0.2), (4.0, 0.1)],
+    vibrato_rate=2.0, vibrato_depth=2.0,
+    reverb_mix=0.5, reverb_decay=3.0, lp_filter_hz=5000, stereo_width=0.75,
+)
+
+SYNTH_CHARANG = InstrumentPreset(
+    name="Charang Lead", gm_program=85, category="synth",
+    osc_type=OscType.SAW, volume=0.16, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[(1.0, 1.0), (2.0, 0.5), (3.0, 0.4), (4.0, 0.3), (5.0, 0.2)],
+    vibrato_rate=5.0, vibrato_depth=1.5,
+    reverb_mix=0.15, reverb_decay=0.8, lp_filter_hz=7000, stereo_width=0.4,
+)
+
+
+# ── v2.1 真实合成引擎乐器 (ADDITIVE / MODAL) ──
+# 这些乐器声明 engine=SynthEngine.ADDITIVE/MODAL，渲染时走 core.additive / core.modal，
+# 而非基础振荡器链路，从而解锁 glass / bell / metal / bar / membrane / bowl / gong 质感。
+GLASS_BELL = InstrumentPreset(
+    name="Glass Bell", gm_program=130, category="percussion",
+    osc_type=OscType.SINE, volume=0.16, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.ADDITIVE, engine_params={"preset": "glass"},
+    reverb_mix=0.45, reverb_decay=2.5, lp_filter_hz=12000, stereo_width=0.6,
+)
+
+METAL_BELL = InstrumentPreset(
+    name="Metal Bell", gm_program=131, category="percussion",
+    osc_type=OscType.SINE, volume=0.18, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.ADDITIVE, engine_params={"preset": "bell"},
+    reverb_mix=0.4, reverb_decay=3.0, lp_filter_hz=12000, stereo_width=0.5,
+)
+
+METAL_PLATE = InstrumentPreset(
+    name="Metal Plate", gm_program=132, category="percussion",
+    osc_type=OscType.SINE, volume=0.14, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.ADDITIVE, engine_params={"preset": "metal"},
+    reverb_mix=0.35, reverb_decay=2.0, lp_filter_hz=11000, stereo_width=0.55,
+)
+
+GLASS_PAD = InstrumentPreset(
+    name="Glass Pad", gm_program=133, category="synth",
+    osc_type=OscType.SINE, volume=0.1, env_shape=EnvShape.PAD,
+    harmonics=[], engine=SynthEngine.ADDITIVE, engine_params={"preset": "glass_pad"},
+    vibrato_rate=1.2, vibrato_depth=0.6,
+    reverb_mix=0.55, reverb_decay=3.0, lp_filter_hz=8000, stereo_width=0.85,
+)
+
+MARIMBA_BAR = InstrumentPreset(
+    name="Marimba Bar", gm_program=134, category="percussion",
+    osc_type=OscType.SINE, volume=0.18, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.MODAL, engine_params={"preset": "bar", "base_decay": 4.0},
+    reverb_mix=0.3, reverb_decay=1.5, lp_filter_hz=9000, stereo_width=0.45,
+)
+
+TUBULAR_BELL_MODAL = InstrumentPreset(
+    name="Tubular Bell (Modal)", gm_program=135, category="percussion",
+    osc_type=OscType.SINE, volume=0.17, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.MODAL, engine_params={"preset": "tubular", "base_decay": 2.0},
+    reverb_mix=0.5, reverb_decay=4.0, lp_filter_hz=10000, stereo_width=0.5,
+)
+
+SINGING_BOWL = InstrumentPreset(
+    name="Singing Bowl", gm_program=136, category="ethnic",
+    osc_type=OscType.SINE, volume=0.2, env_shape=EnvShape.PAD,
+    harmonics=[], engine=SynthEngine.MODAL, engine_params={"preset": "bowl", "base_decay": 1.5},
+    reverb_mix=0.6, reverb_decay=5.0, lp_filter_hz=7000, stereo_width=0.7,
+)
+
+GONG_MODAL = InstrumentPreset(
+    name="Gong (Modal)", gm_program=137, category="percussion",
+    osc_type=OscType.SINE, volume=0.22, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.MODAL, engine_params={"preset": "gong", "base_decay": 1.2},
+    reverb_mix=0.55, reverb_decay=5.0, lp_filter_hz=8000, stereo_width=0.8,
+)
+
+
+# ── v2.2 混合声部乐器 (HYBRID) ──
+# 单一声部内融合 additive + modal + tone + noise 多层，engine=SynthEngine.HYBRID。
+HYBRID_BELL_METAL = InstrumentPreset(
+    name="Hybrid Bell Metal", gm_program=140, category="percussion",
+    osc_type=OscType.SINE, volume=0.18, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.HYBRID, engine_params={"preset": "bell_metal"},
+    reverb_mix=0.5, reverb_decay=3.5, lp_filter_hz=12000, stereo_width=0.6,
+)
+
+HYBRID_GLASS_STRIKE = InstrumentPreset(
+    name="Hybrid Glass Strike", gm_program=141, category="percussion",
+    osc_type=OscType.SINE, volume=0.16, env_shape=EnvShape.PERCUSSIVE,
+    harmonics=[], engine=SynthEngine.HYBRID, engine_params={"preset": "glass_strike"},
+    reverb_mix=0.45, reverb_decay=3.0, lp_filter_hz=13000, stereo_width=0.55,
+)
+
+HYBRID_SHIMMER_PAD = InstrumentPreset(
+    name="Hybrid Shimmer Pad", gm_program=142, category="synth",
+    osc_type=OscType.SINE, volume=0.12, env_shape=EnvShape.PAD,
+    harmonics=[], engine=SynthEngine.HYBRID, engine_params={"preset": "hybrid_pad"},
+    vibrato_rate=1.0, vibrato_depth=0.5,
+    reverb_mix=0.6, reverb_decay=3.5, lp_filter_hz=9000, stereo_width=0.85,
+)
+
+
+# ── v2.3 材质感知鼓组 (Material-aware, 鼓专用) ──
+# engine=SynthEngine.MATERIAL → 鼓渲染走 sfx.material.synthesize_material_impact，
+# 由 engine_params["track_materials"] 决定 kick/snare/hihat 各自材质，
+# 同一套合成逻辑参数化出 wood/metal/glass/ceramic 等截然不同的撞击质感。
+MATERIAL_DRUMKIT = InstrumentPreset(
+    name="Material Drumkit", gm_program=118, category="drum",
+    osc_type=OscType.NOISE_BROWN, volume=0.8, env_shape=EnvShape.PERCUSSIVE,
+    engine=SynthEngine.MATERIAL,
+    engine_params={
+        "material": "wood",
+        "track_materials": {
+            "kick": "wood",
+            "snare": "metal",
+            "hihat": "ceramic",
+        },
+    },
+)
+
+
 # 分类汇总
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -358,15 +791,31 @@ for _inst in [
     # Piano
     ACOUSTIC_GRAND_PIANO, BRIGHT_PIANO, ELECTRIC_PIANO, HARPSICHORD, CELESTA,
     # Strings
-    VIOLIN, VIOLA, CELLO, STRING_ENSEMBLE, PIZZICATO,
+    VIOLIN, VIOLA, CELLO, STRING_ENSEMBLE, PIZZICATO, CONTRABASS, TREMOLO_STRINGS,
     # Brass/Woodwind
     TRUMPET, FLUTE, CLARINET, SAXOPHONE, BRASS_SECTION,
+    TROMBONE, TUBA, MUTED_TRUMPET, FRENCH_HORN,
+    OBOE, ENGLISH_HORN, BASSOON, SOPRANO_SAX, TENOR_SAX, BARITONE_SAX,
+    PICCOLO, RECORDER, PAN_FLUTE, SHAKUHACHI, WHISTLE, OCARINA,
+    # Organ family (GM 17-24)
+    DRAWBAR_ORGAN, CHURCH_ORGAN, REED_ORGAN, ACCORDION, HARMONICA,
     # Guitar/Plucked
     ACOUSTIC_GUITAR, ELECTRIC_GUITAR_CLEAN, KOTO, BANJO,
+    # Ethnic / World
+    SITAR, SHAMISEN, KALIMBA, BAGPIPE, FIDDLE, SHANAI,
     # Percussion/Mallet
     MUSIC_BOX, VIBRAPHONE, MARIMBA, TUBULAR_BELLS,
+    GLOCKENSPIEL, XYLOPHONE, DULCIMER,
+    # v2.1 真实合成引擎乐器 (ADDITIVE / MODAL)
+    GLASS_BELL, METAL_BELL, METAL_PLATE, MARIMBA_BAR, TUBULAR_BELL_MODAL, GONG_MODAL,
+    SINGING_BOWL, GLASS_PAD,
+    # v2.2 混合声部乐器 (HYBRID)
+    HYBRID_BELL_METAL, HYBRID_GLASS_STRIKE, HYBRID_SHIMMER_PAD,
+    # v2.3 材质感知鼓组 (MATERIAL, 鼓专用)
+    MATERIAL_DRUMKIT,
     # Synth
     SYNTH_PAD_WARM, SYNTH_PAD_BRIGHT, SYNTH_LEAD, SYNTH_BASS,
+    SYNTH_POLYSYNTH, SYNTH_SPACE, SYNTH_METAL, SYNTH_HALO, SYNTH_SWEEP, SYNTH_CHARANG,
     # Custom Bass
     UPRIGHT_BASS, DEEP_BASS, WARM_BASS,
 ]:

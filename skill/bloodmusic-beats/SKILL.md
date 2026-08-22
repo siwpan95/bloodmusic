@@ -388,7 +388,7 @@ cd G:\tools\audio\bloodmusic
 python -m bloodmusic.album_maker.cli make --demo
 
 # 自定义 YAML 专辑配置
-python -m bloodmusic.album_maker.cli make -c custom_album.yaml
+python -m bloodmusic.album_maker.cli make -c configs/custom_album.yaml
 
 # 快速单曲 / 指定风格
 python -m bloodmusic.album_maker.cli quick

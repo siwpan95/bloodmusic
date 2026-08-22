@@ -1,0 +1,73 @@
+{
+  "version": "1.0",
+  "created_at": "2026-08-22T20:20:09",
+  "song": "song_final.wav",
+  "bpm": 92,
+  "musical_key": "Dm",
+  "sample_rate": 44100,
+  "bit_depth": 16,
+  "separate_mode": "manifest",
+  "note": "⚠ 混音不可逆；全部音源均为 BloodMusic 程序化合成（零外部采样），分轨=复用混音时保留的原始分轨（100% 保真）。",
+  "sources": [
+    {
+      "output_name": "主旋律.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\主旋律.wav",
+      "sha256": "d3757f26f7e41f90e0df5732c3662d575ff81f30cd352ccbd66927d8ce090eaf"
+    },
+    {
+      "output_name": "和弦铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\和弦铺底.wav",
+      "sha256": "add34278e20a823e8e58ac49d3b3fa4fab2393d57a3ec763d42f8836eeb489ee"
+    },
+    {
+      "output_name": "低音贝斯.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\低音贝斯.wav",
+      "sha256": "90201b46c5355db433bf8f16cf1c80c72431c4d65cdc67afb8eef8610e08ed71"
+    },
+    {
+      "output_name": "氛围铺底.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\氛围铺底.wav",
+      "sha256": "6de0723a979809502c078306ddebb6f29798f2d8526112f0be332458d6939042"
+    },
+    {
+      "output_name": "拨弦特效.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\拨弦特效.wav",
+      "sha256": "ba5ab64329b2272c7cb45963bfa07de2a049882cc2123cf0b386dda88ed19750"
+    },
+    {
+      "output_name": "低音提琴.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\低音提琴.wav",
+      "sha256": "60a8dd2af2aa3d80d27fadead968c6a5c7ec8c8c954a7b42c0d316bcd3af6dcb"
+    },
+    {
+      "output_name": "电钢.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\电钢.wav",
+      "sha256": "08aedc5da9fab38b22bd5bd6057ea43cd22d27d63713fe25f2068d8af1b0d50e"
+    },
+    {
+      "output_name": "锣.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\锣.wav",
+      "sha256": "dcffab01f0cbe47f75d7b93fe9c64aadcff26cdf6994184e72bdce43f162f8b2"
+    },
+    {
+      "output_name": "诵钵.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\诵钵.wav",
+      "sha256": "39c22b8923f230ccf5489f84f5bea328508eb8858c478ab31700c85e322a681b"
+    },
+    {
+      "output_name": "鼓组.wav",
+      "instrument_class": "synth",
+      "original_path": "D:\\bloodmusic\\spectrum_album_output\\track_12_12_深渊___回响\\stems\\鼓组.wav",
+      "sha256": "38f88a432a7036ce0fdc2b1cf606a49d21f67475f8fe9430ae1a449bd0c18fc5"
+    }
+  ]
+}

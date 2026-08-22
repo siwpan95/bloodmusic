@@ -55,6 +55,7 @@ _ENGINE_OSC_MAP: Dict[SynthEngine, OscType] = {
     SynthEngine.WAVETABLE: OscType.TRIANGLE,
     SynthEngine.WAVEGUIDE: OscType.SQUARE,
     SynthEngine.NOISE: OscType.NOISE_BROWN,
+    SynthEngine.MATERIAL: OscType.NOISE_BROWN,
 }
 
 
@@ -409,8 +410,15 @@ class PoolGenerator:
         """为 drum 角色生成打击乐 DrumPattern。
 
         使用 euclidean.py 生成欧几里得节奏。
+
+        若乐器指定 engine=SynthEngine.MATERIAL，则各鼓声改为材质感知撞击
+        （wood/metal/glass/ceramic...），由 engine_params 决定每件鼓的材质。
         """
         style_params = self._resolve_style_params(InstrumentRole.DRUM)
+
+        # Material-aware 鼓：路由到参数化材质合成
+        if instrument.engine == SynthEngine.MATERIAL:
+            return self._generate_material_drum(instrument, target_bars)
 
         from .euclidean import euclidean_rhythm
 
@@ -458,6 +466,71 @@ class PoolGenerator:
                     decay=0.06,
                     volume=instrument.volume * 0.3,
                     hp_hz=5000.0,
+                ),
+            },
+        )
+        return drum
+
+    def _generate_material_drum(
+        self,
+        instrument: PoolInstrument,
+        target_bars: int,
+    ) -> DrumPattern:
+        """为 engine=MATERIAL 的 drum 乐器生成材质感知鼓组。
+
+        同一套合成逻辑由材质参数驱动出 wood / metal / glass / ceramic 等
+        截然不同的撞击质感（这正是 Wwise·FMOD 文献里 Material-aware SFX
+        的程序化落地）。每件鼓（kick/snare/hihat）可映射不同材质。
+
+        engine_params 约定:
+            material:       默认材质（未指定 track_materials 时全鼓共用）
+            track_materials: {"kick": "wood", "snare": "metal", ...} 逐鼓覆盖
+        """
+        from .euclidean import euclidean_rhythm
+
+        style_params = self._resolve_style_params(InstrumentRole.DRUM)
+        pulse_density = style_params.get("pulse_density", 0.5)
+
+        steps = 16
+        kick_pulses = min(steps, max(1, int(steps * pulse_density * 0.7)))
+        snare_pulses = min(steps, max(1, int(steps * pulse_density * 0.5)))
+        hihat_pulses = min(steps, max(1, int(steps * pulse_density * 1.2)))
+
+        kick_pattern = euclidean_rhythm(kick_pulses, steps, 0)
+        snare_pattern = euclidean_rhythm(snare_pulses, steps, 4)
+        hihat_pattern = euclidean_rhythm(hihat_pulses, steps, 0)
+
+        ep = instrument.engine_params or {}
+        default_material = ep.get("material", "wood")
+        track_materials = ep.get("track_materials", {}) or {}
+
+        def mat_for(track: str) -> str:
+            return track_materials.get(track, default_material)
+
+        drum = DrumPattern(
+            name=instrument.name,
+            steps=steps,
+            bpm=self.pool.bpm,
+            tracks={
+                "kick": kick_pattern,
+                "snare": snare_pattern,
+                "hihat": hihat_pattern,
+            },
+            sounds={
+                "kick": DrumSoundParams(
+                    engine=SynthEngine.MATERIAL,
+                    engine_params={"material": mat_for("kick")},
+                    volume=instrument.volume * 0.9,
+                ),
+                "snare": DrumSoundParams(
+                    engine=SynthEngine.MATERIAL,
+                    engine_params={"material": mat_for("snare")},
+                    volume=instrument.volume * 0.6,
+                ),
+                "hihat": DrumSoundParams(
+                    engine=SynthEngine.MATERIAL,
+                    engine_params={"material": mat_for("hihat")},
+                    volume=instrument.volume * 0.4,
                 ),
             },
         )
@@ -545,22 +618,50 @@ class PoolGenerator:
         """
         style_params = self._resolve_style_params(InstrumentRole.FX)
         if not style_params.get("enabled", False):
-            # FX 被禁用，返回静音模式
-            return MusicPattern(
-                name=instrument.name,
-                notes=[None],
-                durations=[float(target_bars * 4)],
-                bpm=self.pool.bpm,
-                osc_type=OscType.SINE,
-                volume=0.0,
-                env_shape=EnvShape.PAD,
-                engine=instrument.engine,
-                engine_params=instrument.engine_params,
-                automation=instrument.automation,
-            )
+            # FX 风格关闭：普通 fx 乐器静音；
+            # 但携带真实音高引擎 (additive/modal/hybrid) 的乐器仍需发声，
+            # 否则在专辑中完全消失（这些引擎是带音高的合成器，需要音符）。
+            if instrument.engine in (
+                SynthEngine.ADDITIVE,
+                SynthEngine.MODAL,
+                SynthEngine.HYBRID,
+            ):
+                pass  # 落到下方有音高的 drone 生成分支
+            else:
+                return MusicPattern(
+                    name=instrument.name,
+                    notes=[None],
+                    durations=[float(target_bars * 4)],
+                    bpm=self.pool.bpm,
+                    osc_type=OscType.SINE,
+                    volume=0.0,
+                    env_shape=EnvShape.PAD,
+                    engine=instrument.engine,
+                    engine_params=instrument.engine_params,
+                    automation=instrument.automation,
+                )
 
         from .scale import Scale
-        scale_obj = Scale(root=self.pool.key, scale_type=self.pool.scale, octave=2)
+        # 真实音高引擎 (additive/modal/hybrid) 的 fx 乐器（bell/plate/bowl/gong 类）
+        # 用更高八度 + 更大音量，确保作为专辑音色色彩清晰可闻；
+        # 普通 fx 乐器维持原有低八度低音量 drone。
+        real_engine = instrument.engine in (
+            SynthEngine.ADDITIVE,
+            SynthEngine.MODAL,
+            SynthEngine.HYBRID,
+        )
+        if real_engine:
+            drone_octave = 4
+            drone_vol = instrument.volume * 0.5
+            vib_rate, vib_depth = 0.3, 0.4
+            lp_hz = 8000.0
+        else:
+            drone_octave = 2
+            drone_vol = instrument.volume * 0.06
+            vib_rate, vib_depth = 0.5, 1.0
+            lp_hz = 2000.0
+
+        scale_obj = Scale(root=self.pool.key, scale_type=self.pool.scale, octave=drone_octave)
         root_note = scale_obj.get_notes()[0] if scale_obj.get_notes() else "C2"
 
         # 生成长音 drone
@@ -573,14 +674,14 @@ class PoolGenerator:
             durations=durations,
             bpm=self.pool.bpm,
             osc_type=OscType.SINE,
-            volume=instrument.volume * 0.06,
+            volume=drone_vol,
             env_shape=EnvShape.SWELL,
             reverb_mix=0.7,
             reverb_decay=3.0,
-            lp_filter_hz=2000.0,
+            lp_filter_hz=lp_hz,
             stereo_width=0.9,
-            vibrato_rate=0.5,
-            vibrato_depth=1.0,
+            vibrato_rate=vib_rate,
+            vibrato_depth=vib_depth,
             engine=instrument.engine,
             engine_params=instrument.engine_params,
             automation=instrument.automation,

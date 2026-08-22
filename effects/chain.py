@@ -9,6 +9,7 @@ from typing import Optional, List
 from .filters import apply_lowpass, apply_highpass, apply_bandpass, apply_notch
 from .distortion import apply_distortion, apply_bit_crush
 from .spatial import apply_simple_reverb, apply_stereo, apply_schroeder_reverb
+from .spatial import apply_hrtf
 from .dynamics import CompressorParams, apply_compressor, apply_limiter
 from .eq import ParametricEQParams, apply_parametric_eq
 from .modulation import apply_chorus
@@ -60,6 +61,12 @@ class EffectChain:
     phaser_depth: float = 0.7                  # Phaser 调制深度
     phaser_stages: int = 6                     # Phaser 滤波器级数
     phaser_feedback: float = 0.0               # Phaser 反馈量
+
+    # ── Spatial HRTF 双耳空间化 (P3) ──
+    spatial_enabled: bool = False              # 是否启用 HRTF 双耳空间化
+    spatial_azimuth: float = 0.0               # 方位角 (度) 0=前 +90=右 -90=左
+    spatial_elevation: float = 0.0             # 仰角 (度) 0=水平 +90=上 -90=下
+    spatial_distance: float = 1.0              # 距离 (米)
 
 
 def process_effects(
@@ -164,5 +171,18 @@ def process_effects(
     # 9. 立体声展宽
     if chain.stereo_width > 0:
         result = apply_stereo(result, chain.stereo_width, sr)
+
+    # 10. HRTF 双耳空间化 (P3) —— 将单声道声源定位到三维空间
+    #     若信号已是立体声（如 step 9 之后），先下混为单声道再定位
+    if chain.spatial_enabled:
+        if result.ndim == 2:
+            result = result.mean(axis=1)
+        result = apply_hrtf(
+            result,
+            azimuth=chain.spatial_azimuth,
+            elevation=chain.spatial_elevation,
+            distance=chain.spatial_distance,
+            sr=sr,
+        )
 
     return result
