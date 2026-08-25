@@ -118,3 +118,11 @@ bloodmusic/
 ## 许可
 
 MIT License · Copyright (c) 2026 siwpan
+
+
+---
+
+## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+
+> BloodMusic 程序化音频合成引擎（现行）；本地对应 G:\tools\audio\bloodmusic；2.0 分支为旧版。
+> 本标注为发布面统一追加，不改变原有内容。
