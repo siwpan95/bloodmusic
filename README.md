@@ -122,7 +122,7 @@ MIT License · Copyright (c) 2026 siwpan
 
 ---
 
-## 仓库索引标注（2026-08-25 · siwpan 统一治理）
+## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> BloodMusic 程序化音频合成引擎（现行）；本地对应 G:\tools\audio\bloodmusic；2.0 分支为旧版。
+> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/audio-generation）；本地对应 G:\repos\audio-generation；2.0 旧版已转 tag。
 > 本标注为发布面统一追加，不改变原有内容。
