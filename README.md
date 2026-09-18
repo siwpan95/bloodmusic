@@ -10,7 +10,7 @@
 - **效果链** — 滤波器（低通/高通/带通/陷波）、EQ、压缩器、限制器、合唱、失真、混响、延迟、Flanger/Phaser
 - **多轨音乐** — 旋律 + 和弦 + 鼓点 + 琶音，支持 MusicPattern / DrumPattern / MultiTrackPattern
 - **乐理系统** — 音阶/调式选择、情绪映射、马尔可夫旋律生成、和弦进行
-- **互动自适应引擎** — 状态机 + 分层混音 + 参数映射，适合游戏实时音乐（实测 8 层 60fps 仅 1.6ms/帧）
+- **互动自适应引擎** — 状态机 + 分层混音 + 参数映射，适合游戏实时音乐（实测 8 层 60fps 仅 1.6ms/帧）；**B-lite 服务化**（interactive/service.py）：mini-Context + 引擎四服务 + 状态机运行时热替换（Phase B-lite，docs/REVIEW_phase_b_20260918.md）
 - **SFX 系统** — 40+ 预设（UI/卡牌/战斗/系统）+ 游戏通用 8 类（pickup/laser/explosion/power_up/hit/jump/blip/random）
 - **参数序列化** — SynthVoice ↔ JSON / 紧凑短串（仿 jsfxr base58 短 URL，典型 <120 字符）
 - **变异引擎** — mutate / randomize / 锁定字段（仿 bfxr lock 图标）

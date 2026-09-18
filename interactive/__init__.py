@@ -63,6 +63,13 @@ from bloodmusic.interactive.engine import (
     DEFAULT_LAYER_TEMPLATES,
 )
 
+from bloodmusic.interactive.service import (
+    Context,
+    MusicEnginePlugin,
+    music_engine_plugin,
+    replace_state_machine,
+)
+
 __all__ = [
     # 状态机
     "MusicState",
@@ -91,4 +98,9 @@ __all__ = [
     # 引擎
     "EngineConfig",
     "RealtimeMusicEngine",
+    # B-lite 服务化（Phase B-lite，docs/REVIEW_phase_b_20260918.md）
+    "Context",
+    "MusicEnginePlugin",
+    "music_engine_plugin",
+    "replace_state_machine",
 ]

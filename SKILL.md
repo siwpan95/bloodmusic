@@ -25,4 +25,4 @@ agent_created: true
 - v2.0 新 API：InstrumentPool/PoolRenderer（mirror 层），新代码走新 API
 - editable 安装：改代码立即生效，无需重装
 - **host-js 陷阱**（详见 docs/PLAN_cordis_host.md「关键设计决策」）：cordis rc.10 无 ctx.stop()（根 fiber dispose=重启，关停用 boot.mjs stopHost）；插件必须对象形态导出（{name,inject,apply}，函数形态 inject 会被 unwrapExports 丢弃）；rpc_server.py stdout 只走协议（库 print 一律 redirect 到 stderr）；bloodmusic 子包全是相对导入，必须包身份导入（_ensure_bloodmusic 包锚点）；album_maker 外部依赖默认指 G:\tools\audio\*（本机缺失），rpc_server 缺省注入 G:\repos\audio-pipeline + G:\repos\remix
-- **pytest 本机收集问题（前置存在）**：pytest 9.1.1 会把仓库根 __init__.py 以顶层模块 `__init__` 导入 → 全套件 583 项同源 ImportError；与代码改动无关（2026-09-18 实测签名单一）
+- **pytest 修复（2026-09-18 P0）**：仓库根即包根 + pytest Package 收集器会以顶层模块导入根 `__init__.py`（目录名 audio-generation 含连字符非合法包名）→ 相对导入崩、583 项收集错误。已修：根/album_maker `__init__.py` 加 `__package__` 守卫（勿删，冻结门禁以已审计提交放行）；tests/__init__.py 保留。pytest 8/9 均可跑；跑法 `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest`（本机 langsmith/aiohttp 插件链断，禁自动加载规避）。基线：559 passed / 4 failed（album_maker 环境依赖 mixdown+顺序污染，单跑可过，前置存在）/ 59 skipped。

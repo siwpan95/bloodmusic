@@ -99,12 +99,28 @@ Python 主套件（pytest）零回归依据：本 Phase 只新增 `host-js/`（�
 `__init__.py` 以顶层模块 `__init__` 导入导致 583 项同源 ImportError）
 为前置存在的环境问题，与本次改动无关（错误签名单一、不涉及 host-js 任何文件）。
 
-## Phase B 设计方向（未实施）
+## Phase B 设计方向
 
-把 Python 侧的 core/effects/music/sfx/mirror 等收编为声明式插件体系
-（cordis 语义的 Python 实现：Context 服务注入 / Fiber 生命周期 / inject
-拓扑加载）。待 Phase A 在生态内跑稳后再评审开工。
-
-> **2026-09-18 立项评审结论**（docs/REVIEW_phase_b_20260918.md）：全量 B 不立项；
-> 建议序列 P0 修 pytest → P1 players-unified 收编 → P2 B-lite（仅 interactive/
-> 服务化，抄 alloy/core/context.py 形态）→ P3 视真实消费方数量重评全量。
+> **2026-09-18 立项评审 + 推进结论**（docs/REVIEW_phase_b_20260918.md）：
+> 全量 B 不立项（DSP 纯函数无副作用可组合、audio_pipeline 兼容层契约、
+> 实时重载无消费方）。按评审序列已推进：
+>
+> - **P0 完成**：pytest 收集错误 583→0。根因 = 仓库根即包根（flat 布局）+
+>   pytest Package 收集器对收集路径上每个含 `__init__.py` 的目录执行
+>   `importtestmodule(__init__.py)`，而目录名 `audio-generation` 含连字符不是
+>   合法包名 → 顶层导入 → 相对导入崩。修法 = 根/album_maker 的 `__init__.py`
+>   加 `__package__` 守卫（正常包导入全量导出、顶层收集导入跳过），pytest
+>   8.4.2 / 9.1.1 双版本验证通过。基线：559 passed / 4 failed（album_maker
+>   环境依赖+顺序污染，前置存在）/ 59 skipped。
+> - **P1 完成**：players-unified 收编 bloodmusic 为第四媒体来源（89b124d）——
+>   枚举走本仓 `host-js/python/list_media.py`（MediaItem[] 契约），实测
+>   aggregate `bloodmusic ok count=36`，4 项专属验收全绿。
+> - **P2 完成（B-lite）**：`interactive/service.py` —— mini-Context
+>   （provide/get/effect/install/unload/dispose/fork，形态借鉴
+>   alloy/core/context.py，MIT）+ MusicEnginePlugin（music.engine /
+>   state_machine / mapper / mixer 四服务，dispose 清缓存回调）+
+>   `replace_state_machine` 运行时热替换（重绑引擎引用+状态继承，引擎不重启）。
+>   core/effects/music/sfx 保持纯函数库不动。新增 20 项测试全绿
+>   （tests/test_interactive_service.py）。
+>
+> 全量 B（Python 内部全面插件化）维持不立项；重评条件见评审文档 P3。
