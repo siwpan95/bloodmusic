@@ -41,9 +41,14 @@ __all__ = [
     "make_demo_config",
 ]
 
-from .config import AlbumConfig, TrackSpec
-from .demo_config import DEMO_ALBUM_CONFIG, make_demo_config
-from .track import TrackHandler, TrackResult
-from .album import AlbumMaker, AlbumResult
-from .quick import QuickMaker, QuickResult
-from .report import AlbumReport
+
+# ── pytest 收集兼容守卫（勿删，原理见仓库根 __init__.py）──
+# pytest Package 收集器会以顶层模块导入本文件（无包上下文，相对导入崩溃）；
+# 仅在具备包上下文时才执行相对导入。
+if __package__:
+    from .config import AlbumConfig, TrackSpec
+    from .demo_config import DEMO_ALBUM_CONFIG, make_demo_config
+    from .track import TrackHandler, TrackResult
+    from .album import AlbumMaker, AlbumResult
+    from .quick import QuickMaker, QuickResult
+    from .report import AlbumReport
