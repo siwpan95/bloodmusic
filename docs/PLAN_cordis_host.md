@@ -104,3 +104,7 @@ Python 主套件（pytest）零回归依据：本 Phase 只新增 `host-js/`（�
 把 Python 侧的 core/effects/music/sfx/mirror 等收编为声明式插件体系
 （cordis 语义的 Python 实现：Context 服务注入 / Fiber 生命周期 / inject
 拓扑加载）。待 Phase A 在生态内跑稳后再评审开工。
+
+> **2026-09-18 立项评审结论**（docs/REVIEW_phase_b_20260918.md）：全量 B 不立项；
+> 建议序列 P0 修 pytest → P1 players-unified 收编 → P2 B-lite（仅 interactive/
+> 服务化，抄 alloy/core/context.py 形态）→ P3 视真实消费方数量重评全量。
