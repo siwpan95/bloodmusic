@@ -24,6 +24,7 @@
 - **真实引擎接入验证**（games/zhuangtaiji/）— 多范式决策引擎 FSM 驱动 RealtimeMusicEngine 的端到端 demo（探索→战斗→BOSS→胜利自适应音乐，离线渲染 WAV）
 - **AutoWav 作曲核心**（autowav/，自 wav_music_gen 并入）— 14 调式、13 和弦进行、加权马尔可夫旋律、对位、曲式、鼓机，零依赖；Klatt 共振峰人声（8 元音吟唱/哼鸣 + 拼音韵母映射）；**人声档 B：SAPI 念白**（vocal_tts，中文语音自动选择，Piper 可选降级）；MIDI 导入导出桥；symbolic 默认 / acestep 可选懒加载
 - **镜像层**（mirror/）— 与 musickit（纯采样混音项目）互为镜像的纯机生成混音：13 机生成声池（同名 13 池）、65 风格提示词（Phase 2 全量精调）、5 曲式模板、24 混音师签名链、固定 stems×24 混音师专辑镜像（mirror/album.py）、制作工作室镜像页签，license_tier 恒 selfgen（详见 docs/PLAN_mirror_2026.md）
+- **Cordis 宿主**（host-js/）— 进程外 Cordis 插件宿主：Python 引擎作 JSON-RPC stdio 子进程，SFX/专辑/镜像/AutoWav 四面暴露为 cordis 服务与声明式插件（inject 响应式、Fiber 托管子进程生命周期、cordis.json 声明式装载），与 players-unified/pluginplayer 宿主生态同构（详见 docs/PLAN_cordis_host.md）
 
 ## 快速开始
 
@@ -58,6 +59,13 @@ python -m bloodmusic.autowav.vocal_tts --list-voices
 # 真实引擎接入验证：FSM 驱动自适应音乐（32s 探索→战斗→BOSS→胜利）
 python games/zhuangtaiji/demo_adaptive_music.py
 python games/zhuangtaiji/demo_adaptive_music.py --play   # 实时播放
+
+# Cordis 宿主（Node 22+，cordis 依赖已随仓在 host-js/node_modules）
+cd host-js
+node src/index.mjs                 # 常驻宿主
+node src/cli.mjs --check           # 门禁：启用条目全 ACTIVE + 核心服务 ping
+node src/cli.mjs --call sfx.render '{"name":"explosion"}'
+node tests/run-all.mjs             # 端到端验收（10 项）
 
 
 # 提交+推送到 Gitee（无需 git 命令，基于 dulwich；令牌用环境变量）
@@ -97,6 +105,7 @@ bloodmusic/
 ├── benchmarks/    # 实时性能基准（bench_engine.py / bench_realtime_e2e.py）
 ├── docs/          # 产品需求文档 (PRD) + 架构设计文档 + PLAN_mirror_2026.md
 ├── pipeline/      # 生成流水线（tests 需单独运行）
+├── host-js/       # Cordis 宿主（Node，进程外 JSON-RPC 桥接 Python 引擎）
 ├── tools/         # git_push_gitee.py 等仓库工具
 ├── .workflow/     # Gitee Go 流水线（CI，push/PR 到 master 触发）
 └── tests/         # 单元 + 集成测试

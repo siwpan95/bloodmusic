@@ -1,0 +1,39 @@
+{
+  "$note": "BloodMusic Cordis 宿主基座配置。entries 为声明式插件树；bloodmusic 为核心服务（Python 子进程），四个功能插件 inject 它。装载顺序由依赖拓扑决定，与声明顺序无关。",
+  "host": {
+    "python": null,
+    "requestTimeoutMs": 120000
+  },
+  "entries": [
+    {
+      "id": "bloodmusic",
+      "$note": "核心服务：spawn Python JSON-RPC 子进程，Fiber dispose 自动回收",
+      "name": "./src/core/bloodmusic.mjs",
+      "config": {}
+    },
+    {
+      "id": "sfx",
+      "$note": "SFX/合成面：40+ 预设渲染",
+      "name": "./src/plugins/01-synth.mjs",
+      "config": { "selfCheck": true }
+    },
+    {
+      "id": "album",
+      "$note": "专辑/单曲面：12 风格快速制作",
+      "name": "./src/plugins/02-album.mjs",
+      "config": { "selfCheck": true }
+    },
+    {
+      "id": "mirror",
+      "$note": "镜像混音面：65 风格 × 24 混音师",
+      "name": "./src/plugins/03-mirror.mjs",
+      "config": { "selfCheck": true }
+    },
+    {
+      "id": "autowav",
+      "$note": "AutoWav 算法作曲 + SAPI 念白",
+      "name": "./src/plugins/04-autowav.mjs",
+      "config": { "selfCheck": true }
+    }
+  ]
+}

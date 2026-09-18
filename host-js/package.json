@@ -1,0 +1,19 @@
+{
+  "name": "bloodmusic-host-js",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "BloodMusic 的进程外 Cordis 插件宿主（JSON-RPC stdio 桥接 Python 引擎）",
+  "main": "src/index.mjs",
+  "scripts": {
+    "start": "node src/index.mjs",
+    "check": "node src/cli.mjs --check",
+    "dump-config": "node src/cli.mjs --dump-config",
+    "list-services": "node src/cli.mjs --list-services",
+    "test": "node tests/run-all.mjs"
+  },
+  "dependencies": {
+    "@cordisjs/plugin-loader": "^1.0.0-rc.7",
+    "cordis": "^4.0.0-rc.10"
+  }
+}
