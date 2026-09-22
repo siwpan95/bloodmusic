@@ -29,6 +29,22 @@ CLI:
 
 __version__ = "2.0.0"
 
+# ── 扁平导入兼容垫片（勿删）──────────────────────────────────────
+# 本包历史上以「仓库根即包根」的 flat 布局发布，core/ effects/ music/ 等曾作为
+# 顶层包安装，因此包内代码与 games/、remix/、benchmarks/ 等子项目都写的是
+# `from core import ...` 这类扁平导入。
+# 现在 pyproject 用 package-dir 把它们收进 bloodmusic 命名空间，以免在
+# site-packages 顶层留下 core/ music/ export/ gui/ pipeline/ mirror/ 等通用名
+# （会与其它包冲突）。结构变了但导入写法不变 —— 故在此把包目录加回 sys.path。
+# 与 autowav/__init__.py 保留扁平模块名的做法一致。
+import os as _os
+import sys as _sys
+
+_DIR = _os.path.dirname(_os.path.abspath(__file__))
+if _DIR not in _sys.path:
+    _sys.path.insert(0, _DIR)
+del _os, _sys, _DIR
+
 # ── pytest 收集兼容守卫（勿删）────────────────────────────────────
 # 本文件同时是 pytest rootdir 的 __init__.py（仓库根即 bloodmusic 包根，
 # flat 布局）。pytest 的 Package 收集器（_pytest/python.py Package.setup）

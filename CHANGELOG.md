@@ -23,6 +23,22 @@
   运行时热替换（引擎不重启、状态继承）。新增 tests/test_interactive_service.py
   20 项测试。
 
+### Changed
+
+- **打包结构改造（命名空间包）**：`pyproject.toml` 改用 `package-dir` 映射，把
+  `core/ effects/ music/ sfx/ export/ playback/ gui/ bridge/ album_maker/ pipeline/
+  interactive/ autowav/ mirror/` 收进 `bloodmusic` 命名空间。此前它们以**顶层名**
+  装入 site-packages，其中 `core` `music` `export` `gui` `pipeline` `mirror`
+  过于通用，会与他人环境中的同名包冲突（只在别人 `pip install` 时才暴露，
+  本机因是 editable 安装而未显现）。改造后 wheel 顶层仅剩 `bloodmusic/`。
+- `__init__.py` 新增**扁平导入兼容垫片**：把包目录加回 `sys.path`，使历史写法
+  `from core import ...` 在安装后仍能解析（与 `autowav/__init__.py` 保留扁平
+  模块名的既有做法一致）。注意：用了 `..` 跨包相对导入的子包（如 `music`）
+  扁平加载本来就不成立，改造前后行为一致。
+- `pyproject.toml` 补 `readme` 字段 —— 此前缺 `long_description`，PyPI 页面无描述。
+- `.gitignore` 补 `build/`、`dist/`。
+- 已发布测试版至 TestPyPI：<https://test.pypi.org/project/bloodmusic/2.0.0/>
+
 ### Fixed
 
 - **pytest 全套件收集错误（583 项 → 0）**：仓库根即 bloodmusic 包根（flat 布局）

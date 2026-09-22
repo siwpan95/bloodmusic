@@ -6,6 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "bloodmusic"
 version = "2.0.0"
 description = "程序化游戏音频合成引擎"
+readme = "README.md"
 requires-python = ">=3.10"
 authors = [
     { name = "siwpan" },
@@ -27,25 +28,32 @@ bloodmusic = "bloodmusic.cli:main"
 
 [tool.setuptools]
 packages = [
-    "bloodmusic", "core", "effects", "music", "sfx", "export", "playback", "gui",
-    "bridge", "album_maker", "pipeline", "interactive", "autowav", "mirror",
+    "bloodmusic",
+    "bloodmusic.core", "bloodmusic.effects", "bloodmusic.music", "bloodmusic.sfx",
+    "bloodmusic.export", "bloodmusic.playback", "bloodmusic.gui", "bloodmusic.bridge",
+    "bloodmusic.album_maker", "bloodmusic.pipeline", "bloodmusic.interactive",
+    "bloodmusic.autowav", "bloodmusic.mirror",
 ]
+py-modules = []
 
+# 源码目录名（audio-generation）与包名（bloodmusic）不一致，故用 package-dir
+# 把各子包映射进 bloodmusic 命名空间；否则安装后会在 site-packages 顶层留下
+# core/ music/ export/ gui/ pipeline/ mirror/ 等通用名，与其它包冲突。
 [tool.setuptools.package-dir]
 bloodmusic = "."
-core = "core"
-effects = "effects"
-music = "music"
-sfx = "sfx"
-export = "export"
-playback = "playback"
-gui = "gui"
-bridge = "bridge"
-album_maker = "album_maker"
-pipeline = "pipeline"
-interactive = "interactive"
-autowav = "autowav"
-mirror = "mirror"
+"bloodmusic.core" = "core"
+"bloodmusic.effects" = "effects"
+"bloodmusic.music" = "music"
+"bloodmusic.sfx" = "sfx"
+"bloodmusic.export" = "export"
+"bloodmusic.playback" = "playback"
+"bloodmusic.gui" = "gui"
+"bloodmusic.bridge" = "bridge"
+"bloodmusic.album_maker" = "album_maker"
+"bloodmusic.pipeline" = "pipeline"
+"bloodmusic.interactive" = "interactive"
+"bloodmusic.autowav" = "autowav"
+"bloodmusic.mirror" = "mirror"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "album_maker/tests"]

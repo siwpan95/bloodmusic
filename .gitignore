@@ -23,6 +23,8 @@ bridge_output/
 *.pyc
 __pycache__/
 *.egg-info/
+build/
+dist/
 
 # IDE / OS
 .idea/
@@ -62,3 +64,7 @@ remix/output/
 # Python venv（含第三方库，一律不入库）
 .venv/
 venv/
+
+# 自动化脚本生成产物（automations/ 下脚本的输出，含报告）
+automations/output/
+automations/*.log
