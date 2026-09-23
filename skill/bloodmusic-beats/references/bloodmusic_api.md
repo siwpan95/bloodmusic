@@ -7,7 +7,7 @@ BloodMusic 是一个纯 Python 的程序化音频合成引擎，支持零依赖�
 ## 安装
 
 ```bash
-cd G:\tools\audio\bloodmusic
+cd <PATH>
 pip install -e .
 ```
 

@@ -17,7 +17,7 @@
   该模块来自 **项目内置的 `pipeline/`**（audio_pipeline），其内部经 `pipeline/config.bootstrap_env()`
   把项目内置的 `remix/`（提供 `core.audio_mixer` / `core.audio_loader`）注入 sys.path。
   `common.py` 默认把 `BLOODMUSIC_AUDIO_PIPELINE` / `BLOODMUSIC_REMIX` 指向仓库内目录，
-  因此**内容生成完全本地、不依赖外部 `G:\tools\audio\*`**，可被同名环境变量覆盖。
+  因此**内容生成完全本地、不依赖仓库外部的音频工具目录**，可被同名环境变量覆盖。
 - 所有产物落在 `automations/output/`（已被根 `.gitignore` 忽略），报告在 `automations/output/reports/`。
 
 ## 脚本一览

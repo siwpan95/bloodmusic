@@ -28,9 +28,9 @@ sequenceDiagram
     end
 
     %% ═══════════ 阶段 1：SCAN (P0-2) ═══════════
-    User->>CLI: bridge scan --root G:\midi
+    User->>CLI: bridge scan --root <MIDI_ROOT>
     CLI->>CFG: BridgeConfig.from_args(ns)
-    CFG-->>CLI: cfg (output_root=bridge_output, readonly_roots=[G:\midi])
+    CFG-->>CLI: cfg (output_root=bridge_output, readonly_roots=[<MIDI_ROOT>])
     CLI->>SC: scan_midi_assets(root, cfg.exclude_dirs)
     loop os.walk 自顶向下
         SC->>SC: dirnames[:] = 剪枝(dist/_internal/build/site-packages/…)
@@ -41,7 +41,7 @@ sequenceDiagram
     CLI-->>User: 表格 / --json 输出
 
     %% ═══════════ 阶段 2：IMPORT v2 (P0-3 / P0-4) ═══════════
-    User->>CLI: bridge import --root G:\midi
+    User->>CLI: bridge import --root <MIDI_ROOT>
     CLI->>SC: scan_midi_assets(...)
     SC-->>CLI: assets[6]
     loop 对每个 MidiAsset（单文件失败不中断）
@@ -89,7 +89,7 @@ sequenceDiagram
     CLI->>RPT: 汇总 issues（不中断）
 
     %% ═══════════ 阶段 3：RENDER + EXPORT (P0-5) ═══════════
-    User->>CLI: bridge render --root G:\midi --format wav --mode both
+    User->>CLI: bridge render --root <MIDI_ROOT> --format wav --mode both
     CLI->>RD: render_import_result(result, out_dir, fmt, mode)
     RD->>RD: estimate_duration_sec(result) = total_beats × 60 / bpm
     Note over RD,PAT: 时长必须由 pattern 时值精确推导——<br/>render_pattern_to_array 在 duration 偏大时会自动 tile 造成重复
@@ -132,7 +132,7 @@ sequenceDiagram
     alt 未显式 --apply（默认 dry-run）
         DAW-->>CLI: 仅打印计划写入清单，不落盘
     else 目标位于 readonly_roots 且非显式 DAW 目录
-        DAW--xCLI: BridgeWriteDenied（硬规则：绝不写 G:\midi）
+        DAW--xCLI: BridgeWriteDenied（硬规则：绝不写 <MIDI_ROOT>）
     else 允许写入
         DAW->>MIDO: MidiFile(type=1, ticks_per_beat=480)
         DAW->>DAW: 旋律/和弦轨 → note_on/off；根音+chords 同 tick 发音

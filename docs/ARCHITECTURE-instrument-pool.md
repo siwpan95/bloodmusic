@@ -63,7 +63,7 @@
 ### 2. 文件列表
 
 ```
-G:\tools\audio\bloodmusic\
+<仓库根>\
 │
 ├── music\                              # (现有目录，仅修改 pattern.py)
 │   ├── pattern.py                      # [修改] MusicPattern 新增 pool_role: Optional[str] = None

@@ -1,11 +1,11 @@
-# BloodMusic × G:\midi 整合系统设计 —— 子包 `bridge`
+# BloodMusic × <MIDI_ROOT> 整合系统设计 —— 子包 `bridge`
 
 | 项 | 值 |
 |---|---|
 | 文档版本 | v1.0 |
 | 架构师 | 高见远（software-architect） |
 | 上游输入 | PM 的 PRD + F1–F4 实测发现 + 主理人 Q1–Q7 决策 |
-| 目标仓库 | `G:\tools\audio\bloodmusic\`（BloodMusic v2.0.0） |
+| 目标仓库 | `<仓库根>`（BloodMusic v2.0.0） |
 | 交付形态 | bloodmusic 子包 `bloodmusic/bridge/`（Q1 已拍板） |
 | 本文性质 | **只做设计与任务分解，不含实现代码** |
 
@@ -166,10 +166,10 @@
 ## 2. 文件列表（最终文件树）
 
 > 对主理人给出的划分：**确认 7 项全部保留**，并基于 F5–F12 **补充 6 个模块**。
-> 补充理由逐条标注在「新增理由」列。全部路径相对 `G:\tools\audio\bloodmusic\`。
+> 补充理由逐条标注在「新增理由」列。全部路径相对 `<仓库根>`。
 
 ```
-G:\tools\audio\bloodmusic\
+<仓库根>\
 ├── requirements.txt                      [改] +1 行
 ├── pyproject.toml                        [改] +3 处（dependencies / packages / package-dir）
 │
@@ -399,7 +399,7 @@ class BridgeReport:
 # ── 输出（Q3）──
 DEFAULT_OUTPUT_ROOT: Path = Path(__file__).resolve().parent.parent / "bridge_output"
 # ── 只读硬规则（Q3）：默认绝不写入这些根之下 ──
-DEFAULT_READONLY_ROOTS: tuple[Path, ...] = (Path("G:/midi"),)
+DEFAULT_READONLY_ROOTS: tuple[Path, ...] = (Path("<MIDI_ROOT>"),)
 # ── 和弦（Q6 + F5）──
 CHORD_TOLERANCE_DIVISOR: int = 16            # tol = round(ppq / 16) → 220→14, 480→30
 CHORD_MIN_NOTES: int = 2
@@ -464,7 +464,7 @@ def scan_midi_assets(
       4. root 不存在 → 抛 BridgeScanError；root 是文件且是 .mid → 返回单元素列表（便于 --file 复用）。
       5. 只读操作，不创建任何目录。
 
-    验收（P0-2）：scan_midi_assets(r"G:\\midi") 的 len() == 6，
+    验收（P0-2）：scan_midi_assets(r"<MIDI_ROOT>") 的 len() == 6，
                  且不包含 pro4/.../dist/.../MIDI_sample.mid。
     """
 ```
@@ -735,9 +735,9 @@ def render_batch(
 
 ```python
 DEFAULT_DAW_MIDI_DIRS: tuple[str, ...] = (
-    r"G:\midi\MusicStudio\Data\MIDI",
-    r"G:\midi\pro4\MusicStudioPro\Data\MIDI",
-)   # 接点依据：G:\midi\MusicStudio\Engine\gui\daw_window.py:238
+    r"<MIDI_ROOT>\MusicStudio\Data\MIDI",
+    r"<MIDI_ROOT>\pro4\MusicStudioPro\Data\MIDI",
+)   # 接点依据：<MIDI_ROOT>\MusicStudio\Engine\gui\daw_window.py:238
     # Data/Instruments(JSON) → batch_json_to_midi → **Data/MIDI** → batch_synthesize → Data/Audio
 
 def patterns_to_midi(
@@ -786,7 +786,7 @@ def main(argv: Sequence[str] | None = None) -> int: ...   # __main__.py: raise S
 
 ```
 CLI ─▶ BridgeConfig.from_args
-    ─▶ scan_midi_assets(G:\midi)                       → 6 × MidiAsset
+    ─▶ scan_midi_assets(<MIDI_ROOT>)                       → 6 × MidiAsset
     ─▶ for asset: midi_to_patterns_v2(asset.path)
             ├─ mido.MidiFile → ppq=220, bpm=120
             ├─ _read_events → List[NoteEvent]
@@ -877,7 +877,7 @@ CLI ─▶ BridgeConfig.from_args
 |---|---|
 | 命中需求 | **P0-2** |
 | 源文件 | `bridge/models.py`（新，§3.1 全部 dataclass）<br/>`bridge/scanner.py`（新，§3.3）<br/>`bridge/report.py`（新，§3.2 logger + BridgeReport 构建/落盘）<br/>`bridge/__init__.py`（改，导出 `scan_midi_assets` / `MidiAsset`） |
-| 验收 | ① `scan_midi_assets(r"G:\midi")` → **len == 6**；<br/>② 结果**不含** `pro4/…/dist/…/MIDI_sample.mid`；<br/>③ 结果按 `rel_path` 升序，重复调用完全一致；<br/>④ `source_group` 分别为 `MusicStudio`(2) / `pro4`(4)；<br/>⑤ 全程零写盘 |
+| 验收 | ① `scan_midi_assets(r"<MIDI_ROOT>")` → **len == 6**；<br/>② 结果**不含** `pro4/…/dist/…/MIDI_sample.mid`；<br/>③ 结果按 `rel_path` 升序，重复调用完全一致；<br/>④ `source_group` 分别为 `MusicStudio`(2) / `pro4`(4)；<br/>⑤ 全程零写盘 |
 | 风险 | `os.walk` 剪枝写成 `dirnames = [...]`（未用切片赋值）→ 剪枝失效，会扫出 7 个 |
 
 ### T03 · 导入核心：和弦 / 鼓 / 音高守卫 / 音色 · **P0** · 依赖：T01（可与 T02 并行）
@@ -896,8 +896,8 @@ CLI ─▶ BridgeConfig.from_args
 |---|---|
 | 命中需求 | **P0-5、P0-6**，P1-2、P1-4 |
 | 源文件 | `bridge/renderer.py`（新，§3.9 —— P0-5）<br/>`bridge/daw_export.py`（新，§3.10 —— P1-2）<br/>`bridge/cli.py`（新，§3.11 —— P0-6）<br/>`bridge/report.py`（改，补 `to_markdown` / `write_report`）<br/>`bridge/__init__.py`（改，导出全部公共 API） |
-| 验收 | ① `python -m bloodmusic.bridge render --root G:\midi` → `bridge_output/` 下 6 个子目录，各含 mix + stems 音频，**可播放且非静音**（峰值 > 0.1）；<br/>② 输出时长 == `total_beats × 60/bpm`（16 拍 @120 → **8.0s ± 0.05**），**无意外循环重复**（D6）；<br/>③ `--format ogg` / `flac` 均成功；<br/>④ **`G:\midi` 目录树 mtime/大小在全流程后完全不变**（Q3 硬规则）；<br/>⑤ `export-to-daw` 不带 `--apply` 时零写盘；带 `--apply` 时只写 `bm_` 前缀文件；<br/>⑥ 故意塞一个损坏 .mid → 流程不中断，`report.json` 记 `IMPORT_FAILED`，退出码 2；<br/>⑦ `render_*` 与 `export_audio` **未被修改**（git diff 为空） |
-| 风险 | `duration_sec` 估算偏大 → `pattern.py:266` 自动 tile 造成乐句重复（D6）；<br/>忘记 `_assert_write_allowed` 导致污染 `G:\midi` |
+| 验收 | ① `python -m bloodmusic.bridge render --root <MIDI_ROOT>` → `bridge_output/` 下 6 个子目录，各含 mix + stems 音频，**可播放且非静音**（峰值 > 0.1）；<br/>② 输出时长 == `total_beats × 60/bpm`（16 拍 @120 → **8.0s ± 0.05**），**无意外循环重复**（D6）；<br/>③ `--format ogg` / `flac` 均成功；<br/>④ **`<MIDI_ROOT>` 目录树 mtime/大小在全流程后完全不变**（Q3 硬规则）；<br/>⑤ `export-to-daw` 不带 `--apply` 时零写盘；带 `--apply` 时只写 `bm_` 前缀文件；<br/>⑥ 故意塞一个损坏 .mid → 流程不中断，`report.json` 记 `IMPORT_FAILED`，退出码 2；<br/>⑦ `render_*` 与 `export_audio` **未被修改**（git diff 为空） |
+| 风险 | `duration_sec` 估算偏大 → `pattern.py:266` 自动 tile 造成乐句重复（D6）；<br/>忘记 `_assert_write_allowed` 导致污染 `<MIDI_ROOT>` |
 
 ### T05 · 真实素材回归测试与报告校验 · **P0** · 依赖：T04
 
@@ -905,8 +905,8 @@ CLI ─▶ BridgeConfig.from_args
 |---|---|
 | 命中需求 | **P0-7** |
 | 源文件 | `tests/test_bridge.py`（新，`unittest` 风格，与 `tests/test_export.py` 一致）<br/>`tests/__init__.py`（确认无需改）<br/>`docs/system_design.md`（改，回填标定后的实测值：C1 容差、C3 预设、C4 力度曲线）<br/>`.gitignore`（改，追加 `bridge_output/`） |
-| 测试分层 | **L2 纯函数单测**（无需素材、无需 mido）：`note_range` / `chord_merge` / `drum_map` 用构造数据；<br/>**L3 素材回归**（需素材，`@unittest.skipUnless(Path("G:/midi").exists())`）：6 个真实文件的 §10 全部断言；<br/>**L4 端到端**：CLI `render` 冒烟 + 只读性校验 |
-| 验收 | ① 全部断言通过；<br/>② 在无 `G:\midi` 的机器上，L2 层测试仍全绿（不硬绑素材路径）；<br/>③ `python -m pytest tests/test_bridge.py -q` 与 `python -m unittest tests.test_bridge` 均可跑；<br/>④ 测试**不写入** `G:\midi`，临时输出走 `tempfile.TemporaryDirectory()` |
+| 测试分层 | **L2 纯函数单测**（无需素材、无需 mido）：`note_range` / `chord_merge` / `drum_map` 用构造数据；<br/>**L3 素材回归**（需素材，`@unittest.skipUnless(Path("<MIDI_ROOT>").exists())`）：6 个真实文件的 §10 全部断言；<br/>**L4 端到端**：CLI `render` 冒烟 + 只读性校验 |
+| 验收 | ① 全部断言通过；<br/>② 在无 `<MIDI_ROOT>` 的机器上，L2 层测试仍全绿（不硬绑素材路径）；<br/>③ `python -m pytest tests/test_bridge.py -q` 与 `python -m unittest tests.test_bridge` 均可跑；<br/>④ 测试**不写入** `<MIDI_ROOT>`，临时输出走 `tempfile.TemporaryDirectory()` |
 
 ### 7.1 任务—需求覆盖矩阵
 
@@ -1009,7 +1009,7 @@ graph TD
 
 | # | 规则 |
 |---|---|
-| R1 | **绝不写入 `G:\midi`**。任何落盘前过 `_assert_write_allowed(path, cfg)`；唯一例外是 `export-to-daw` 且 `--apply` 且 `cfg.allow_daw_write=True`，且文件名带 `bm_` 前缀。 |
+| R1 | **绝不写入 `<MIDI_ROOT>`**。任何落盘前过 `_assert_write_allowed(path, cfg)`；唯一例外是 `export-to-daw` 且 `--apply` 且 `cfg.allow_daw_write=True`，且文件名带 `bm_` 前缀。 |
 | R2 | **默认输出根 = `bloodmusic/bridge_output/`**（与 `album_output*` 风格一致），并加入 `.gitignore`。 |
 | R3 | **运行期完全离线**。禁止任何 `requests` / `urllib` / 遥测。 |
 | R4 | **渲染侧零改造**。`music/pattern.py` 的 `render_*`、`export/batch.py` 的 `export_audio`、`export/midi_export.py` 的 `MIDI_DRUM_MAP` **只读复用**，不得修改。`git diff` 对这 3 个文件必须为空。 |
@@ -1072,7 +1072,7 @@ DATE_FORMAT = "%H:%M:%S"
 
 ### 10.1 扫描（T02）
 ```
-scan_midi_assets("G:/midi")                        → len == 6
+scan_midi_assets("<MIDI_ROOT>")                        → len == 6
 {a.name for a in assets} == {"Piano","Drums","Bass_130406",
                              "Chords_130406","Drum Kit_130406","Piano_130406"}
 "MIDI_sample" not in {a.name for a in assets}      # dist/_internal 已剪枝
@@ -1140,7 +1140,7 @@ len(rr.audio_files) >= 2
 abs(rr.duration_sec - 8.0) < 0.05          # 16 拍 @120 BPM
 np.max(np.abs(read(mix))) > 0.1            # 非静音
 # Q3 只读硬规则
-snapshot_before == snapshot_after          # G:\midi 全树 (mtime, size) 不变
+snapshot_before == snapshot_after          # <MIDI_ROOT> 全树 (mtime, size) 不变
 ```
 
 ### 10.7 容错（T04/T05）

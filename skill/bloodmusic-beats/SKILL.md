@@ -2,7 +2,7 @@
 name: bloodmusic-beats
 description: >
   This skill should be used when the user wants to produce beats, drum patterns, or instrumental music
-  using the BloodMusic programmatic audio synthesis engine located at G:/tools/bloodmusic.
+  using the BloodMusic programmatic audio synthesis engine at this repository root.
   Triggers include: "make a beat", "create a drum pattern", "produce music with code",
   "generate 808 beats", "make trap/boom-bap/lo-fi/EDM beats", "create game music with drums",
   "compose a song", "make a complete track", "add bass line", "add harmony", "automate filter",
@@ -20,7 +20,7 @@ description: >
 
 ## Overview
 
-Use the BloodMusic engine (at `G:\tools\audio\bloodmusic`) to programmatically synthesize beats, drum patterns, full music arrangements, and complete songs. Generate WAV audio files by combining 808 drum synthesis, Euclidean rhythms, music presets, custom patterns, bass synthesis, harmony generation, effects chains, and automation lanes.
+Use the BloodMusic engine (in this repository) to programmatically synthesize beats, drum patterns, full music arrangements, and complete songs. Generate WAV audio files by combining 808 drum synthesis, Euclidean rhythms, music presets, custom patterns, bass synthesis, harmony generation, effects chains, and automation lanes.
 
 The engine also includes the **InstrumentPool** system — define a multi-instrument ensemble via YAML, pick a StylePreset, and render a complete arrangement with one call. Use the `album_maker` subpackage (`python -m bloodmusic.album_maker.cli make`) to generate a multi-style album from pool presets. The legacy root-level `album_generator.py` script has been removed from the repo (historical versions remain in git history); use `album_maker` instead.
 
@@ -46,11 +46,11 @@ Output files appear in `./output_beats/` (with timestamps to avoid overwrites):
 Before using BloodMusic, ensure it is installed:
 
 ```bash
-cd G:\tools\audio\bloodmusic
+cd <PATH>
 pip install -e .
 ```
 
-If `from bloodmusic import ...` fails, check `pyproject.toml` at `G:\tools\audio\bloodmusic\pyproject.toml`:
+If `from bloodmusic import ...` fails, check the repo's `pyproject.toml`:
 - `[tool.setuptools].packages` must include `"bloodmusic"`
 - `[tool.setuptools.package-dir]` must include `bloodmusic = "."`
 
@@ -382,7 +382,7 @@ wavfile.write("output.wav", 44100, (final_audio * 32767).astype(np.int16))
 **生成整张专辑（10 首多风格纯音乐）**：
 
 ```bash
-cd G:\tools\audio\bloodmusic
+cd <PATH>
 
 # 专辑模式（album_maker 子包，替代已移除的 album_generator.py）
 python -m bloodmusic.album_maker.cli make --demo

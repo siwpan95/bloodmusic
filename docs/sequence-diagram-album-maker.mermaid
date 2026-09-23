@@ -38,7 +38,7 @@ sequenceDiagram
         end
 
         Note over TH,Mix: ── 阶段 M：混音 ──
-        TH->>TH: sys.path.insert(0, "G:/tools/audio_pipeline")
+        TH->>TH: sys.path.insert(0, "<同级仓>/audio-pipeline")
         TH->>Mix: mixdown(sources, work_dir, MixConfig, bpm=..., musical_key=...)
         Mix->>FS: 拷贝 sources → _sources/
         Mix->>FS: 写入 manifest.json
