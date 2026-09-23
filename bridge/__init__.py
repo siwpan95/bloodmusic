@@ -2,7 +2,7 @@
 bloodmusic.bridge —— MIDI 素材库 × BloodMusic 合成引擎 桥接子包
 
 定位:
-    把 `G:/midi` 下的历史 MIDI 素材无损导入 BloodMusic 的 pattern 体系，
+    把 MIDI 素材根（环境变量 `MIDI_ROOT`，默认同级仓 `repos/midi`）下的历史素材无损导入 BloodMusic 的 pattern 体系，
     复用本体渲染管线产出音频，并可把 pattern 回流成 DAW 可用的 `bm_*.mid`。
 
 依赖方向（R7，单向，不可逆）:
@@ -16,7 +16,7 @@ bloodmusic.bridge —— MIDI 素材库 × BloodMusic 合成引擎 桥接子包
 
 Example:
     >>> from bloodmusic.bridge import scan_midi_assets, midi_to_patterns_v2
-    >>> assets = scan_midi_assets("G:/midi")                    # doctest: +SKIP
+    >>> assets = scan_midi_assets("<MIDI_ROOT>")                # doctest: +SKIP
     >>> result = midi_to_patterns_v2(assets[0].path)            # doctest: +SKIP
     >>> result.ticks_per_beat                                   # doctest: +SKIP
     220

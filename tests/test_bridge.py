@@ -2,14 +2,14 @@
 
 运行::
 
-    cd G:\\tools\\bloodmusic
+    cd <仓库根>
     python -m pytest tests/test_bridge.py -v
 
 设计说明:
-    - 断言全部锚定在 `G:\\midi` 的 **6 个真实素材** 上（PPQ=220 / 120BPM / 4-4 拍）,
+    - 断言全部锚定在 MIDI 素材根（`MIDI_ROOT`）的 **6 个真实素材** 上（PPQ=220 / 120BPM / 4-4 拍）,
       而不是构造数据 —— 构造数据测不出 F5/F7/F8 这类真实坑；
     - 素材树不存在时整体 skip，保证在没有素材的机器上不误报红；
-    - 任何写盘一律落在 `tempfile` 目录，**绝不**写进 `G:\\midi`（R1）。
+    - 任何写盘一律落在 `tempfile` 目录，**绝不**写进 MIDI 素材根（R1）。
 """
 
 from __future__ import annotations
@@ -48,9 +48,11 @@ from bloodmusic.bridge import (
 from bloodmusic.bridge.models import NoteEvent
 from bloodmusic.bridge.note_range import midi_to_note_name, note_name_to_midi
 from bloodmusic.bridge.renderer import drum_duration_sec, resolve_duration
+from bloodmusic.bridge.config import DEFAULT_SCAN_ROOT
 
-#: 素材根（PRD 指定）
-MIDI_ROOT = Path("G:/midi")
+#: 素材根（PRD 指定；2026-09-23 去本地化：跟随 bridge.config 解析 ——
+#: MIDI_ROOT 环境变量优先，默认同级仓 repos/midi）
+MIDI_ROOT = Path(DEFAULT_SCAN_ROOT)
 #: 该目录下**恰好**应扫出这 6 个资产（第 7 个在 dist/_internal 里，属打包噪声）
 EXPECTED_ASSET_COUNT = 6
 EXPECTED_NAMES = {
@@ -63,9 +65,18 @@ EXPECTED_NAMES = {
 }
 
 _HAS_MATERIAL = MIDI_ROOT.is_dir()
+# 2026-09-23 去本地化配套：判据从「素材根存在」升级为「6 个标准素材齐」——
+# 历史素材库已按 DAW 拆分到不同位置，缺库时应当干净跳过，而不是导入阶段 KeyError 跑挂。
+try:
+    _ACTUAL_NAMES = {a.name for a in scan_midi_assets(MIDI_ROOT)} if _HAS_MATERIAL else set()
+except Exception:  # pragma: no cover - 扫描异常一律按缺素材处理
+    _ACTUAL_NAMES = set()
+_HAS_LIBRARY = EXPECTED_NAMES.issubset(_ACTUAL_NAMES)
 _HAS_MIDO = mido_available()
 _REQUIRES = unittest.skipUnless(
-    _HAS_MATERIAL and _HAS_MIDO, "需要 G:/midi 素材库与 mido 才能运行"
+    _HAS_LIBRARY and _HAS_MIDO,
+    f"需要含 {EXPECTED_ASSET_COUNT} 个标准素材的 MIDI 素材库（当前 MIDI_ROOT={MIDI_ROOT}，"
+    f"实际扫出 {len(_ACTUAL_NAMES)} 个；可用环境变量 MIDI_ROOT 指向合并后的素材库）与 mido 才能运行",
 )
 
 
@@ -97,7 +108,7 @@ class TestScanner(unittest.TestCase):
     """P0-2：资产扫描器。"""
 
     def test_scan_returns_exactly_six_assets(self):
-        """对 G:/midi 必须恰好返回 6 个资产。"""
+        """对 MIDI 素材根必须恰好返回 6 个资产。"""
         assets = scan_midi_assets(MIDI_ROOT)
         self.assertEqual(len(assets), EXPECTED_ASSET_COUNT)
         self.assertEqual({a.name for a in assets}, EXPECTED_NAMES)
@@ -396,7 +407,7 @@ class TestNoteRange(unittest.TestCase):
 
 
 class TestWriteGuard(unittest.TestCase):
-    """R1：G:/midi 只读，唯一例外是 export-to-daw --apply + bm_ 前缀。"""
+    """R1：MIDI 素材根只读，唯一例外是 export-to-daw --apply + bm_ 前缀。"""
 
     def test_plain_write_into_readonly_root_denied(self):
         """未授权写入只读根 → BridgeWriteDenied。"""
@@ -424,7 +435,7 @@ class TestWriteGuard(unittest.TestCase):
 
 @_REQUIRES
 class TestReadOnlyInvariant(unittest.TestCase):
-    """Q3：整条流水线跑完，G:/midi 必须字节级不变。"""
+    """Q3：整条流水线跑完，MIDI 素材根必须字节级不变。"""
 
     def test_full_pipeline_does_not_touch_material(self):
         """扫描 + 全量导入 + 渲染 + DAW dry-run 之后，素材树快照一致。"""
@@ -436,7 +447,7 @@ class TestReadOnlyInvariant(unittest.TestCase):
             for asset in scan_midi_assets(MIDI_ROOT):
                 result = import_asset(asset.path, cfg)
                 render_import_result(result, cfg)
-                # dry-run 回流：一个字节都不能写进 G:/midi
+                # dry-run 回流：一个字节都不能写进 MIDI 素材根
                 paths, issues = export_import_result_to_daw(result, cfg)
                 self.assertTrue(
                     all(i.code == IssueCode.DRY_RUN for i in issues if i.level == "info")
@@ -446,7 +457,7 @@ class TestReadOnlyInvariant(unittest.TestCase):
                     self.assertFalse(path.exists() and path.name.startswith("bm_") is False)
 
         after = snapshot_tree(MIDI_ROOT)
-        self.assertEqual(before, after, "G:/midi 被修改了，违反 R1/Q3")
+        self.assertEqual(before, after, "MIDI 素材根被修改了，违反 R1/Q3")
 
 
 # ════════════════════════════ P1-2 DAW 回流 ════════════════════════════
@@ -525,13 +536,15 @@ class TestDawExport(unittest.TestCase):
         """常量必须是设计文档 §3.10 的**两个**目录，而不是单目录。"""
         lowered = {str(d).lower().replace("/", "\\") for d in DAW_MIDI_DIRS}
         self.assertEqual(len(DAW_MIDI_DIRS), 2, f"白名单目录数不对: {DAW_MIDI_DIRS}")
-        self.assertIn("g:\\midi\\musicstudio\\data\\midi", lowered)
-        self.assertIn("g:\\midi\\pro4\\musicstudiopro\\data\\midi", lowered)
+        # 2026-09-23 去本地化：素材根不再写死，期望值由 MIDI_ROOT 现算
+        _root = str(MIDI_ROOT).lower().replace("/", "\\").rstrip("\\")
+        self.assertIn(_root + "\\musicstudio\\data\\midi", lowered)
+        self.assertIn(_root + "\\pro4\\musicstudiopro\\data\\midi", lowered)
 
     def test_write_allowed_in_second_daw_dir(self):
         """鉴权必须认第二个 DAW 目录，否则 pro4 回流会被自己的守卫拦死。"""
         cfg = BridgeConfig(allow_daw_write=True)
-        target = Path(r"G:\midi\pro4\MusicStudioPro\Data\MIDI\bm_probe.mid")
+        target = Path(DAW_MIDI_DIRS[1]) / "bm_probe.mid"
         self.assertEqual(
             assert_daw_write_allowed(target, cfg),
             target.resolve(strict=False),

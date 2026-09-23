@@ -68,15 +68,14 @@ def _fix_album_deps() -> None:
     """album_maker/track.py 的外部依赖默认指 G:\\tools\\audio\\*（本机不存在）。
 
     本地实有（es.exe 全盘定位，无需下载）：
-      G:\\repos\\audio-pipeline —— mixdown.py / config.py / manifest.py
-      G:\\repos\\remix          —— core/audio_mixer.py（mixdown 的 import 源）
+      <repos>/audio-pipeline —— mixdown.py / config.py / manifest.py
+      <repos>/remix          —— core/audio_mixer.py（mixdown 的 import 源）
     只在「用户未显式配置环境变量」且「候选目录存在」时注入，优先级不压用户配置。
     """
     candidates = {
-        "BLOODMUSIC_AUDIO_PIPELINE": [
-            r"G:\tools\audio\audio_pipeline", r"G:\repos\audio-pipeline",
-        ],
-        "BLOODMUSIC_REMIX": [r"G:\tools\audio\remix", r"G:\repos\remix"],
+        # 2026-09-23 去本地化：同级仓推导（原 G:\tools\audio\* 候选已失效，删除）
+        "BLOODMUSIC_AUDIO_PIPELINE": [str(REPO_ROOT.parent / "audio-pipeline")],
+        "BLOODMUSIC_REMIX": [str(REPO_ROOT.parent / "remix")],
     }
     for var, paths in candidates.items():
         if os.environ.get(var):

@@ -105,7 +105,7 @@ def scan_midi_assets(
         BridgeScanError: root 不存在或不可读。
 
     Example:
-        >>> assets = scan_midi_assets("G:/midi")   # doctest: +SKIP
+        >>> assets = scan_midi_assets("<MIDI_ROOT>")   # doctest: +SKIP
         >>> len(assets)                            # doctest: +SKIP
         6
     """

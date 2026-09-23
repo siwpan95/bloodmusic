@@ -9,7 +9,7 @@ import time
 import urllib.request
 import urllib.error
 
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 项目根目录（原 D:\allin 已失效）
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # 项目根目录（2026-09-23 去本地化）
 import web.server as ws  # noqa: E402
 import http.server as h  # noqa: E402
 

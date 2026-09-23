@@ -382,7 +382,7 @@ def midi_to_patterns_v2(
         BridgeImportError: 文件无法解析，或 strict=True 且存在 error 级 issue。
 
     Example:
-        >>> r = midi_to_patterns_v2("G:/midi/MusicStudio/Data/MIDI/Chords_130406.mid")  # doctest: +SKIP
+        >>> r = midi_to_patterns_v2("<MIDI_ROOT>/MusicStudio/Data/MIDI/Chords.mid")   # doctest: +SKIP
         >>> len(r.chord_patterns[0].notes)                                              # doctest: +SKIP
         4
     """
