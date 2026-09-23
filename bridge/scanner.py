@@ -1,7 +1,7 @@
 """
 bridge/scanner.py —— MIDI 资产扫描器（P0-2）
 
-命中需求: **P0-2**（资产扫描器，对 G:\\midi 恰好返回 6）
+命中需求: **P0-2**（资产扫描器，对 MIDI 素材根恰好返回 6）
 关联发现: **D2** —— 素材树里混有 PyInstaller 打包噪声
           （`pro4/.../dist/.../_internal/pygame/examples/data/MIDI_sample.mid`），
           必须用 `os.walk` **就地剪枝** 整棵子树。
