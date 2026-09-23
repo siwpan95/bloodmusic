@@ -1,5 +1,8 @@
 # BloodMusic — 程序化游戏音频合成引擎
 
+> 仓库：<https://gitee.com/siwpan/audio-generation> ｜ 许可：MIT（见 [LICENSE](LICENSE)）
+> 注：文中 <PATH> 为路径占位符，请替换为你本机实际的目录 / 可执行文件路径。
+
 全功能程序化游戏音频合成引擎，支持 BGM + SFX 实时生成、专辑制作。
 纯自生成定位：全部音频由程序化合成产生，零外部采样。
 
@@ -133,5 +136,5 @@ MIT License · Copyright (c) 2026 siwpan
 
 ## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/audio-generation）；本地对应 G:\repos\audio-generation；2.0 旧版已转 tag。
+> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/audio-generation）；本地对应 <PATH> 旧版已转 tag。
 > 本标注为发布面统一追加，不改变原有内容。
