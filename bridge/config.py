@@ -14,6 +14,7 @@ bridge/config.py —— BridgeConfig 与全部默认常量（唯一真源）
 from __future__ import annotations
 
 import argparse
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -64,11 +65,15 @@ PACKAGE_ROOT: Path = Path(__file__).resolve().parent.parent
 #: R2：默认输出根 = <包根>/bridge_output/
 DEFAULT_OUTPUT_ROOT: Path = PACKAGE_ROOT / "bridge_output"
 
+#: MIDI 素材根（2026-09-23 去本地化：原顶层分类目录已拆为一仓一目录）
+#: 环境变量 MIDI_ROOT 优先；默认取同级仓 repos/midi（PACKAGE_ROOT = 本仓根，其上一级即 repos）。
+_MIDI_ROOT: Path = Path(os.environ.get("MIDI_ROOT") or (PACKAGE_ROOT.parent / "midi"))
+
 #: 默认扫描根（历史素材库）
-DEFAULT_SCAN_ROOT: Path = Path("G:/midi")
+DEFAULT_SCAN_ROOT: Path = _MIDI_ROOT
 
 #: R1 / Q3：默认绝不写入这些根之下（唯一例外见 assert_write_allowed）
-DEFAULT_READONLY_ROOTS: tuple[Path, ...] = (Path("G:/midi"),)
+DEFAULT_READONLY_ROOTS: tuple[Path, ...] = (_MIDI_ROOT,)
 
 #: 扫描黑名单目录（就地剪枝整棵子树）
 DEFAULT_EXCLUDE_DIRS: frozenset[str] = frozenset(
@@ -139,8 +144,8 @@ DEFAULT_DAW_PREFIX: str = "bm_"
 #: 把 pro4 的素材写进 MusicStudio 会让 MusicStudioPro 永远看不到自己的回流文件，
 #: 同时污染另一个 DAW 的工作目录（QA BUG-1）。
 DEFAULT_DAW_MIDI_DIRS: tuple[Path, ...] = (
-    Path(r"G:\midi\MusicStudio\Data\MIDI"),
-    Path(r"G:\midi\pro4\MusicStudioPro\Data\MIDI"),
+    _MIDI_ROOT / "MusicStudio" / "Data" / "MIDI",
+    _MIDI_ROOT / "pro4" / "MusicStudioPro" / "Data" / "MIDI",
 )
 
 # ── 渲染 ──

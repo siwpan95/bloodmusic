@@ -31,7 +31,8 @@ export const name = 'bloodmusic'
 
 function defaultPython() {
   if (process.env.BLOODMUSIC_PYTHON) return process.env.BLOODMUSIC_PYTHON
-  return process.platform === 'win32' ? 'F:\\Python314\\python.exe' : 'python3'
+  // 2026-09-23 去本地化：win32 下优先 PYEXE，其次 PATH 上的 python（原硬编码 F:\Python314\python.exe）
+  return process.platform === 'win32' ? (process.env.PYEXE || 'python') : 'python3'
 }
 
 export default class BloodmusicService extends Service {

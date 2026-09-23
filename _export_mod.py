@@ -9,7 +9,7 @@ ROOT = os.path.dirname(os.path.abspath(__file__))  # 项目根（python -m _expo
 if not os.path.isdir(os.path.join(ROOT, "spectrum_album_output")):
     raise SystemExit(
         f"未找到 spectrum_album_output（ROOT={ROOT}）。"
-        "请在项目根目录用 python -m _export_mod 运行（旧版硬编码 D:/bloodmusic 回退已移除）。"
+        "请在项目根目录用 python -m _export_mod 运行（旧版硬编码路径回退已移除）。"
     )
 
 def convert(src, dst, fmt):

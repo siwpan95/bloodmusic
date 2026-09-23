@@ -5,7 +5,7 @@ bloodmusic.bridge.__main__ —— `python -m bloodmusic.bridge` 入口
 
 Example:
     $ python -m bloodmusic.bridge scan
-    $ python -m bloodmusic.bridge render --root G:/midi --format wav
+    $ python -m bloodmusic.bridge render --root <MIDI_ROOT> --format wav
 """
 
 from __future__ import annotations

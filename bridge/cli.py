@@ -13,7 +13,7 @@ bridge/cli.py —— 命令行入口（P0-6）
 硬规则:
     - **U3**：`--drum-grid 32` 必须报错（退出码 2）并提示回退 16；
     - **R2**：默认输出根 `<包根>/bridge_output/`；
-    - **R1**：除 `export-to-daw --apply` + `bm_` 前缀外，绝不写 `G:/midi`。
+    - **R1**：除 `export-to-daw --apply` + `bm_` 前缀外，绝不写 MIDI 素材根。
 
 退出码:
     0 = 全部成功；1 = 有 error 级 issue；2 = 参数非法 / 环境缺失。
@@ -118,10 +118,10 @@ def build_parser() -> argparse.ArgumentParser:
         epilog=(
             "示例:\n"
             "  python -m bloodmusic.bridge scan\n"
-            "  python -m bloodmusic.bridge import --root G:/midi\n"
-            "  python -m bloodmusic.bridge render --root G:/midi --format wav\n"
-            "  python -m bloodmusic.bridge export-to-daw --root G:/midi          # dry-run\n"
-            "  python -m bloodmusic.bridge export-to-daw --root G:/midi --apply  # 真写盘\n"
+            "  python -m bloodmusic.bridge import --root <MIDI_ROOT>\n"
+            "  python -m bloodmusic.bridge render --root <MIDI_ROOT> --format wav\n"
+            "  python -m bloodmusic.bridge export-to-daw --root <MIDI_ROOT>          # dry-run\n"
+            "  python -m bloodmusic.bridge export-to-daw --root <MIDI_ROOT> --apply  # 真写盘\n"
         ),
     )
     parser.add_argument("--version", action="version", version=f"bridge {BRIDGE_VERSION}")

@@ -10,7 +10,7 @@ roots 可配置（命令行参数；默认扫 BloodMusic 的典型产物目录�
 
 零三方依赖（纯 stdlib）。用法：
   python list_media.py [root ...]        # 默认 roots = 上述四目录（存在才扫）
-  python list_media.py --roots-json '["G:/x","G:/y"]'
+  python list_media.py --roots-json '[<ROOT1>,<ROOT2>]'
 """
 
 import hashlib
