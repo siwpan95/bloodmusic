@@ -20,7 +20,7 @@ import yaml
 PROJECT_ROOT = Path(os.path.dirname(os.path.abspath(__file__))).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-# Known-good MIDI asset（2026-09-23 去本地化：原 G:/midi 已拆为同级仓 repos/midi）
+# Known-good MIDI asset（2026-09-23 去本地化：原路径已拆为同级仓 repos/midi）
 try:  # 跟随 bridge 的解析（MIDI_ROOT 环境变量 → 同级仓），拿不到再按同级仓推导
     from bloodmusic.bridge.config import DEFAULT_SCAN_ROOT as _MIDI_ROOT
 except Exception:  # pragma: no cover

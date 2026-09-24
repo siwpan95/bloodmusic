@@ -36,7 +36,7 @@ DEFAULT_PYTHON = os.environ.get("BM_PYTHON", r"F:\Python314\python.exe")
 # 而 `mixdown` 来自 audio_pipeline（本项目内置于 pipeline/），其内部又通过
 # pipeline/config.bootstrap_env() 把 <repo>/remix 注入 sys.path 以取到
 # `core.audio_mixer` / `core.audio_loader`。
-# 默认指向仓库内目录 => 内容生成完全本地、不依赖外部 G:\tools\audio\*，
+# 默认指向仓库内目录 => 内容生成完全本地、不依赖外部旧分类目录，
 # 符合「所有内容均在项目内实现」的约束。可被同名环境变量覆盖。
 os.environ.setdefault("BLOODMUSIC_AUDIO_PIPELINE", str(REPO_ROOT / "pipeline"))
 os.environ.setdefault("BLOODMUSIC_REMIX", str(REPO_ROOT / "remix"))

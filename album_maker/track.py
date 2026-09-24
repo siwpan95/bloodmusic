@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 # ── sys.path 注入 audio_pipeline + remix（环境变量可配置） ──
 # CRITICAL: remix 必须在 bloodmusic 之前，因为 bloodmusic 也有 core/ 子包
 # bloodmusic 内部使用相对导入 (.core)，不受影响
-# 2026-09-23 去本地化：外部依赖默认值改由本仓位置推导（原 G:\tools\audio\* 已失效）
+# 2026-09-23 去本地化：外部依赖默认值改由本仓位置推导（原路径已失效）
 _REPO_ROOT = Path(__file__).resolve().parents[1]      # 本仓根（album_maker/ 的上一级）
 _REPOS_DIR = _REPO_ROOT.parent                        # …/repos
 _AUDIO_PIPELINE_ROOT = Path(os.environ.get(
