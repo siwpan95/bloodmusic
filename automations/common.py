@@ -5,8 +5,8 @@
 - REPO_ROOT    : G:/repos/audio-generation
 - OUTPUT_ROOT  : REPO_ROOT/automations/output  （已被 .gitignore 忽略）
 - REPORTS_DIR  : OUTPUT_ROOT/reports
-- DEFAULT_PYTHON: 项目运行解释器，优先 F:/Python314/python.exe（已装齐依赖 + tkinter），
-                 可用环境变量 BM_PYTHON 覆盖。
+- DEFAULT_PYTHON: 项目运行解释器，优先环境变量 BM_PYTHON；缺省用**脚本自身解释器**
+                 （sys.executable）——原写死的主解释器路径已失效（去符盘：/Python314）。
 
 提供能力
 --------
@@ -29,7 +29,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_ROOT = REPO_ROOT / "automations" / "output"
 REPORTS_DIR = OUTPUT_ROOT / "reports"
-DEFAULT_PYTHON = os.environ.get("BM_PYTHON", r"F:\Python314\python.exe")
+DEFAULT_PYTHON = os.environ.get("BM_PYTHON", sys.executable)
 
 # ── album_maker 混音阶段依赖（关键）────────────────────────────────────────
 # album_maker 的母带混音 `_mixdown` 延迟 `from mixdown import mixdown`，
@@ -50,7 +50,7 @@ def log(msg: str) -> None:
 def ensure_bloodmusic(python: str = DEFAULT_PYTHON) -> bool:
     """确保 bloodmusic 可导入。
 
-    说明：本机 F:/Python314 的 pip 在「写盘/解包/卸载」阶段会卡死（已实测，
+    说明：本机主解释器（去符盘：/Python314）的 pip 在「写盘/解包/卸载」阶段会卡死（已实测，
     多次超时 kill 子进程），因此这里**只做导入检测，绝不触发 pip 安装**，
     否则任何被调度起来的自动化任务都会被 pip 挂死。
 
@@ -68,7 +68,7 @@ def ensure_bloodmusic(python: str = DEFAULT_PYTHON) -> bool:
     except Exception as exc:
         log(f"[ensure] bloodmusic 不可导入: {type(exc).__name__}: {exc}")
         log("[ensure] 本环境 pip 写盘阶段会卡死，已禁用自动安装；"
-            "请确认 F:/Python314/Lib/site-packages/bloodmusic (junction) 与"
+            "请确认 <主解释器>/Lib/site-packages/bloodmusic (junction) 与"
             " bloodmusic_dev.pth 均存在且指向 G:\\repos\\audio-generation。")
         return False
 

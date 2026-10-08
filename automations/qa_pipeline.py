@@ -7,7 +7,7 @@
                       （仅扫核心相关包；二进制缺失则软跳过，不挂死、不误报）
   T4  [可选] 性能基准  benchmarks/bench_engine.py                 （需 BM_BENCH=1，默认关闭以免耗时）
 
-说明：本机 F:/Python314 装有多余第三方 pytest 插件（hydra_pytest / langsmith_plugin /
+说明：本机主解释器（去符盘：/Python314）装有多余第三方 pytest 插件（hydra_pytest / langsmith_plugin /
 aiohttp），其依赖（antlr4 / annotated_types / aiohttp）部分损坏，会在 pytest 启动时
 崩溃。这些插件与 BloodMusic 测试无关，故通过 `-p no:<plugin>` 关闭，套件本身 602 用例正常。
 
@@ -109,7 +109,7 @@ def step_pytest_pipeline() -> dict:
 def step_ruff() -> dict:
     """ruff 扫描（仅核心相关包）。
 
-    注意：本机 F:/Python314 的 pip 写盘阶段会卡死，且 ruff 的 Python 包只是
+    注意：本机主解释器（去符盘：/Python314）的 pip 写盘阶段会卡死，且 ruff 的 Python 包只是
     薄壳，真正可执行的是 ruff.exe 二进制。若二进制缺失，则**软跳过**（不视为失败），
     避免自动化任务挂死或误报；待二进制就位后下次运行即生效。绝不在此触发 pip 安装。
     """

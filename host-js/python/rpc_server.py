@@ -42,7 +42,7 @@ def _ensure_bloodmusic():
     """保证 `import bloodmusic.xxx` 可用。
 
     子包内部全用相对导入（from ..core.oscillator import ...），必须以 bloodmusic 包
-    身份导入，平铺导入 sfx/core 会炸。优先用 editable 安装（F:\\Python314 已装）；
+    身份导入，平铺导入 sfx/core 会炸。优先用 editable 安装（主解释器 /Python314 已装）；
     没有安装时在进程内合成 bloodmusic 包锚点（submodule_search_locations 指仓库根），
     做到零安装依赖。
     """
