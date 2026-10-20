@@ -1,6 +1,6 @@
 ﻿---
 name: bloodmusic
-description: Maintain the bloodmusic procedural audio synthesis engine (G:/repos/audio-generation). v2.0 mirror architecture with pool renderer and legacy sampler compat layer.
+description: Maintain the bloodmusic procedural audio synthesis engine (G:/repos/bloodmusic). v2.0 mirror architecture with pool renderer and legacy sampler compat layer.
 agent_created: true
 ---
 

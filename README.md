@@ -7,9 +7,10 @@
 [![Python](https://img.shields.io/pypi/pyversions/bloodmusic)](https://pypi.org/project/bloodmusic/)
 [![License](https://img.shields.io/pypi/l/bloodmusic)](https://pypi.org/project/bloodmusic/)
 
-**PyPI**：<https://pypi.org/project/bloodmusic/> ｜ **发行名与导入名都是 `bloodmusic`**
-（⚠ 注意：仓库目录名是 `audio-generation`，**包名不是** —— 源码目录靠 `package-dir` 映射进
-`bloodmusic` 命名空间，见 `pyproject.toml`。`pip install audio-generation` 是**错误**的。）
+**PyPI**：<https://pypi.org/project/bloodmusic/> ｜ **仓库名 / 发行名 / 导入名统一为 `bloodmusic`**
+（`pip install bloodmusic`、`import bloodmusic`、仓库 `siwpan/bloodmusic` 三者同名，
+不会再出现"仓库叫什么、包叫什么"的歧义。仓库地址以 Gitee 上实际显示的为准 ——
+本仓曾用名 `audio-generation`，改名后旧地址会由 Gitee 重定向。）
 
 全功能程序化游戏音频合成引擎，支持 BGM + SFX 实时生成、专辑制作。
 纯自生成定位：全部音频由程序化合成产生，零外部采样。
@@ -50,8 +51,9 @@ bloodmusic --help                 # CLI 入口（脚本名也是 bloodmusic）
 
 ### 从源码运行（开发）
 
-> 源码目录下没有 `bloodmusic/` 这一层（靠 `package-dir` 映射），所以 `python -m bloodmusic`
-> 这类按包名调用的命令需要先 `pip install -e .`；直接跑脚本（`python main.py`）则不受影响。
+> 仓库根即包根（目录名就是 `bloodmusic`），各子包由 `pyproject.toml` 的 `package-dir`
+> 逐个映射进 `bloodmusic.*` 命名空间。`python -m bloodmusic` 这类按包名调用的命令
+> 需要先 `pip install -e .`（或让仓库根在 `sys.path` 上）；直接跑脚本则不受影响。
 
 ```bash
 # 安装依赖
@@ -159,5 +161,5 @@ MIT License · Copyright (c) 2026 siwpan
 
 ## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/audio-generation）；本地对应 <PATH> 旧版已转 tag。
+> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/audio-generation，2026-10-20 起显示名为 siwpan/bloodmusic）；本地对应 <PATH> 旧版已转 tag。
 > 本标注为发布面统一追加，不改变原有内容。

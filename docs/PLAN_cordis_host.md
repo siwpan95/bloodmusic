@@ -107,7 +107,7 @@ Python 主套件（pytest）零回归依据：本 Phase 只新增 `host-js/`（�
 >
 > - **P0 完成**：pytest 收集错误 583→0。根因 = 仓库根即包根（flat 布局）+
 >   pytest Package 收集器对收集路径上每个含 `__init__.py` 的目录执行
->   `importtestmodule(__init__.py)`，而目录名 `audio-generation` 含连字符不是
+>   `importtestmodule(__init__.py)`，而从仓库真实路径收集时该文件没有包上下文
 >   合法包名 → 顶层导入 → 相对导入崩。修法 = 根/album_maker 的 `__init__.py`
 >   加 `__package__` 守卫（正常包导入全量导出、顶层收集导入跳过），pytest
 >   8.4.2 / 9.1.1 双版本验证通过。基线：559 passed / 4 failed（album_maker

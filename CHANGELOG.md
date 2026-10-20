@@ -6,6 +6,20 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **仓库改名：`audio-generation` → `bloodmusic`**（2026-10-20，历史遗留问题清理）。
+  此前仓库名与 PyPI 发行名 / 导入包名三者不一致：仓库叫 `audio-generation`、包叫
+  `bloodmusic`，导致「`pip install audio-generation` 是错的」「本地目录名含连字符不是
+  合法包名」这类反复踩的坑。现统一为 **仓库名 = 发行名 = 导入名 = `bloodmusic`**。
+  - Gitee 显示名已改为 `siwpan/bloodmusic`；URL 路径因该仓库启用了 Gitee Go
+    （`.workflow/bloodmusic-ci.yml`）而被平台禁止修改，仍为 `siwpan/audio-generation`
+    —— 关掉 Gitee Go 后才能改 path，旧地址会由 Gitee 重定向。
+  - 本地目录 `G:\repos\audio-generation` → `G:\repos\bloodmusic`；
+    `bloodmusic_dev.pth` 同步指向新路径。
+  - 本仓内所有路径/URL 引用已更新。历史产物里的旧路径（`automations/output/`、
+    `_smoke_output/` 等）**保持原样**——那是当时生成的真实记录，回改等于伪造。
+
 ### Added
 
 - **host-js/ Cordis 插件宿主（Phase A）**：进程外 Node 宿主，Python 引擎作

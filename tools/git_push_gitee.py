@@ -34,7 +34,7 @@ tools/git_push_gitee.py —— 无需 git 客户端的 Gitee 推送工具（基�
 
 环境变量:
     GITEE_TOKEN   令牌（Gitee 私人令牌）
-    GITEE_REMOTE  远端地址（默认 https://gitee.com/siwpan/audio-generation.git）
+    GITEE_REMOTE  远端地址（默认 https://gitee.com/siwpan/bloodmusic.git）
     GITEE_BRANCH  分支名（默认 master）
     GITEE_AUTHOR  作者 "Name <email>"（默认 siwpan <siwpan@users.noreply.gitee.com>）
 
@@ -52,7 +52,7 @@ import sys
 import tempfile
 from pathlib import Path
 
-DEFAULT_REMOTE = "https://gitee.com/siwpan/audio-generation.git"
+DEFAULT_REMOTE = "https://gitee.com/siwpan/bloodmusic.git"
 DEFAULT_BRANCH = "master"
 DEFAULT_AUTHOR = "siwpan <siwpan@users.noreply.gitee.com>"
 

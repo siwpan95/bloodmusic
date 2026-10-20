@@ -42,7 +42,7 @@ PYTEST_PLUGIN_OFF = [
 RUFF_TARGETS = ["album_maker", "automations"]
 
 # pytest 必须从 bloodmusic 联接目录（site-packages/bloodmusic）运行，
-# 否则 pytest 会沿真实路径 G:\repos\audio-generation（含连字符，非合法包名）
+# 否则 pytest 会沿真实路径 G:\repos\bloodmusic（含连字符，非合法包名）
 # 解析包链，把根 __init__.py 当成无父包的模块导入，触发
 # `from .core import` 的 "attempted relative import with no known parent package"。
 # 从 site-packages 运行时，bloodmusic 是干净的顶层包名，包链解析正常。

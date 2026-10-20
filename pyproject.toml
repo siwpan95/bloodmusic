@@ -36,7 +36,7 @@ packages = [
 ]
 py-modules = []
 
-# 源码目录名（audio-generation）与包名（bloodmusic）不一致，故用 package-dir
+# 仓库根即包根（目录名 bloodmusic，与包名一致），子包用 package-dir 逐个映射
 # 把各子包映射进 bloodmusic 命名空间；否则安装后会在 site-packages 顶层留下
 # core/ music/ export/ gui/ pipeline/ mirror/ 等通用名，与其它包冲突。
 [tool.setuptools.package-dir]

@@ -2,7 +2,7 @@
 
 路径约定
 --------
-- REPO_ROOT    : G:/repos/audio-generation
+- REPO_ROOT    : G:/repos/bloodmusic
 - OUTPUT_ROOT  : REPO_ROOT/automations/output  （已被 .gitignore 忽略）
 - REPORTS_DIR  : OUTPUT_ROOT/reports
 - DEFAULT_PYTHON: 项目运行解释器，优先环境变量 BM_PYTHON；缺省用**脚本自身解释器**
@@ -55,8 +55,8 @@ def ensure_bloodmusic(python: str = DEFAULT_PYTHON) -> bool:
     否则任何被调度起来的自动化任务都会被 pip 挂死。
 
     bloodmusic 的可导入性由 site-packages 下的目录联接 (junction)
-    bloodmusic -> G:\\repos\\audio-generation 以及 bloodmusic_dev.pth
-    （内容 G:\\repos\\audio-generation，用于满足仓库内 `import core` /
+    bloodmusic -> G:\\repos\\bloodmusic 以及 bloodmusic_dev.pth
+    （内容 G:\\repos\\bloodmusic，用于满足仓库内 `import core` /
     `import music` 等兄弟包绝对导入）共同保证。详见 automations/README.md。
 
     若导入失败，直接返回 False 并给出可执行的修复提示，交由调用方决定，
@@ -69,7 +69,7 @@ def ensure_bloodmusic(python: str = DEFAULT_PYTHON) -> bool:
         log(f"[ensure] bloodmusic 不可导入: {type(exc).__name__}: {exc}")
         log("[ensure] 本环境 pip 写盘阶段会卡死，已禁用自动安装；"
             "请确认 <主解释器>/Lib/site-packages/bloodmusic (junction) 与"
-            " bloodmusic_dev.pth 均存在且指向 G:\\repos\\audio-generation。")
+            " bloodmusic_dev.pth 均存在且指向 G:\\repos\\bloodmusic。")
         return False
 
 

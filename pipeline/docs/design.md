@@ -69,7 +69,7 @@
 ```python
 # config.py —— 仅依赖 os/sys/pathlib（纯逻辑，零重包）
 REMIX_ROOT          = r"<同级仓>/remix"
-BLOODMUSIC_ROOT     = r"<同级仓>/audio-generation"
+BLOODMUSIC_ROOT     = r"<同级仓>/bloodmusic"
 AUDIO_SEPARATOR_ROOT= r"<同级仓>/audio-separator"
 AUDIO_SEPARATOR_VENV_PY = r"<同级仓>/audio-separator\venv\Scripts\python.exe"  # 复用其约定，不 import
 REMIX_BIN           = os.path.join(REMIX_ROOT, "bin")          # ffmpeg.exe / ffprobe.exe

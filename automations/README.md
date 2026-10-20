@@ -8,8 +8,8 @@
 - 解释器：`F:\Python314\python.exe`（已装齐 numpy/scipy/sounddevice/soundfile/mido/pyyaml/pytest），
   可用环境变量 `BM_PYTHON` 覆盖。
 - `bloodmusic` 可导入性由 **目录联接 + .pth** 保证（非 editable pip）：
-  - `F:\Python314\Lib\site-packages\bloodmusic` → junction → `G:\repos\audio-generation`
-  - `F:\Python314\Lib\site-packages\bloodmusic_dev.pth` 内容 `G:\repos\audio-generation`
+  - `F:\Python314\Lib\site-packages\bloodmusic` → junction → `G:\repos\bloodmusic`
+  - `F:\Python314\Lib\site-packages\bloodmusic_dev.pth` 内容 `G:\repos\bloodmusic`
     （满足仓库内 `import core` / `import music` 等兄弟包绝对导入）
   - ⚠️ 本机 `F:\Python314` 的 pip 在「写盘/解包/卸载」阶段会卡死（已多次实测超时 kill），
     **脚本不做任何 pip 安装/自修复**，只做导入检测（`ensure_bloodmusic()`）。
