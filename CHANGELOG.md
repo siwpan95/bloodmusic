@@ -12,9 +12,12 @@
   此前仓库名与 PyPI 发行名 / 导入包名三者不一致：仓库叫 `audio-generation`、包叫
   `bloodmusic`，导致「`pip install audio-generation` 是错的」「本地目录名含连字符不是
   合法包名」这类反复踩的坑。现统一为 **仓库名 = 发行名 = 导入名 = `bloodmusic`**。
-  - Gitee 显示名已改为 `siwpan/bloodmusic`；URL 路径因该仓库启用了 Gitee Go
-    （`.workflow/bloodmusic-ci.yml`）而被平台禁止修改，仍为 `siwpan/audio-generation`
-    —— 关掉 Gitee Go 后才能改 path，旧地址会由 Gitee 重定向。
+  - Gitee 仓库地址同步为 `siwpan/bloodmusic`。原仓库因启用了 Gitee Go
+    （`.workflow/bloodmusic-ci.yml`）而被平台禁止修改 URL 路径，且该限制无法通过
+    API 解除（改 path 返回「改仓库开启了 Gitee Go 服务」，`gitee_go` 端点 GET/POST/PUT
+    全 405、DELETE 404）。故采取**删除旧仓重建**：新仓 `siwpan/bloodmusic` 为全新仓库，
+    旧地址不再重定向，请以新地址为准。历史 issue/PR 原本均为 0 条；v1.0.0 发行版
+    与其附件已在新仓重建。
   - 本地目录 `G:\repos\audio-generation` → `G:\repos\bloodmusic`；
     `bloodmusic_dev.pth` 同步指向新路径。
   - 本仓内所有路径/URL 引用已更新。历史产物里的旧路径（`automations/output/`、
@@ -66,4 +69,5 @@
 ### Added
 
 - 首个发行版：便携源码 zip（剔除 .venv/构建产物/输出物，依赖见 README）。
-- 发布面：gitee [siwpan/audio-generation](https://gitee.com/siwpan/audio-generation) release `v1.0.0`（BloodMusic 程序化音频引擎 v1.0.0）。
+- 发布面：gitee [siwpan/bloodmusic](https://gitee.com/siwpan/bloodmusic) release `v1.0.0`（BloodMusic 程序化音频引擎 v1.0.0）。
+  （原发布于 `siwpan/audio-generation`，仓库改名重建后发行版已迁至新地址。）

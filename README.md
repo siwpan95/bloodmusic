@@ -1,6 +1,6 @@
 # BloodMusic — 程序化游戏音频合成引擎
 
-> 仓库：<https://gitee.com/siwpan/audio-generation> ｜ 许可：MIT（见 [LICENSE](LICENSE)）
+> 仓库：<https://gitee.com/siwpan/bloodmusic> ｜ 许可：MIT（见 [LICENSE](LICENSE)）
 > 注：文中 <PATH> 为路径占位符，请替换为你本机实际的目录 / 可执行文件路径。
 
 [![PyPI](https://img.shields.io/pypi/v/bloodmusic)](https://pypi.org/project/bloodmusic/)
@@ -161,5 +161,5 @@ MIT License · Copyright (c) 2026 siwpan
 
 ## 仓库索引标注（2026-08-27 · siwpan 统一治理）
 
-> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/audio-generation，2026-10-20 起显示名为 siwpan/bloodmusic）；本地对应 <PATH> 旧版已转 tag。
+> BloodMusic 程序化音频合成引擎（现行，独立仓 siwpan/bloodmusic，2026-10-20 起仓库名与发行名/导入名统一）；本地对应 <PATH> 旧版已转 tag。
 > 本标注为发布面统一追加，不改变原有内容。
