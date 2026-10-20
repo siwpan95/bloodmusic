@@ -4,6 +4,20 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.1.0] - 2026-10-20
+
+### Added
+
+- **`bloodmusic.workstation` 子包（整合自 station 引擎层）**：将仓库 `station`
+  中 bloodmusic 此前缺失的音频引擎能力沉淀为新子包，去除对 station domain/GUI/VST
+  桩的耦合：
+  - `nodes`：音频节点图（Kahn 拓扑排序 / DFS 无环检测 / 多通道总线）。
+  - `commands`：命令模式系统（线程安全 `CommandBus` / undo / 宏录制回放）。
+  - `ring_buffer`：无锁 SPSC 环形缓冲（实时音频流）。
+  - `dsp_utils`：纯函数 DSP 工具（混音 / 增益 / 声伴 / 波形生成）。
+  - 新增 `tests/test_workstation.py`（15 例）覆盖四模块核心行为。
+  - station 远端仓库（`siwpan/station`）已删除，能力并入本仓。
+
 ## [Unreleased]
 
 ### Changed
