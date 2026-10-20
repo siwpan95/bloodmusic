@@ -3,6 +3,14 @@
 > 仓库：<https://gitee.com/siwpan/audio-generation> ｜ 许可：MIT（见 [LICENSE](LICENSE)）
 > 注：文中 <PATH> 为路径占位符，请替换为你本机实际的目录 / 可执行文件路径。
 
+[![PyPI](https://img.shields.io/pypi/v/bloodmusic)](https://pypi.org/project/bloodmusic/)
+[![Python](https://img.shields.io/pypi/pyversions/bloodmusic)](https://pypi.org/project/bloodmusic/)
+[![License](https://img.shields.io/pypi/l/bloodmusic)](https://pypi.org/project/bloodmusic/)
+
+**PyPI**：<https://pypi.org/project/bloodmusic/> ｜ **发行名与导入名都是 `bloodmusic`**
+（⚠ 注意：仓库目录名是 `audio-generation`，**包名不是** —— 源码目录靠 `package-dir` 映射进
+`bloodmusic` 命名空间，见 `pyproject.toml`。`pip install audio-generation` 是**错误**的。）
+
 全功能程序化游戏音频合成引擎，支持 BGM + SFX 实时生成、专辑制作。
 纯自生成定位：全部音频由程序化合成产生，零外部采样。
 
@@ -31,9 +39,24 @@
 
 ## 快速开始
 
+### 从 PyPI 安装（用库 / 用 CLI）
+
+```bash
+pip install bloodmusic            # 依赖（numpy/scipy/sounddevice/soundfile/mido）自动带上
+
+python -c "import bloodmusic; print(bloodmusic.__version__)"
+bloodmusic --help                 # CLI 入口（脚本名也是 bloodmusic）
+```
+
+### 从源码运行（开发）
+
+> 源码目录下没有 `bloodmusic/` 这一层（靠 `package-dir` 映射），所以 `python -m bloodmusic`
+> 这类按包名调用的命令需要先 `pip install -e .`；直接跑脚本（`python main.py`）则不受影响。
+
 ```bash
 # 安装依赖
 pip install numpy scipy sounddevice soundfile
+pip install -e .                  # 需要 python -m bloodmusic 时执行一次
 
 # 启动 GUI 工作站（预览/导出/波形/滑块）
 python main.py
