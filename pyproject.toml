@@ -32,7 +32,7 @@ packages = [
     "bloodmusic.core", "bloodmusic.effects", "bloodmusic.music", "bloodmusic.sfx",
     "bloodmusic.export", "bloodmusic.playback", "bloodmusic.gui", "bloodmusic.bridge",
     "bloodmusic.album_maker", "bloodmusic.pipeline", "bloodmusic.interactive",
-    "bloodmusic.autowav", "bloodmusic.mirror",
+    "bloodmusic.autowav", "bloodmusic.mirror", "bloodmusic.workstation",
 ]
 py-modules = []
 
@@ -54,6 +54,7 @@ bloodmusic = "."
 "bloodmusic.interactive" = "interactive"
 "bloodmusic.autowav" = "autowav"
 "bloodmusic.mirror" = "mirror"
+"bloodmusic.workstation" = "workstation"
 
 [tool.pytest.ini_options]
 testpaths = ["tests", "album_maker/tests"]
