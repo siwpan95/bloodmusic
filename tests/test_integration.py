@@ -191,9 +191,48 @@ class TestTopLevelImport(unittest.TestCase):
     """顶层 bloodmusic 包导入验证"""
 
     def test_import_bloodmusic(self):
-        """应能导入 bloodmusic 包"""
+        """应能导入 bloodmusic 包，且 __version__ 是合法版本号"""
         import bloodmusic
-        self.assertEqual(bloodmusic.__version__, "2.0.0")
+        self.assertRegex(bloodmusic.__version__, r"^\d+\.\d+\.\d+$")
+
+    def test_version_single_source_of_truth(self):
+        """pyproject 的 [project] 表必须声明 dynamic version，不得再写静态 version。
+
+        历史 bug：pyproject 升到 2.1.0 而 __init__.py 仍硬编码 "2.0.0"，
+        已发布包对外自报旧版本。此处锁死「单一真源」结构，防止回退。
+        """
+        import re
+        from pathlib import Path
+
+        pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+        text = pyproject.read_text(encoding="utf-8")
+
+        # 取出 [project] 表（到下一个顶层表头为止）
+        m = re.search(r"(?ms)^\[project\]\s*$(.*?)(?=^\[|\Z)", text)
+        self.assertIsNotNone(m, "pyproject.toml 缺少 [project] 表")
+        project_table = m.group(1)
+
+        self.assertIn('dynamic = ["version"]', project_table)
+        self.assertIsNone(
+            re.search(r"(?m)^version\s*=", project_table),
+            "[project] 不应再写静态 version，版本唯一真源在 __init__.py",
+        )
+        # 动态版本必须确实指向包内 __version__
+        self.assertIn('version = {attr = "bloodmusic.__version__"}', text)
+
+    def test_version_matches_installed_metadata(self):
+        """以发行包形式安装时，__version__ 必须等于元数据版本。
+
+        源码树直跑时元数据来自开发安装（可能是旧 egg-info），跳过。
+        """
+        import bloodmusic
+
+        if "site-packages" not in bloodmusic.__file__.replace("\\", "/"):
+            self.skipTest("源码树直跑，不做元数据一致性校验")
+
+        from importlib.metadata import version as dist_version
+
+        self.assertEqual(bloodmusic.__version__, dist_version("bloodmusic"))
 
     def test_import_core_symbols(self):
         """应能从 bloodmusic 导入核心符号"""

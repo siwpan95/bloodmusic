@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "bloodmusic"
-version = "2.1.0"
+dynamic = ["version"]
 description = "程序化游戏音频合成引擎"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -25,6 +25,12 @@ gui = ["tkinter"]
 
 [project.scripts]
 bloodmusic = "bloodmusic.cli:main"
+
+# 版本号唯一真源在 __init__.py 的 __version__（此处不再手写 version）。
+# 历史上两处各写一份，pyproject 升到 2.1.0 时 __init__.py 仍是 2.0.0，
+# 导致已发布版本对外自报旧版本（`bloodmusic --info` 直接打印它）。
+[tool.setuptools.dynamic]
+version = {attr = "bloodmusic.__version__"}
 
 [tool.setuptools]
 packages = [

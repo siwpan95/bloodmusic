@@ -4,6 +4,19 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.1.1] - 2026-10-20
+
+### Fixed
+
+- **版本号漂移**：包根 `__init__.py` 的 `__version__` 此前硬编码为 `"2.0.0"`，
+  而 `pyproject.toml` 已升到 `2.1.0`，导致 `pip install bloodmusic` 后
+  `bloodmusic.__version__` 与 `bloodmusic --info` 对外自报旧版本 `2.0.0`。
+  现改为**单一真源**：`pyproject.toml` 通过
+  `[tool.setuptools.dynamic] version = {attr = "bloodmusic.__version__"}` 动态读取，
+  只改 `__init__.py` 一处即可，结构上不可能再漂移。
+- 补充 `tests/test_integration.py` 两个守卫用例：锁死「pyproject 不得再写静态
+  `version`」的结构，以及安装态下 `__version__` 必须等于发行包元数据版本。
+
 ## [2.1.0] - 2026-10-20
 
 ### Added

@@ -27,7 +27,11 @@ CLI:
   $ python -m bloodmusic batch --output ./audio --duration 30 --format ogg
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.1"
+# ↑ 版本号唯一真源。pyproject.toml 用 [tool.setuptools.dynamic] 从此处读取
+#   （version = {attr = "bloodmusic.__version__"}），二者不会漂移。
+#   历史上这里硬编码 "2.0.0" 而 pyproject 已是 2.1.0，导致 pip 安装后
+#   `bloodmusic --info` / `bloodmusic.__version__` 对外报错版本。勿再手改 pyproject。
 
 # ── 扁平导入兼容垫片（勿删）──────────────────────────────────────
 # 本包历史上以「仓库根即包根」的 flat 布局发布，core/ effects/ music/ 等曾作为
