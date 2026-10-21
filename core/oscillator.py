@@ -101,8 +101,10 @@ def _pink_noise_vectorized(n: int, rng: np.random.Generator | None = None) -> np
         b5 = -0.7616 * b5 - w * 0.0168980
         pink[i] = b0 + b1 + b2 + b3 + b4 + b5 + b6 + w * 0.5362
         b6 = w * 0.115926
-    # 归一化到约 ±1 幅度
-    pink *= 0.11
+    # 峰值归一化到 ±1（与 osc_noise_brown 一致），避免叠加后数字削波
+    peak = np.max(np.abs(pink))
+    if peak > 0.0:
+        pink = pink / (peak + 1e-8)
     return pink
 
 

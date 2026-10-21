@@ -57,6 +57,9 @@ def note_to_freq(note: str) -> float:
     if not note or not isinstance(note, str):
         raise ValueError(f"非法音符名: {note!r} (需类似 'C4' / 'G#3')")
     normalized = note.replace("_", "").strip()
+    # 大小写归一：仅首字母（音名）大写，保留降号 'b' 小写以匹配 NOTES 键（如 Db4/Eb4/Bb4）
+    if normalized:
+        normalized = normalized[0].upper() + normalized[1:]
     # 必须以数字八度结尾
     if not normalized[-1].isdigit():
         raise ValueError(f"音符名缺少八度数字: {note!r}")

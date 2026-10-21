@@ -18,6 +18,8 @@ def apply_lowpass(sig: np.ndarray, cutoff_hz: float, sr: int = _SR) -> np.ndarra
         cutoff_hz: 截止频率 (Hz)
         sr: 采样率
     """
+    if sig is None or np.asarray(sig).size == 0:
+        return sig          # 空信号无需滤波（避免 scipy 内部 reshape 报错）
     if cutoff_hz is None or cutoff_hz <= 0:
         return sig
     nyq = sr / 2.0

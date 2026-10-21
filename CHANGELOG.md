@@ -4,6 +4,23 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [2.1.2] - 2026-10-21
+
+> 专项压测暴露的 5 处缺陷修复。
+
+### Fixed
+
+- **effects.apply_multitap_delay**：最长延迟小于信号长度时，湿信号切片 `result[n:n+n]`
+  实际长度只有 `max_delay`，与干声不等长导致 numpy 广播 `ValueError`（默认参数在短于
+  0.5 秒的信号上必崩——正是最常见用法）。现对不足部分补零对齐。
+- **core.osc_noise_pink**：此前仅做固定 `*0.11` 缩放、未做峰值归一，峰值在 1.0~1.3
+  间随机波动会数字削波。现与 `osc_noise_brown` 一致做峰值归一（峰值恒 ≤1.0）。
+- **core.KSVoice**：`freq<=0` 时延迟线长度 `sr/freq` 除零，泄漏裸 `ZeroDivisionError`
+  （负频率还会产生负延迟）。现于构造期（`__post_init__`）校验 `freq>0` 并抛 `ValueError`。
+- **core.note_to_freq**：对大小写零容错（`"c4"` 被拒），与同库其它入口不一致。现做大小写
+  归一——仅首字母（音名）大写，保留降号 `b` 小写以匹配 `NOTES` 键（如 `Db4`/`Eb4`）。
+- **effects.apply_lowpass**：空信号触发 scipy 内部 reshape 报错。现空信号直接返回。
+
 ## [2.1.1] - 2026-10-20
 
 ### Fixed

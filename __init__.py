@@ -27,7 +27,7 @@ CLI:
   $ python -m bloodmusic batch --output ./audio --duration 30 --format ogg
 """
 
-__version__ = "2.1.1"
+__version__ = "2.1.2"
 # ↑ 版本号唯一真源。pyproject.toml 用 [tool.setuptools.dynamic] 从此处读取
 #   （version = {attr = "bloodmusic.__version__"}），二者不会漂移。
 #   历史上这里硬编码 "2.0.0" 而 pyproject 已是 2.1.0，导致 pip 安装后

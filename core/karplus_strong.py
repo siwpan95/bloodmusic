@@ -50,6 +50,11 @@ class KSVoice:
     # 效果
     effect_mix: float = 0.0          # 预留效果器接口
 
+    def __post_init__(self):
+        if not (self.freq > 0):
+            raise ValueError(
+                f"KSVoice.freq 必须为正（延迟线长度 = sr/freq，freq<=0 会除零），收到 {self.freq!r}")
+
     @property
     def delay_length(self) -> int:
         """延迟线长度（采样数）"""

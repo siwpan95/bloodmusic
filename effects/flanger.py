@@ -406,7 +406,13 @@ def apply_multitap_delay(
         # 所有超过原始长度的都是湿信号
         pass  # 留空,保持架构
 
-    output = sig * (1.0 - mix) + result[n:n + n] * mix if len(result) > n else sig
+    if len(result) > n:
+        wet = result[n:n + n]
+        if wet.size < n:                       # max_delay < n 时切片不足，补零对齐干声长度
+            wet = np.pad(wet, (0, n - wet.size))
+        output = sig * (1.0 - mix) + wet * mix
+    else:
+        output = sig
 
     peak = np.max(np.abs(output))
     if peak > 1.0:
