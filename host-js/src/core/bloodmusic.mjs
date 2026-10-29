@@ -15,7 +15,7 @@
  * - Python 侧 'progress' 通知 → 'bloodmusic/progress' 事件（进入 cordis 事件系统）。
  *
  * config: { python?, script?, cwd?, requestTimeoutMs? }
- *   python 默认取环境变量 BLOODMUSIC_PYTHON，再退回 F:\Python314\python.exe（本机
+ *   python 默认取环境变量 BLOODMUSIC_PYTHON，再退回 python（本机
  *   唯一带完整科学栈 + editable bloodmusic 的解释器），最后退回 PATH 里的 python。
  */
 
@@ -31,7 +31,7 @@ export const name = 'bloodmusic'
 
 function defaultPython() {
   if (process.env.BLOODMUSIC_PYTHON) return process.env.BLOODMUSIC_PYTHON
-  // 2026-09-23 去本地化：win32 下优先 PYEXE，其次 PATH 上的 python（原硬编码 F:\Python314\python.exe）
+  // 2026-09-23 去本地化：win32 下优先 PYEXE，其次 PATH 上的 python（原硬编码 python）
   return process.platform === 'win32' ? (process.env.PYEXE || 'python') : 'python3'
 }
 

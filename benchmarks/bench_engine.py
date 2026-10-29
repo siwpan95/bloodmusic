@@ -5,7 +5,7 @@
 对照 60fps 预算 (16.6ms/帧)，给出实时可行的配置建议。
 
 用法:
-    F:/Python314/python.exe benchmarks/bench_engine.py
+    python benchmarks/bench_engine.py
 输出:
     benchmarks/report.md — 表格 + 结论
 """

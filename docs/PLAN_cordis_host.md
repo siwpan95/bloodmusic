@@ -27,7 +27,7 @@ Cordis 插件宿主**（`host-js/`），把引擎能力暴露为 cordis 服务�
 cordis 插件（inject: ['bloodmusic']）          host-js/src/plugins/0x-*.mjs
   → ctx.bloodmusic（BloodmusicService）        host-js/src/core/bloodmusic.mjs
     → JsonRpcBridge（stdio 行分隔 JSON-RPC）   host-js/src/core/bridge.mjs
-      → python -u host-js/python/rpc_server.py（bloodmusic 引擎，F:\Python314）
+      → python -u host-js/python/rpc_server.py（bloodmusic 引擎，/Python314）
 ```
 
 ### Cordis 语义落点
@@ -74,7 +74,7 @@ node src/cli.mjs --call sfx.render '{"name":"explosion"}'   # 直接调服务面
 node tests/run-all.mjs             # 端到端验收（10 项）
 ```
 
-配置：`host-js/cordis.json`。Python 解释器默认 `F:\Python314\python.exe`，
+配置：`host-js/cordis.json`。Python 解释器默认 `/Python314/python.exe`，
 可用环境变量 `BLOODMUSIC_PYTHON` 或 cordis.json 的 config.python 覆盖。
 
 ## 验收记录（2026-09-18，全部实跑）
