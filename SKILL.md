@@ -7,7 +7,7 @@ agent_created: true
 # bloodmusic 程序化音频合成引擎维护
 
 ## 概述
-程序化游戏音频合成引擎 v2.0（镜像架构）：FM/粒子/波表/物理建模 + 效果链，BGM/SFX 实时生成。独立 .git，editable 安装于 F:\Python314。消费者：alloy 引擎 audio 层、audio_pipeline、remix、musickit。
+程序化游戏音频合成引擎 v2.0（镜像架构）：FM/粒子/波表/物理建模 + 效果链，BGM/SFX 实时生成。独立 .git，editable 安装于 /Python314。消费者：alloy 引擎 audio 层、audio_pipeline、remix、musickit。
 
 ## 结构
 - music/：arpeggiator/bass/harmony/pattern/instrument_pool/pool_renderer/presets/... + sampler.py（兼容层，见下）

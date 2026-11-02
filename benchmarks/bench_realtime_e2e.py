@@ -21,8 +21,8 @@ bench_realtime_e2e.py — RealtimeMusicEngine 真实游戏引擎端到端延迟�
      与 wall-clock，定位「首帧显著偏离基线」=合成端 onset；可闻 onset = 合成 onset + 设备输出延迟。
 
 用法:
-    F:/Python314/python.exe benchmarks/bench_realtime_e2e.py
-    F:/Python314/python.exe benchmarks/bench_realtime_e2e.py --play   # 追加真实播放管线验证（低音量）
+    python benchmarks/bench_realtime_e2e.py
+    python benchmarks/bench_realtime_e2e.py --play   # 追加真实播放管线验证（低音量）
 """
 
 from __future__ import annotations

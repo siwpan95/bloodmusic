@@ -5,13 +5,13 @@
 不涉及任何外部项目、外部仓库或外部发布（无 Gitee 推送、无 musickit 同步、无网易云发布）。
 
 ## 运行环境
-- 解释器：`F:\Python314\python.exe`（已装齐 numpy/scipy/sounddevice/soundfile/mido/pyyaml/pytest），
+- 解释器：`/Python314/python.exe`（已装齐 numpy/scipy/sounddevice/soundfile/mido/pyyaml/pytest），
   可用环境变量 `BM_PYTHON` 覆盖。
 - `bloodmusic` 可导入性由 **目录联接 + .pth** 保证（非 editable pip）：
-  - `F:\Python314\Lib\site-packages\bloodmusic` → junction → `G:\repos\bloodmusic`
-  - `F:\Python314\Lib\site-packages\bloodmusic_dev.pth` 内容 `G:\repos\bloodmusic`
+  - `/Python314\Lib\site-packages\bloodmusic` → junction → `G:\repos\bloodmusic`
+  - `/Python314\Lib\site-packages\bloodmusic_dev.pth` 内容 `G:\repos\bloodmusic`
     （满足仓库内 `import core` / `import music` 等兄弟包绝对导入）
-  - ⚠️ 本机 `F:\Python314` 的 pip 在「写盘/解包/卸载」阶段会卡死（已多次实测超时 kill），
+  - ⚠️ 本机 `/Python314` 的 pip 在「写盘/解包/卸载」阶段会卡死（已多次实测超时 kill），
     **脚本不做任何 pip 安装/自修复**，只做导入检测（`ensure_bloodmusic()`）。
 - 混音阶段依赖（关键）：`album_maker` 的母带混音 `_mixdown` 延迟 `from mixdown import mixdown`，
   该模块来自 **项目内置的 `pipeline/`**（audio_pipeline），其内部经 `pipeline/config.bootstrap_env()`
@@ -31,13 +31,13 @@
 ## 直接运行
 ```bash
 # 内容流水线
-F:/Python314/python.exe automations/content_pipeline.py
+/Python314/python.exe automations/content_pipeline.py
 
 # 工程侧流水线（含基准：BM_BENCH=1）
-BM_BENCH=1 F:/Python314/python.exe automations/qa_pipeline.py
+BM_BENCH=1 /Python314/python.exe automations/qa_pipeline.py
 
 # 全量
-F:/Python314/python.exe automations/run_all.py
+/Python314/python.exe automations/run_all.py
 ```
 
 ## 报告
