@@ -65,6 +65,9 @@ remix/output/
 .venv/
 venv/
 
+# Node 依赖（第三方源码，一律不入库）
+node_modules/
+
 # 自动化脚本生成产物（automations/ 下脚本的输出，含报告）
 automations/output/
 automations/*.log
